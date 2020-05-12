@@ -1,0 +1,69 @@
+
+- cal_id: corick@vols.utk.edu
+  entities:
+  - device_id: utk
+    ignore_availability: true
+    name: UTK
+    track: false
+
+- cal_id: jta8mn45ge0lmu7cl0lvlm9igs@group.calendar.google.com
+  entities:
+  - device_id: secret
+    ignore_availability: true
+    name: Secret
+    track: false
+
+- cal_id: 37ei9ahtvp4251itaeb1listp0@group.calendar.google.com
+  entities:
+  - device_id: home
+    ignore_availability: true
+    name: Home
+    track: true
+  - device_id: alarm
+    ignore_availability: true
+    name: Alarm
+    search: '#alarm'
+    track: true
+  - device_id: vacation
+    ignore_availability: true
+    name: Vacation
+    search: '#vacation'
+    track: true
+  - device_id: visitors
+    ignore_availability: true
+    name: Visitors
+    search: '#visitors'
+    track: true
+  - device_id: wfh
+    ignore_availability: true
+    name: Working From Home
+    search: '#wfh'
+    track: true
+
+- cal_id: cnathanorick@gmail.com
+  entities:
+  - device_id: gmail
+    ignore_availability: true
+    name: Gmail
+    track: false
+
+- cal_id: b89g410srb785hik96qu8032to@group.calendar.google.com
+  entities:
+  - device_id: work
+    ignore_availability: true
+    name: Work
+    track: false
+
+- cal_id: addressbook#contacts@group.v.calendar.google.com
+  entities:
+  - device_id: contacts
+    ignore_availability: true
+    name: Contacts
+    track: false
+
+- cal_id: en.usa#holiday@group.v.calendar.google.com
+  entities:
+  - device_id: holidays_in_united_states
+    ignore_availability: true
+    name: Holidays in United States
+    track: false

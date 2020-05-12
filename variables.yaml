@@ -1,0 +1,4 @@
+hallway_before_laundry_opened:
+  value_template: >- 
+    {{ is_state('light.hallway_1', 'on') 
+      or is_state('light.hallway_2', 'on') }}

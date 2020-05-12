@@ -1,0 +1,413 @@
+- id: '1587847979565'
+  name: Tv Playing at Night
+  entities:
+    automation.kitchen_motion:
+      friendly_name: Turn On Kitchen If Motion
+      id: '1587438080867'
+      last_triggered: '2020-04-25T06:28:24.172875+00:00'
+      state: 'off'
+    light.bookshelf_bottom:
+      transition: 10
+      brightness: 16
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Bottom
+      hs_color:
+      - 270
+      - 67.451
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 168
+      - 82
+      - 255
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.265
+      - 0.131
+    light.bookshelf_top:
+      transition: 10
+      brightness: 16
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Top
+      hs_color:
+      - 8.276
+      - 90.98
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 55
+      - 23
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.677
+      - 0.312
+    light.front_door:
+      friendly_name: Front Door
+      state: 'off'
+      supported_features: 41
+    light.hallway_1:
+      friendly_name: Hallway 1
+      state: 'off'
+      supported_features: 41
+    light.hallway_2:
+      friendly_name: Hallway 2
+      state: 'off'
+      supported_features: 41
+    light.kitchen_string_lights:
+      effect_list:
+      - blue_fade
+      - blue_strobe
+      - colorjump
+      - colorloop
+      - colorstrobe
+      - cyan_fade
+      - cyan_strobe
+      - gb_cross_fade
+      - green_fade
+      - green_strobe
+      - purple_fade
+      - purple_strobe
+      - rb_cross_fade
+      - red_fade
+      - red_strobe
+      - rg_cross_fade
+      - white_fade
+      - white_strobe
+      - yellow_fade
+      - yellow_strobe
+      - random
+      friendly_name: Kitchen String Lights
+      max_mireds: 500
+      min_mireds: 153
+      state: 'off'
+      supported_features: 151
+    light.overhead:
+      friendly_name: Overhead
+      state: 'off'
+      supported_features: 41
+    light.tv_lamp:
+      transition: 10
+      brightness: 16
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Tv Lamp
+      hs_color:
+      - 27.733
+      - 88.235
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 133
+      - 30
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.599
+      - 0.376
+    switch.kitchen_counter:
+      friendly_name: Kitchen Counter
+      state: 'off'
+    switch.kitchen_overhead:
+      friendly_name: Kitchen Overhead
+      state: 'off'
+- id: '1587849548722'
+  name: Tv Paused at Night
+  entities:
+    light.bookshelf_bottom:
+      transition: 10
+      brightness: 141
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Bottom
+      hs_color:
+      - 270
+      - 67.451
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 168
+      - 82
+      - 255
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.265
+      - 0.131
+    light.bookshelf_top:
+      transition: 10
+      brightness: 135
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Top
+      hs_color:
+      - 8.158
+      - 89.412
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 57
+      - 26
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.674
+      - 0.313
+    light.hallway_2:
+      transition: 10
+      brightness: 154
+      friendly_name: Hallway 2
+      state: 'on'
+      supported_features: 41
+    light.tv_lamp:
+      transition: 10
+      brightness: 97
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Tv Lamp
+      hs_color:
+      - 27.297
+      - 87.059
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 133
+      - 32
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.598
+      - 0.375
+    light.kitchen_string_lights:
+      transition: 10
+      effect_list:
+      - blue_fade
+      - blue_strobe
+      - colorjump
+      - colorloop
+      - colorstrobe
+      - cyan_fade
+      - cyan_strobe
+      - gb_cross_fade
+      - green_fade
+      - green_strobe
+      - purple_fade
+      - purple_strobe
+      - rb_cross_fade
+      - red_fade
+      - red_strobe
+      - rg_cross_fade
+      - white_fade
+      - white_strobe
+      - yellow_fade
+      - yellow_strobe
+      - random
+      friendly_name: Kitchen String Lights
+      max_mireds: 500
+      min_mireds: 153
+      state: 'on'
+      supported_features: 151
+- id: '1587849799364'
+  name: Tv Off at Night
+  entities:
+    automation.kitchen_motion:
+      friendly_name: Turn On Kitchen If Motion
+      id: '1587438080867'
+      last_triggered: '2020-04-25T06:28:24.172875+00:00'
+      state: 'on'
+    light.bookshelf_bottom:
+      transition: 15
+      brightness: 170
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Bottom
+      hs_color:
+      - 36.568
+      - 66.275
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 188
+      - 85
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.502
+      - 0.414
+    light.bookshelf_top:
+      transition: 15
+      brightness: 191
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bookshelf Top
+      hs_color:
+      - 36.568
+      - 66.275
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 188
+      - 85
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.502
+      - 0.414
+    light.hallway_1:
+      transition: 15
+      brightness: 157
+      friendly_name: Hallway 1
+      state: 'on'
+      supported_features: 41
+    light.hallway_2:
+      transition: 15
+      brightness: 189
+      friendly_name: Hallway 2
+      state: 'on'
+      supported_features: 41
+    light.tv_lamp:
+      transition: 15
+      brightness: 150
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Tv Lamp
+      hs_color:
+      - 36.568
+      - 66.275
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 188
+      - 85
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.502
+      - 0.414
+- id: '1589041501221'
+  name: Bedtime
+  entities:
+    light.bedroom_door:
+      friendly_name: Bedroom Door
+      state: 'off'
+      supported_features: 41
+    light.bedroom_top:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bedroom Top
+      max_mireds: 500
+      min_mireds: 153
+      state: 'off'
+      supported_features: 63
+    light.desk_lamp:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Desk Lamp
+      max_mireds: 500
+      min_mireds: 153
+      state: 'off'
+      supported_features: 63
+    light.nathan_s_nightstand:
+      friendly_name: Nathan's Nightstand
+      state: 'off'
+      supported_features: 41
+    light.sarah_s_nightstand:
+      friendly_name: Sarah's Nightstand
+      state: 'off'
+      supported_features: 41
+    switch.nathans_fan:
+      friendly_name: Nathan's Fan
+      state: 'on'
+    switch.sarahs_fan:
+      friendly_name: Sarah's Fan
+      state: 'on'
+- id: '1589242846422'
+  name: WFH
+  entities:
+    light.bedroom_door:
+      friendly_name: Bedroom Door
+      state: 'off'
+      supported_features: 41
+    light.bedroom_top:
+      brightness: 255
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bedroom Top
+      hs_color:
+      - 68.571
+      - 19.216
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 248
+      - 255
+      - 205
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.349
+      - 0.383
+    light.desk_lamp:
+      brightness: 105
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Desk Lamp
+      hs_color:
+      - 61.304
+      - 18.039
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 254
+      - 255
+      - 209
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.353
+      - 0.377
+    light.nathan_s_nightstand:
+      friendly_name: Nathan's Nightstand
+      state: 'off'
+      supported_features: 41
+    light.sarah_s_nightstand:
+      friendly_name: Sarah's Nightstand
+      state: 'off'
+      supported_features: 41
+    switch.closet:
+      friendly_name: Closet
+      state: 'off'

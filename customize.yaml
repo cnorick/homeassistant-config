@@ -1,0 +1,4 @@
+binary_sensor.occupied:
+  device_class: occupancy
+sensor.time:
+  hidden: true

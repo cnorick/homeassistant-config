@@ -1,0 +1,178 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+# http:
+#   base_url: example.duckdns.org:8123
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+frontend:
+  themes: !include_dir_merge_named ./themes
+
+http:
+  server_port: 80
+
+media_player:
+  - platform: androidtv
+    name: Living Room TV
+    host: 192.168.87.43
+
+device_tracker:
+  - platform: ping
+    count: 1
+    scan_interval: 15
+    consider_home: 0:15
+    hosts:
+      leah_phone: 192.168.87.27
+
+binary_sensor:
+  - platform: template
+    sensors:
+      occupied:
+        friendly_name: "Home Occupancy"
+        device_class: occupancy
+        value_template: >-
+          {{ is_state('person.sarah', 'home')
+            or is_state('person.kane', 'home')
+            or is_state('person.nathan', 'home') }}
+      is_during_workday:
+        value_template: >-
+          {{
+            states('sensor.time') > states('input_datetime.work_start_time').rsplit(':',1)[0]
+            and states('sensor.time') < states('input_datetime.work_end_time').rsplit(':',1)[0]
+          }}
+
+      everyone_in_bed:
+        value_template: >-
+          {{ 
+              (
+                is_state('media_player.living_room_tv', 'off')
+                or is_state('media_player.living_room_tv', 'unavailable')
+              )
+              and (
+                is_state('binary_sensor.public_space_motion', 'off')
+                and (strptime(states('sensor.date_time_iso'), '%Y-%m-%dT%H:%M:%S%z') | as_timestamp) >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
+              )
+              and is_state('binary_sensor.wyze_door1', 'off')
+              and is_state('binary_sensor.occupied', 'on')
+              and (
+                states('sensor.time') > states('input_datetime.bedtime')
+                or states('sensor.time') < states('input_datetime.morning')
+              )
+              and is_state('group.bedroom_lights', 'off')
+          }}
+          
+      are_master_bedroom_people_home:
+        friendly_name: "Are Sarah and Nathan Home"
+        device_class: occupancy
+        value_template: >-
+          {{ is_state('person.sarah', 'home')
+            or is_state('person.nathan', 'home') }}
+        
+      public_space_motion:
+        friendly_name: "Public Space Motion"
+        device_class: motion
+        value_template: >-
+          {{ is_state('binary_sensor.kitchen_motion', 'on') or is_state('binary_sensor.wyze_motion1', 'on') }}
+
+      
+  - platform: wyzesense
+    device: auto
+
+sensor:
+  - platform: history_stats
+    name: Quarantine Meter Nathan
+    entity_id: person.nathan
+    state: "home"
+    type: ratio
+    duration:
+      days: 10
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine Meter Sarah
+    entity_id: person.sarah
+    state: "home"
+    type: ratio
+    duration:
+      days: 10
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine Meter Kane
+    entity_id: person.kane
+    state: "home"
+    type: ratio
+    duration:
+      days: 10
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine Meter Times Nathan Left
+    entity_id: person.nathan
+    state: "home"
+    type: count
+    duration:
+      days: 10
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine Meter Times Sarah Left
+    entity_id: person.sarah
+    state: "home"
+    type: count
+    duration:
+      days: 10
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine Meter Times Kane Left
+    entity_id: person.kane
+    state: "home"
+    type: count
+    duration:
+      days: 5
+    end: "{{ now() }}"
+    
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date_time_iso'
+
+
+tuya:
+  username: !secret tuya_username
+  password: !secret tuya_password
+  country_code: "1"
+  platform: smart_life
+
+
+light:
+  - platform: flux_led
+    devices:
+      192.168.87.186:
+        name: Kitchen String Lights
+
+google:
+  client_id: !secret google_cal_client_id
+  client_secret: !secret google_cal_client_secret
+
+var: !include variables.yaml
+
+spotify:
+  client_id: !secret spotify_client_id
+  client_secret: !secret spotify_client_secret
+  
+recorder:
+  exclude:
+    entities:
+      - sensor.date_time_iso
+      - sensor.time
