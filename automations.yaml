@@ -92,7 +92,7 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
-  - wait_template: '{{ is_state(''vacuum.rooben'', ''off'') }}'
+  - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
@@ -108,7 +108,7 @@
     entity_id: group.master_room_people
     state: home
   - condition: state
-    entity_id: binary_sensor.everyone_in_bed
+    entity_id: input_boolean.night_mode
     state: 'off'
   action:
   - data:
