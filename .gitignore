@@ -1,1 +1,16 @@
+custom_components/*
+themes/*
+www/community/*
+.cloud/*
+.storage/*
+tts/*
 secrets.yaml
+.google.token
+.HA_VERSION
+home-assistant.log
+home-assistant_v2.db
+OZW_Log.txt
+pyozw.sqlite
+zigbee.db
+zwcfg_0xd48933ca.xml
+zwscene.xml
