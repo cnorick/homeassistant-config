@@ -25,6 +25,9 @@
   - condition: state
     entity_id: group.master_room_people
     state: home
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
   action:
   - data:
       group_name: Nathan's Room
