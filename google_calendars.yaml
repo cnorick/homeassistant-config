@@ -1,4 +1,3 @@
-
 - cal_id: corick@vols.utk.edu
   entities:
   - device_id: utk
@@ -38,6 +37,11 @@
     ignore_availability: true
     name: Working From Home
     search: '#wfh'
+    track: true
+  - device_id: vacuum
+    ignore_availability: true
+    name: Vacuum
+    search: '#vacuum'
     track: true
 
 - cal_id: cnathanorick@gmail.com
