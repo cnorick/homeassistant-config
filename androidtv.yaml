@@ -1,0 +1,13 @@
+    name: Living Room TV
+    host: 192.168.87.43
+    state_detection_rules:
+      'com.amazon.tv.launcher':
+        - 'standby'
+      'com.amazon.tv.inputpreference.service':
+        - 'playing'
+      'com.hulu.plus':
+        - 'playing':
+            'wake_lock_size': 2  # this indentation is important!
+        - 'paused':
+            'wake_lock_size': 0  # this indentation is important!
+        - 'standby'

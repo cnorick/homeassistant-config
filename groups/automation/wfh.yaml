@@ -1,0 +1,6 @@
+wfh_automations:
+  name: Automations for Working From Home
+  entities:
+    - automation.turn_on_kitchen_when_leaving_bedroom
+    - automation.kitchen_motion
+    - automation.no_motion_kitchen

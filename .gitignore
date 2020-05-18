@@ -14,3 +14,5 @@ pyozw.sqlite
 zigbee.db
 zwcfg_0xd48933ca.xml
 zwscene.xml
+home-assistant_v2.db-shm
+home-assistant_v2.db-wal

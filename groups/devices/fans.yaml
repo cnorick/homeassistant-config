@@ -1,0 +1,5 @@
+fans:
+  name: Fans
+  entities:
+    - switch.nathans_fan
+    - switch.sarahs_fan

@@ -1,0 +1,12 @@
+master_bedroom:
+  name: Master Bedroom
+  entities:
+    - light.bedroom_door
+    - light.bedroom_top
+    - light.desk_lamp
+    - light.nathan_s_nightstand
+    - light.sarah_s_nightstand
+    - switch.nathans_fan
+    - switch.sarahs_fan
+    - switch.closet
+    

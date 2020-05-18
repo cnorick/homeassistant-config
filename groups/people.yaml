@@ -1,0 +1,12 @@
+master_room_people:
+  name: Master Bedroom Occupants
+  entities:
+    - person.nathan
+    - person.sarah
+
+people_who_live_here:
+  name: Full-Time Home Occupants
+  entities:
+    - person.nathan
+    - person.sarah
+    - person.kane

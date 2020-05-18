@@ -1,0 +1,53 @@
+- platform: history_stats
+  name: Quarantine Meter Nathan
+  entity_id: person.nathan
+  state: "home"
+  type: ratio
+  duration:
+    days: 10
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Quarantine Meter Sarah
+  entity_id: person.sarah
+  state: "home"
+  type: ratio
+  duration:
+    days: 10
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Quarantine Meter Kane
+  entity_id: person.kane
+  state: "home"
+  type: ratio
+  duration:
+    days: 10
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Quarantine Meter Times Nathan Left
+  entity_id: person.nathan
+  state: "home"
+  type: count
+  duration:
+    days: 10
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Quarantine Meter Times Sarah Left
+  entity_id: person.sarah
+  state: "home"
+  type: count
+  duration:
+    days: 10
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Quarantine Meter Times Kane Left
+  entity_id: person.kane
+  state: "home"
+  type: count
+  duration:
+    days: 5
+  end: "{{ now() }}"
