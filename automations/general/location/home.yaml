@@ -1,0 +1,43 @@
+- id: '1586735161292'
+  alias: Turn Off Everything When Everyone Leaves
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.occupied
+    for: 00:05:00
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.all_lights
+    service: homeassistant.turn_off
+  - data: {}
+    entity_id: media_player.living_room_tv
+    service: media_player.turn_off
+  - data:
+      entity_id: alarm_control_panel.alexa_guard_ee9c2
+    service: alarm_control_panel.alarm_arm_away
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.start
+
+- id: '1587162726799'
+  alias: First Person Home
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.occupied
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data:
+      entity_id: alarm_control_panel.alexa_guard_ee9c2
+    service: alarm_control_panel.alarm_disarm
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.stop
+  - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.return_to_base

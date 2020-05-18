@@ -1,0 +1,52 @@
+- id: '1588639275094'
+  alias: Toggle Night Mode
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.everyone_in_bed
+    from: 'off'
+    platform: state
+    to: 'on'
+  - entity_id: calendar.alarm
+    from: 'off'
+    platform: state
+    to: 'on'
+  - platform: template
+    value_template: '{{ states(''sensor.time'') == states(''input_datetime.morning'')
+      }}'
+  condition:
+  - condition: state
+    entity_id: input_boolean.visitors
+    state: 'off'
+  action:
+  - entity_id: input_boolean.night_mode
+    service_template: "{% if trigger.entity_id == 'binary_sensor.everyone_in_bed'\
+      \ %}\n  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif\
+      \ %}"
+
+- id: '1587677710011'
+  alias: Toggle Night Automations
+  description: ''
+  trigger:
+  - entity_id: input_boolean.night_mode
+    platform: state
+  condition: []
+  action:
+  - entity_id: group.bedtime_automations
+    service_template: "{% if is_state('input_boolean.night_mode', 'on') %}\n  homeassistant.turn_on\n\
+      {% else %}\n  homeassistant.turn_off\n{% endif %}"
+
+- id: '1587996987502'
+  alias: Turn Off Public Devices When Night Mode Turns On
+  description: ''
+  trigger:
+  - entity_id: input_boolean.night_mode
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.public_lights
+    service: homeassistant.turn_off
+  - data: {}
+    entity_id: media_player.living_room_tv
+    service: media_player.turn_off

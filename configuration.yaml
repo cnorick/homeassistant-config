@@ -12,6 +12,7 @@ tts:
 
 group: !include_dir_merge_named ./groups
 automation: !include automations.yaml
+automation old: !include_dir_merge_list ./automations
 script: !include scripts.yaml
 scene: !include scenes.yaml
 frontend:

@@ -1,0 +1,44 @@
+- id: '1587264300585'
+  alias: Calendar Alarm Sync
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{state_attr(''calendar.alarm'', ''offset_reached'')}}'
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: home
+  action:
+  - data: {}
+    service: script.slow_alarm
+
+- id: '1587255222033'
+  alias: Run Roomba Every Morning
+  description: ''
+  trigger:
+  - at: 05:00:00
+    platform: time
+  condition: []
+  action:
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.start
+
+- id: '1586661602545'
+  alias: Turn On Master Bedroom Before Bed
+  description: ''
+  trigger:
+  - at: '21:00'
+    platform: time
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: home
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - data:
+      group_name: Nathan's Room
+      scene_name: Bedtime
+    service: hue.hue_activate_scene

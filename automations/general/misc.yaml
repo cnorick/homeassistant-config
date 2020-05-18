@@ -1,0 +1,29 @@
+- id: '1586306345598'
+  alias: Turn Off Fans When Cold
+  description: Turn off the fans if the temperature drops below 40 and we're in bed
+  trigger:
+  - below: '60'
+    entity_id: weather.home
+    platform: numeric_state
+    value_template: '{{ state.attributes.temperature }}'
+  condition:
+  - after: sunset
+    before: sunrise
+    before_offset: '+3:00:00'
+    condition: sun
+  action:
+  - data: {}
+    entity_id: group.fans
+    service: homeassistant.turn_off
+
+- id: '1587483555425'
+  alias: Set Theme at Startup
+  description: ''
+  trigger:
+  - event: start
+    platform: homeassistant
+  condition: []
+  action:
+  - data:
+      name: Google Dark Theme
+    service: frontend.set_theme

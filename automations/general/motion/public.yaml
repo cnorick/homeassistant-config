@@ -1,0 +1,13 @@
+- id: '1589240357141'
+  alias: Turn Off Public Lights After No Motion
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.public_space_motion
+    for: 0:05:00
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.public_lights
+    service: homeassistant.turn_off

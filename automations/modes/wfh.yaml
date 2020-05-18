@@ -1,0 +1,26 @@
+- id: '1587673576123'
+  alias: Toggle Automations When WFH
+  description: ''
+  trigger:
+  - entity_id: input_boolean.wfh
+    platform: state
+  condition: []
+  action:
+  - entity_id: group.wfh_automations
+    service_template: "{% if is_state('input_boolean.wfh', 'on') %}\n  homeassistant.turn_on\n\
+      {% else %}\n  homeassistant.turn_off\n{% endif %}"
+
+- id: '1587668411958'
+  alias: Calendar Toggles WFH
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.is_during_workday
+    platform: state
+  condition:
+  - condition: state
+    entity_id: calendar.wfh
+    state: 'on'
+  action:
+  - entity_id: input_boolean.wfh
+    service_template: "{% if is_state('binary_sensor.is_during_workday', 'on') %}\n\
+      \  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif %}"

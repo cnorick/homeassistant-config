@@ -1,0 +1,66 @@
+- id: '1587443561409'
+  alias: Notify of Intruder
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.kitchen_motion
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.alexa_guard_ee9c2
+      state: armed_away
+    - condition: state
+      entity_id: binary_sensor.occupied
+      state: 'off'
+  action:
+  - data:
+      message: Motion Detected in Living Room
+      title: Hide Yo Kids, Hide Yo Wife!
+    service: notify.notify
+
+- id: '1587250642749'
+  alias: Notify that Kane is Home
+  description: ''
+  trigger:
+  - entity_id: person.kane
+    platform: state
+    to: home
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: home
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - data:
+      message: Kane's home
+    service: script.notify_sarah_and_nathan
+
+- id: '1587614908680'
+  alias: Notify If Bedroom Door Changes When We're Away
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_door1
+    platform: state
+    to: 'off'
+  - entity_id: binary_sensor.wyze_door1
+    platform: state
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: not_home
+  action:
+  - data:
+      message: The bedroom door was {% if is_state('binary_sensor.wyze_door1', 'on')
+        %}opened{% else %}closed{% endif %}!
+      title: Someone is in your room
+    service: notify.mobile_app_iphone
+  - data:
+      message: The bedroom door was {% if is_state('binary_sensor.wyze_door1', 'on')
+        %}opened{% else %}closed{% endif %}!
+      title: Someone is in your room
+    service: notify.mobile_app_pixel_4

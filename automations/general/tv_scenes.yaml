@@ -1,0 +1,44 @@
+- id: '1587852659451'
+  alias: Tv Night Scenes
+  description: Turns on the appropriate living room scenes when the tv is playing
+    at night
+  trigger:
+  - entity_id: sun.sun
+    platform: state
+    to: below_horizon
+  - entity_id: media_player.living_room_tv
+    for: 00:00:10
+    platform: state
+    to: playing
+  - entity_id: media_player.living_room_tv
+    platform: state
+    to: paused
+  - entity_id: media_player.living_room_tv
+    for: 00:00:22
+    platform: state
+    to: standby
+  - entity_id: media_player.living_room_tv
+    platform: state
+    to: 'off'
+  condition:
+  - condition: or
+    conditions:
+    - after: sunset
+      condition: sun
+    - before: sunrise
+      condition: sun
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  - condition: template
+    value_template: '{{ trigger.from_state.state != "unavailable" }}'
+  action:
+  - data_template:
+      entity_id: "{% if is_state('media_player.living_room_tv', 'playing') %}\n  scene.tv_playing_at_night\n\
+        {% elif is_state('media_player.living_room_tv', 'standby')\n   or is_state('media_player.living_room_tv',\
+        \ 'paused')\n%}\n  scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n\
+        {% endif %}\n"
+    service: scene.turn_on
