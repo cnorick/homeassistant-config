@@ -21,7 +21,7 @@ frontend:
 http:
   server_port: 80
 
-media_player: !include_dir_merge_list ./media-players
+media_player: !include_dir_merge_list ./media_players
 
 device_tracker:
   - platform: ping
