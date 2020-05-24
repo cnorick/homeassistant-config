@@ -68,3 +68,17 @@ slow_alarm:
   - delay: 00:15:00
   - data: {}
     service: script.alarm
+notify_random:
+  alias: Notify Random Person
+  fields:
+    title:
+      description: 'The title of the notification'
+      example: 'State change'
+    message:
+      description: 'The message content'
+      example: 'The light is on!'
+  sequence:
+  - data_template:
+      title: '{{title}}'
+      message: '{{message}}'
+    service_template: '{{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_kanes_iphone'', ''notify.mobile_app_iphone''] | random }}'
