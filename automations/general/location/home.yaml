@@ -41,3 +41,18 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
+
+- id: '1587854965958'
+  alias: Turn Off Kane's Bedroom When He Leaves
+  description: ''
+  trigger:
+  - entity_id: person.kane
+    for: 00:05:00
+    from: home
+    platform: state
+    to: not_home
+  condition: []
+  action:
+  - data: {}
+    entity_id: light.kane_s_nightstand, light.top_lamp, light.bottom_lamp
+    service: light.turn_off
