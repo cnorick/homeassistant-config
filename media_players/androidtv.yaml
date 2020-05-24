@@ -12,3 +12,6 @@
       - "paused":
           "wake_lock_size": 0 # this indentation is important!
       - "standby"
+    "com.amazon.avod":
+      - "media_session_state"
+
