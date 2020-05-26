@@ -11,7 +11,7 @@
     platform: state
     to: 'on'
   - platform: template
-    value_template: '{{ states(''sensor.time'') == states(''input_datetime.morning'')
+    value_template: '{{ states(''sensor.time'') >= states(''input_datetime.morning'')
       }}'
   condition:
   - condition: state
