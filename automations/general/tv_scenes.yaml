@@ -41,4 +41,5 @@
         {% elif is_state('media_player.living_room_tv', 'standby')\n   or is_state('media_player.living_room_tv',\
         \ 'paused')\n%}\n  scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n\
         {% endif %}\n"
+      transition: 10
     service: scene.turn_on
