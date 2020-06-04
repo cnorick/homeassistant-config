@@ -67,3 +67,9 @@ recorder:
     entities:
       - sensor.date_time_iso
       - sensor.time
+
+alexa_media:
+  accounts:
+    - email: !secret amazon_email
+      password: !secret amazon_password
+      url: amazon.com
