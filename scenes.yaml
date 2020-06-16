@@ -473,3 +473,60 @@
     switch.closet:
       friendly_name: Closet
       state: 'off'
+- id: '1592253048242'
+  name: WFH Relax
+  entities:
+    light.bedroom_door:
+      friendly_name: Bedroom Door
+      state: 'off'
+      supported_features: 41
+    light.bedroom_top:
+      brightness: 211
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bedroom Top
+      hs_color:
+      - 35.426
+      - 73.725
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 178
+      - 67
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.525
+      - 0.413
+    light.desk_lamp:
+      brightness: 61
+      effect: none
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Desk Lamp
+      hs_color:
+      - 35.426
+      - 73.725
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 255
+      - 178
+      - 67
+      state: 'on'
+      supported_features: 63
+      xy_color:
+      - 0.525
+      - 0.413
+    light.nathan_s_nightstand:
+      friendly_name: Nathan's Nightstand
+      state: 'off'
+      supported_features: 41
+    light.sarah_s_nightstand:
+      friendly_name: Sarah's Nightstand
+      state: 'off'
+      supported_features: 41
