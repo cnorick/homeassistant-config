@@ -24,3 +24,83 @@
   - entity_id: input_boolean.wfh
     service_template: "{% if is_state('binary_sensor.is_during_workday', 'on') %}\n\
       \  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif %}"
+
+- id: start_wfh
+  alias: Start WFH
+  description: 'Turns on office lights when workday starts if working from home'
+  trigger:
+  - platform: template
+    # Account for the length of the transition so that it finishes at the specified time
+    value_template: >-
+      {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.work_start_time'), '%H:%M:%S'))
+      }}
+  condition:
+  - condition: state
+    # We have to use calendar instead of input_boolean here because the input boolean
+    # isn't turned on until work_start_time
+    entity_id: calendar.wfh
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    data:
+      entity_id: scene.wfh
+      transition: 600
+
+- id: start_wfh_lunch
+  alias: Start WFH Lunch
+  description: 'Sets lights in office to relax in preparation for lunch'
+  trigger:
+  - platform: template
+    value_template: >-
+      {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
+      }}
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    data:
+      entity_id: scene.wfh_relax
+      transition: 600
+
+- id: end_wfh_lunch
+  alias: End WFH Lunch
+  description: 'Sets lights in office to WFH after lunch'
+  trigger:
+  - platform: template
+    # Trigger this one hour after lunch.
+    value_template: >-
+      {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
+      }}
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    data:
+      entity_id: scene.wfh
+      transition: 600
+
+- id: end_wfh
+  alias: End WFH
+  description: 'Turns on relax at the end of the day'
+  trigger:
+  - platform: template
+    value_template: >-
+      {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
+      }}
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    data:
+      entity_id: scene.wfh_relax
+      transition: 600
