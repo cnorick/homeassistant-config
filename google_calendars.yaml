@@ -71,3 +71,10 @@
     ignore_availability: true
     name: Holidays in United States
     track: false
+
+- cal_id: family14545398298039458461@group.calendar.google.com
+  entities:
+  - device_id: family
+    ignore_availability: true
+    name: Family
+    track: false
