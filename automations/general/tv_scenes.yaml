@@ -6,7 +6,7 @@
   - platform: sun
     event: sunset
     # 20 minutes before sunset.
-    offset: "-00:20:00"
+    offset: -00:20:00
   - entity_id: media_player.living_room_tv
     for: 00:00:10
     platform: state
@@ -26,7 +26,7 @@
     conditions:
     - after: sunset
       condition: sun
-      after_offset: "-00:20:00"
+      after_offset: -00:25:00
     - before: sunrise
       condition: sun
   - condition: state
