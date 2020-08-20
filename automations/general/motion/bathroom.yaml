@@ -1,0 +1,27 @@
+- id: 'guest_bathroom_motion'
+  alias: Turn On Guest Bathroom When Motion Detected
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_motion1
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: light.guest_bathroom
+    service: light.turn_on
+  mode: single
+
+- id: 'bathroom_motion'
+  alias: Turn On Bathroom When Motion Detected
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_motion2
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: light.bathroom
+    service: light.turn_on
+  mode: single
