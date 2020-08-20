@@ -40,7 +40,7 @@
     entity_id: input_boolean.night_mode
     state: 'off'
   action:
-  - data:
-      group_name: Nathan's Room
-      scene_name: Bedtime
-    service: hue.hue_activate_scene
+  - service: scene.turn_on
+    data:
+      entity_id: scene.bedtime
+      transition: 15
