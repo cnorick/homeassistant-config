@@ -78,3 +78,8 @@ camera:
   - platform: local_file
     file_path: /www/images/mail_and_packages/mail_today.gif
     name: mail_usps
+
+switch:
+  - platform: switchmate
+    mac: 'f3:7e:9f:7b:3e:95'
+    
