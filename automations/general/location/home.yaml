@@ -9,8 +9,8 @@
   condition: []
   action:
   - data: {}
-    entity_id: group.all_lights
-    service: homeassistant.turn_off
+    entity_id: light.home
+    service: light.turn_off
   - data: {}
     entity_id: media_player.living_room_tv
     service: media_player.turn_off
@@ -20,6 +20,8 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.start
+  - entity_id: group.fans
+    service: homeassistant.turn_off
 
 - id: '1587162726799'
   alias: First Person Home
@@ -42,17 +44,3 @@
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
 
-- id: '1587854965958'
-  alias: Turn Off Kane's Bedroom When He Leaves
-  description: ''
-  trigger:
-  - entity_id: person.kane
-    for: 00:05:00
-    from: home
-    platform: state
-    to: not_home
-  condition: []
-  action:
-  - data: {}
-    entity_id: light.kane_s_nightstand, light.top_lamp, light.bottom_lamp
-    service: light.turn_off

@@ -326,19 +326,19 @@
       - random
       friendly_name: Bedroom Top
       hs_color:
-      - 268.953
-      - 67.451
+      - 268.571
+      - 65.882
       max_mireds: 500
       min_mireds: 153
       rgb_color:
-      - 165
-      - 82
+      - 166
+      - 87
       - 255
       state: 'on'
       supported_features: 63
       xy_color:
-      - 0.261
-      - 0.13
+      - 0.262
+      - 0.134
     light.desk_lamp:
       brightness: 84
       effect: none
@@ -347,19 +347,19 @@
       - random
       friendly_name: Desk Lamp
       hs_color:
-      - 233.125
-      - 75.294
+      - 232.941
+      - 73.333
       max_mireds: 500
       min_mireds: 153
       rgb_color:
-      - 63
-      - 85
+      - 68
+      - 90
       - 255
       state: 'on'
       supported_features: 63
       xy_color:
-      - 0.158
-      - 0.093
+      - 0.161
+      - 0.099
     light.nathan_s_nightstand:
       brightness: 84
       friendly_name: Nathan's Nightstand
@@ -372,7 +372,7 @@
       supported_features: 41
     switch.nathans_fan:
       friendly_name: Nathan's Fan
-      state: 'on'
+      state: 'off'
     switch.sarahs_fan:
       friendly_name: Sarah's Fan
       state: 'off'

@@ -1,6 +1,0 @@
-kanes_room:
-  name: Kane's Room
-  entities:
-    - light.bottom_lamp
-    - light.kane_s_nightstand
-    - light.top_lamp

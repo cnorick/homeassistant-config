@@ -3,7 +3,6 @@ occupied:
   device_class: occupancy
   value_template: >-
     {{ is_state('person.sarah', 'home')
-      or is_state('person.kane', 'home')
       or is_state('person.nathan', 'home') }}
 
 is_during_workday:

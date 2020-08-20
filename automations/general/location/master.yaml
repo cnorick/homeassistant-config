@@ -1,17 +1,3 @@
-- id: '1586735596195'
-  alias: Turn Off Master Bedroom When We Leave
-  description: ''
-  trigger:
-  - entity_id: binary_sensor.are_master_bedroom_people_home
-    for: 00:05:00
-    platform: state
-    to: 'off'
-  condition: []
-  action:
-  - data: {}
-    entity_id: group.master_bedroom
-    service: homeassistant.turn_off
-
 - id: '1587673304305'
   alias: Turn On Kitchen When Leaving Bedroom
   description: ''

@@ -20,25 +20,6 @@
       title: Hide Yo Kids, Hide Yo Wife!
     service: notify.notify
 
-- id: '1587250642749'
-  alias: Notify that Kane is Home
-  description: ''
-  trigger:
-  - entity_id: person.kane
-    platform: state
-    to: home
-  condition:
-  - condition: state
-    entity_id: group.master_room_people
-    state: home
-  - condition: state
-    entity_id: input_boolean.night_mode
-    state: 'off'
-  action:
-  - data:
-      message: Kane's home
-    service: script.notify_sarah_and_nathan
-
 - id: '1587614908680'
   alias: Notify If Bedroom Door Changes When We're Away
   description: ''
@@ -73,10 +54,6 @@
   - entity_id: vacuum.rooben
     platform: state
     to: docked
-  - entity_id: person.kane
-    for: 00:03:00
-    platform: state
-    to: home
   - entity_id: person.nathan
     for: 00:03:00
     platform: state
@@ -95,9 +72,18 @@
     entity_id: binary_sensor.rooben_bin_full
     state: 'on'
   action:
-  - data:
-      message: It's your turn to empty it 🚮
+  - service_template: "{% if trigger.entity_id == 'person.nathan' %} notify.mobile_app_pixel_4 {% elif trigger.entity_id == 'person.sarah' %} notify.mobile_app_iphone {% endif %}"
+    data:
       title: Rooben's Bin is Full
-    service_template: '{% set index = states(''var.whose_turn_to_empty_vacuum'') |
-      int %} {{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_kanes_iphone'',
-      ''notify.mobile_app_iphone''][index] }}'
+  - condition: template
+    value_template: "{{ trigger.entity_id == 'vacuum.rooben'}}"
+  - service: notify.mobile_app_pixel_4
+    data:
+      title: Rooben's Bin is Full
+  - service_template: "{% if trigger.entity_id == 'person.nathan' %} notify.mobile_app_pixel_4 {% elif trigger.entity_id == 'person.sarah' %} notify.mobile_app_iphone {% endif %}"
+    data:
+      title: Rooben's Bin is Full
+  - service: notify.mobile_app_iphone
+    data:
+      title: Rooben's Bin is Full
+
