@@ -33,7 +33,7 @@ device_tracker:
 
 binary_sensor:
   - platform: template
-    sensors: !include template_sensors.yaml
+    sensors: !include sensors/template_binary_sensors.yaml
 
   - platform: wyzesense
     device: auto

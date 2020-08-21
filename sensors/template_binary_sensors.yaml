@@ -21,14 +21,11 @@ everyone_in_bed:
         )
         and (
           is_state('binary_sensor.public_space_motion', 'off')
-          and (strptime(states('sensor.date_time_iso'), '%Y-%m-%dT%H:%M:%S%z') | as_timestamp) >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
+          and states('sensor.timestamp') | float >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
         )
         and is_state('binary_sensor.wyze_door1', 'off')
         and is_state('binary_sensor.occupied', 'on')
-        and (
-          states('sensor.time') > states('input_datetime.bedtime')
-          or states('sensor.time') < states('input_datetime.morning')
-        )
+        and is_state('binary_sensor.is_bedtime', 'on')
         and is_state('group.bedroom_lights', 'off')
     }}
 
@@ -44,3 +41,8 @@ public_space_motion:
   device_class: motion
   value_template: >-
     {{ is_state('binary_sensor.kitchen_motion', 'on') or is_state('binary_sensor.wyze_motion1', 'on') }}
+
+is_bedtime:
+  value_template: >-
+    {{ states('sensor.time') > states('input_datetime.bedtime')
+        or states('sensor.time') < states('input_datetime.morning') }}
