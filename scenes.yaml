@@ -556,3 +556,89 @@
       friendly_name: Sarah's Nightstand
       state: 'off'
       supported_features: 41
+- id: '1597976182065'
+  name: Bathroom Night
+  entities:
+    light.bath_1:
+      brightness: 45
+      friendly_name: Bath 1
+      state: 'on'
+      supported_features: 41
+    light.bath_2:
+      friendly_name: Bath 2
+      state: 'off'
+      supported_features: 41
+    light.bath_3:
+      friendly_name: Bath 3
+      state: 'off'
+      supported_features: 41
+    light.bath_4:
+      friendly_name: Bath 4
+      state: 'off'
+      supported_features: 41
+- id: '1598011635236'
+  name: Guest Bathroom Night
+  entities:
+    light.guest_bath_1:
+      brightness: 1
+      friendly_name: Guest Bath 1
+      state: 'on'
+      supported_features: 41
+    light.guest_bath_2:
+      friendly_name: Guest Bath 2
+      state: 'off'
+      supported_features: 41
+    light.guest_bath_3:
+      friendly_name: Guest Bath 3
+      state: 'off'
+      supported_features: 41
+    light.guest_bath_4:
+      friendly_name: Guest Bath 4
+      state: 'off'
+      supported_features: 41
+- id: '1598012344427'
+  name: Guest Bathroom Day
+  entities:
+    light.guest_bath_1:
+      brightness: 255
+      friendly_name: Guest Bath 1
+      state: 'on'
+      supported_features: 41
+    light.guest_bath_2:
+      brightness: 255
+      friendly_name: Guest Bath 2
+      state: 'on'
+      supported_features: 41
+    light.guest_bath_3:
+      brightness: 255
+      friendly_name: Guest Bath 3
+      state: 'on'
+      supported_features: 41
+    light.guest_bath_4:
+      brightness: 255
+      friendly_name: Guest Bath 4
+      state: 'on'
+      supported_features: 41
+- id: '1598012440242'
+  name: Bathroom Day
+  entities:
+    light.bath_1:
+      brightness: 45
+      friendly_name: Bath 1
+      state: 'on'
+      supported_features: 41
+    light.bath_2:
+      brightness: 1
+      friendly_name: Bath 2
+      state: 'on'
+      supported_features: 41
+    light.bath_3:
+      brightness: 1
+      friendly_name: Bath 3
+      state: 'on'
+      supported_features: 41
+    light.bath_4:
+      brightness: 1
+      friendly_name: Bath 4
+      state: 'on'
+      supported_features: 41

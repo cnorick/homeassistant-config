@@ -1,18 +1,4 @@
-- id: 'guest_bathroom_motion'
-  alias: Turn On Guest Bathroom When Motion Detected
-  description: ''
-  trigger:
-  - entity_id: binary_sensor.wyze_motion1
-    platform: state
-    to: 'on'
-  condition: []
-  action:
-  - data: {}
-    entity_id: light.guest_bathroom
-    service: light.turn_on
-  mode: single
-
-- id: 'bathroom_motion'
+- id: 'bathroom_on_motion'
   alias: Turn On Bathroom When Motion Detected
   description: ''
   trigger:
@@ -21,7 +7,69 @@
     to: 'on'
   condition: []
   action:
-  - data: {}
+  - data_template:
+      entity_id: >-
+        {% if is_state("input_boolean.night_mode", "on") %} scene.bathroom_night {% else %} scene.bathroom_day {% endif %}
+    service: scene.turn_on
+  mode: single
+
+- id: 'bathroom_off_no_motion'
+  alias: Turn Off Bathroom When Motion Cleared
+  description: ''
+  trigger:
+    platform: template
+    # TODO: Check that they were turned on automatically.
+    # If they were turned on manually, don't turn them off.
+    value_template: >-
+      {% set pee_timeout = 1 * 60 %}
+      {% set poo_timeout = 30 * 60 %}
+      {% set last_motion = states.binary_sensor.wyze_motion2.last_changed | as_timestamp %}
+      {% if is_state("binary_sensor.wyze_door1", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+      {% if action == "poo" %} {% set timeout_time = last_motion + poo_timeout %} {% else %} {% set timeout_time = last_motion + pee_timeout %} {% endif %}
+      {% set timeout_reached = states("sensor.timestamp") | float >= timeout_time %}
+      {{ timeout_reached }}
+  condition: []
+  action:
+  - data:
+      transition: 6
+    service: light.turn_off
     entity_id: light.bathroom
-    service: light.turn_on
+  mode: single
+
+- id: 'guest_bathroom_on_motion'
+  alias: Turn On Guest Bathroom When Motion Detected
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_motion1
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+    - data_template:
+        entity_id: >-
+          {% if is_state("input_boolean.night_mode", "on") %} scene.guest_bathroom_night {% else %} scene.guest_bathroom_day {% endif %}
+      service: scene.turn_on
+  mode: single
+
+- id: 'guest_bathroom_off_no_motion'
+  alias: Turn Off Bathroom When Motion Cleared
+  description: ''
+  trigger:
+    platform: template
+    # TODO: Check that they were turned on automatically.
+    # If they were turned on manually, don't turn them off.
+    value_template: >-
+      {% set pee_timeout = 1 * 60 %}
+      {% set poo_timeout = 30 * 60 %}
+      {% set last_motion = states.binary_sensor.wyze_motion1.last_changed | as_timestamp %}
+      {% if is_state("binary_sensor.wyze_door1", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+      {% if action == "poo" %} {% set timeout_time = last_motion + poo_timeout %} {% else %} {% set timeout_time = last_motion + pee_timeout %} {% endif %}
+      {% set timeout_reached = states("sensor.timestamp") | float >= timeout_time %}
+      {{ timeout_reached }}
+  condition: []
+  action:
+  - data:
+      transition: 6
+    service: light.turn_off
+    entity_id: light.guest_bathroom
   mode: single
