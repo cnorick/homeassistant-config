@@ -1,13 +1,8 @@
 public_lights:
   name: Public Lights
   entities:
-    - light.bookshelf_top
-    - light.bookshelf_bottom
+    - light.living_space
+    - light.storage_closet
     - light.front_door
-    - light.hallway_1
-    - light.hallway_2
-    - light.overhead
-    - light.tv_lamp
-    - switch.kitchen_counter
+    - light.laundry_room
     - switch.kitchen_overhead
-    - light.kitchen_string_lights

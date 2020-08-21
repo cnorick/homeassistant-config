@@ -11,17 +11,16 @@
     platform: state
     to: 'on'
   - platform: template
-    value_template: '{{ states(''sensor.time'') >= states(''input_datetime.morning'')
-      }}'
+    value_template: >- 
+      {{ states('sensor.time') >= states('input_datetime.morning') }}
   condition:
   - condition: state
     entity_id: input_boolean.visitors
     state: 'off'
   action:
   - entity_id: input_boolean.night_mode
-    service_template: "{% if trigger.entity_id == 'binary_sensor.everyone_in_bed'\
-      \ %}\n  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif\
-      \ %}"
+    service_template: >- 
+      {% if trigger.entity_id == 'binary_sensor.everyone_in_bed' %} input_boolean.turn_on {% else %} input_boolean.turn_off {% endif %}
 
 - id: '1587677710011'
   alias: Toggle Night Automations
@@ -32,8 +31,8 @@
   condition: []
   action:
   - entity_id: group.bedtime_automations
-    service_template: "{% if is_state('input_boolean.night_mode', 'on') %}\n  homeassistant.turn_on\n\
-      {% else %}\n  homeassistant.turn_off\n{% endif %}"
+    service_template: >- 
+      {% if is_state('input_boolean.night_mode', 'on') %} homeassistant.turn_on {% else %} homeassistant.turn_off {% endif %}
 
 - id: '1587996987502'
   alias: Turn Off Public Devices When Night Mode Turns On
