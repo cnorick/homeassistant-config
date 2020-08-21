@@ -1,0 +1,11 @@
+guest_bathroom_turned_on_automatically:
+  tracked_entity_id: light.guest_bathroom
+  value_template: >-
+    {% if is_state('light.guest_bathroom', 'off') %} false {% else %} {{ states('var.guest_bathroom_turned_on_automatically') }} {% endif %}
+  initial_value: 'false'
+
+bathroom_turned_on_automatically:
+  tracked_entity_id: light.bathroom
+  value_template: >-
+    {% if is_state('light.bathroom', 'off') %} false {% else %} {{ states('var.bathroom_turned_on_automatically') }} {% endif %}
+  initial_value: 'false'

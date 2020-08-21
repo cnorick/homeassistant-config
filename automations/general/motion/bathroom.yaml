@@ -5,12 +5,19 @@
   - entity_id: binary_sensor.wyze_motion2
     platform: state
     to: 'on'
-  condition: []
+  condition:
+    - condition: state
+      entity_id: light.bathroom
+      state: 'off'
   action:
   - data_template:
       entity_id: >-
         {% if is_state("input_boolean.night_mode", "on") %} scene.bathroom_night {% else %} scene.bathroom_day {% endif %}
     service: scene.turn_on
+  - service: var.set
+    data:
+      entity_id: var.bathroom_turned_on_automatically
+      value: 'true'
   mode: single
 
 - id: 'bathroom_off_no_motion'
@@ -27,9 +34,11 @@
         {% set poo_timeout = 30 %}
         {% if is_state("binary_sensor.wyze_door1", "off") and False %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
         {% if action == "poo" %} {{ poo_timeout }} {% else %} {{ pee_timeout }} {% endif %}
-    # TODO: Check that they were turned on automatically.
-    # If they were turned on manually, don't turn them off.
-  condition: []
+  # Only turn the lights off if they were turned on automatically.
+  condition:
+    - condition: state
+      entity_id: var.bathroom_turned_on_automatically
+      state: 'true'
   action:
   - data:
       transition: 6
@@ -44,12 +53,19 @@
   - entity_id: binary_sensor.wyze_motion1
     platform: state
     to: 'on'
-  condition: []
+  condition:
+    - condition: state
+      entity_id: light.guest_bathroom
+      state: 'off'
   action:
     - data_template:
         entity_id: >-
           {% if is_state("input_boolean.night_mode", "on") %} scene.guest_bathroom_night {% else %} scene.guest_bathroom_day {% endif %}
       service: scene.turn_on
+    - service: var.set
+      data:
+        entity_id: var.guest_bathroom_turned_on_automatically
+        value: 'true'
   mode: single
 
 - id: 'guest_bathroom_off_no_motion'
@@ -66,9 +82,11 @@
         {% set poo_timeout = 30 %}
         {% if is_state("binary_sensor.wyze_door2", "off") and False %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
         {% if action == "poo" %} {{ poo_timeout | int }} {% else %} {{ pee_timeout | int }} {% endif %}
-    # TODO: Check that they were turned on automatically.
-    # If they were turned on manually, don't turn them off.
-  condition: []
+  # Only turn the lights off if they were turned on automatically.
+  condition:
+    - condition: state
+      entity_id: var.guest_bathroom_turned_on_automatically
+      state: 'true'
   action:
   - data:
       transition: 6
