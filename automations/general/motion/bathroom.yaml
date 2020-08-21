@@ -28,11 +28,10 @@
     entity_id: binary_sensor.wyze_motion2
     to: 'off'
     for:
-      # TODO: Remove "and False" when door sensors are installed
       minutes: >-
         {% set pee_timeout = 1 %}
         {% set poo_timeout = 30 %}
-        {% if is_state("binary_sensor.wyze_door1", "off") and False %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+        {% if is_state("binary_sensor.bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
         {% if action == "poo" %} {{ poo_timeout }} {% else %} {{ pee_timeout }} {% endif %}
   # Only turn the lights off if they were turned on automatically.
   condition:
@@ -76,11 +75,10 @@
     entity_id: binary_sensor.wyze_motion1
     to: 'off'
     for:
-      # TODO: Remove "and False" when door sensors are installed
       minutes: >-
         {% set pee_timeout = 1 %}
         {% set poo_timeout = 30 %}
-        {% if is_state("binary_sensor.wyze_door2", "off") and False %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+        {% if is_state("binary_sensor.guest_bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
         {% if action == "poo" %} {{ poo_timeout | int }} {% else %} {{ pee_timeout | int }} {% endif %}
   # Only turn the lights off if they were turned on automatically.
   condition:

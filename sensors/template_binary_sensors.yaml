@@ -13,9 +13,6 @@ is_during_workday:
     }}
 
 everyone_in_bed:
-  # TODO: Update door when the bedroom door is set up
-  # and is_state('binary_sensor.wyze_door1', 'off')
-  # TODO: When visitor mode is on, check their door too
   value_template: >-
     {{ 
         (
@@ -26,7 +23,14 @@ everyone_in_bed:
           is_state('binary_sensor.public_space_motion', 'off')
           and states('sensor.timestamp') | float >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
         )
+        and is_state('binary_sensor.bedroom_door', 'off')
         and is_state('binary_sensor.occupied', 'on')
+        and (
+          is_state('input_boolean.visitors', 'off')
+          or (
+            is_state('input_boolean.visitors', 'on') and is_state('binary_sensor.guest_bedroom_door', 'off')
+          )
+        )
         and is_state('binary_sensor.is_bedtime', 'on')
         and is_state('group.bedroom_lights', 'off')
     }}
