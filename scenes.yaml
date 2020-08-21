@@ -623,22 +623,22 @@
   name: Bathroom Day
   entities:
     light.bath_1:
-      brightness: 45
+      brightness: 255
       friendly_name: Bath 1
       state: 'on'
       supported_features: 41
     light.bath_2:
-      brightness: 1
+      brightness: 255
       friendly_name: Bath 2
       state: 'on'
       supported_features: 41
     light.bath_3:
-      brightness: 1
+      brightness: 255
       friendly_name: Bath 3
       state: 'on'
       supported_features: 41
     light.bath_4:
-      brightness: 1
+      brightness: 255
       friendly_name: Bath 4
       state: 'on'
       supported_features: 41
