@@ -9,7 +9,8 @@ default_config:
 # Text to speech
 tts:
   - platform: google_translate
-
+homeassistant:
+  customize: !include customize.yaml
 group: !include_dir_merge_named ./groups
 automation: !include automations.yaml
 automation old: !include_dir_merge_list ./automations
@@ -23,13 +24,7 @@ http:
 
 media_player: !include_dir_merge_list ./media_players
 
-device_tracker:
-  - platform: ping
-    count: 1
-    scan_interval: 15
-    consider_home: 0:15
-    hosts:
-      leah_phone: 192.168.87.27
+device_tracker: !include ./devices_to_track.yaml
 
 binary_sensor:
   - platform: template

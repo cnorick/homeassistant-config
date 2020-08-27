@@ -1,0 +1,9 @@
+- platform: ping
+  count: 1
+  scan_interval: 15
+  consider_home: 0:15
+  hosts:
+    garretts_phone: 192.168.87.111
+    donnas_phone: 192.168.87.112
+    ryans_phone: 192.168.87.113
+    beccas_phone: 192.168.87.114

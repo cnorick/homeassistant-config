@@ -1,4 +1,18 @@
 binary_sensor.occupied:
   device_class: occupancy
+
 sensor.time:
   hidden: true
+
+person.nathan:
+  entity_picture: /local/photos/nathan.jpg
+person.sarah:
+  entity_picture: /local/photos/sarah.jpg
+person.becca:
+  entity_picture: /local/photos/becca.jpg
+person.donna:
+  entity_picture: /local/photos/donna.jpg
+person.garrett:
+  entity_picture: /local/photos/garrett.png
+person.ryan:
+  entity_picture: /local/photos/ryan.png
