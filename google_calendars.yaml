@@ -51,13 +51,6 @@
     name: Gmail
     track: false
 
-- cal_id: b89g410srb785hik96qu8032to@group.calendar.google.com
-  entities:
-  - device_id: work
-    ignore_availability: true
-    name: Work
-    track: false
-
 - cal_id: addressbook#contacts@group.v.calendar.google.com
   entities:
   - device_id: contacts
@@ -77,4 +70,11 @@
   - device_id: family
     ignore_availability: true
     name: Family
+    track: false
+
+- cal_id: 4ebb2feer1miom8qgjjsk7guodd9grfr@import.calendar.google.com
+  entities:
+  - device_id: calendar
+    ignore_availability: true
+    name: Work
     track: false
