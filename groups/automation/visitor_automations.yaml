@@ -3,7 +3,4 @@ visitor_automations:
   entities:
     - automation.turn_off_everything_when_people_leave
     - automation.turn_off_master_bedroom_when_we_leave
-    - automation.run_roomba_every_morning
-    - automation.kitchen_motion_night
-    - automation.no_motion_kitchen_night
-    - automation.turn_off_public_lights_after_no_motion
+
