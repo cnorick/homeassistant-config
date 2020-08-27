@@ -10,6 +10,11 @@
       entity_id: light.bathroom
       state: 'off'
   action:
+  - service: var.set
+    data:
+      entity_id: var.bathroom_turned_on_automatically
+      value_template: >-
+        {% if is_state('light.bathroom', 'on') %} {{ states('var.bathroom_turned_on_automatically') }} {% else %} true {% endif %}
   - data_template:
       entity_id: >-
         {% if is_state("input_boolean.night_mode", "on") %} scene.bathroom_night {% else %} scene.bathroom_day {% endif %}
@@ -17,7 +22,8 @@
   - service: var.set
     data:
       entity_id: var.bathroom_turned_on_automatically
-      value: 'true'
+      value_template: >-
+        {% if is_state('light.guest_bathroom', 'on') %} {{ states('var.guest_bathroom_turned_on_automatically') }} {% else %} true {% endif %}
   mode: single
 
 - id: 'bathroom_off_no_motion'
@@ -57,14 +63,15 @@
       entity_id: light.guest_bathroom
       state: 'off'
   action:
+    - service: var.set
+      data:
+        entity_id: var.guest_bathroom_turned_on_automatically
+        value_template: >-
+          {% if is_state('light.guest_bathroom', 'on') %} {{ states('var.guest_bathroom_turned_on_automatically') }} {% else %} true {% endif %}
     - data_template:
         entity_id: >-
           {% if is_state("input_boolean.night_mode", "on") %} scene.guest_bathroom_night {% else %} scene.guest_bathroom_day {% endif %}
       service: scene.turn_on
-    - service: var.set
-      data:
-        entity_id: var.guest_bathroom_turned_on_automatically
-        value: 'true'
   mode: single
 
 - id: 'guest_bathroom_off_no_motion'
