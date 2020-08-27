@@ -11,6 +11,8 @@
   - data: {}
     entity_id: light.home
     service: light.turn_off
+  - service: switch.turn_off
+    entity_id: switch.kitchen_overhead
   - data: {}
     entity_id: media_player.living_room_tv
     service: media_player.turn_off
@@ -33,6 +35,10 @@
     to: 'on'
   condition: []
   action:
+  - service: light.turn_on
+    data:
+      brightness_pct: 100
+      entity_id: light.front_door
   - data:
       entity_id: alarm_control_panel.alexa_guard_ee9c2
     service: alarm_control_panel.alarm_disarm
