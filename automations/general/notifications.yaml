@@ -63,11 +63,6 @@
     platform: state
     to: home
   condition:
-  - condition: template
-    value_template: "{% set people = ['person.nathan', 'person.kane', 'person.sarah']\
-      \ %}\n{% set index = states('var.whose_turn_to_empty_vacuum') | int  %}\n{{\
-      \ \n   trigger.entity_id == people[index] or trigger.entity_id == 'vacuum.rooben'\n\
-      }}"
   - condition: state
     entity_id: binary_sensor.rooben_bin_full
     state: 'on'
@@ -86,4 +81,3 @@
   - service: notify.mobile_app_iphone
     data:
       title: Rooben's Bin is Full
-
