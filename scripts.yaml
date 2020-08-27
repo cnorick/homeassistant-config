@@ -29,14 +29,14 @@ notify_sarah_and_nathan:
       data:
         type: announce
       message: '{{ message }}'
-    service: notify.alexa_media_master_bedroom
+    service: notify.alexa_media_everywhere
 alarm:
   alias: Alarm
   sequence:
   - data:
       brightness_pct: 100
       profile: relax
-    entity_id: group.master_bedroom
+    entity_id: light.bedroom
     service: light.turn_on
   - data: {}
     entity_id: group.fans
