@@ -77,4 +77,6 @@ camera:
 switch:
   - platform: switchmate
     mac: 'f3:7e:9f:7b:3e:95'
+  - platform: template
+    switches: !include switches/template_switches.yaml
     

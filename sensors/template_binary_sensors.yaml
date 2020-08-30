@@ -56,6 +56,15 @@ public_space_motion:
     {{ is_state('binary_sensor.office_motion', 'on') }}
 
 is_bedtime:
+  friendly_name: "Is Bedtime"
   value_template: >-
     {{ states('sensor.time') > states('input_datetime.bedtime')
         or states('sensor.time') < states('input_datetime.morning') }}
+
+# This just simply tracks the template switch. It's here so Alexa
+# can make a routine to turn off the physical switch
+guest_air_freshener:
+  device_class: door
+  friendly_name: "Guest Air Freshener"
+  value_template: >-
+    {{ is_state('switch.guest_air_freshener', 'on') }}
