@@ -17,15 +17,6 @@
   end: "{{ now() }}"
 
 - platform: history_stats
-  name: Quarantine Meter Kane
-  entity_id: person.kane
-  state: "home"
-  type: ratio
-  duration:
-    days: 10
-  end: "{{ now() }}"
-
-- platform: history_stats
   name: Quarantine Meter Times Nathan Left
   entity_id: person.nathan
   state: "home"
@@ -43,11 +34,3 @@
     days: 10
   end: "{{ now() }}"
 
-- platform: history_stats
-  name: Quarantine Meter Times Kane Left
-  entity_id: person.kane
-  state: "home"
-  type: count
-  duration:
-    days: 5
-  end: "{{ now() }}"
