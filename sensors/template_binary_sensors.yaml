@@ -33,6 +33,12 @@ everyone_in_bed:
         )
         and is_state('binary_sensor.is_bedtime', 'on')
         and is_state('group.bedroom_lights', 'off')
+        and (
+          is_state('input_boolean.visitors', 'off')
+          or (
+            is_state('input_boolean.visitors', 'on') and is_state('group.guest_bedroom_lights', 'off')
+          )
+        )
     }}
 
 are_master_bedroom_people_home:

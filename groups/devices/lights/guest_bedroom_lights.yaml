@@ -1,0 +1,4 @@
+guest_bedroom_lights:
+  name: Guest Bedroom Lights
+  entities:
+    - light.guest_bedroom
