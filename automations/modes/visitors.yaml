@@ -21,3 +21,15 @@
   - entity_id: input_boolean.visitors
     service_template: "{% if is_state('calendar.visitors', 'on') %}\n  input_boolean.turn_on\n\
       {% else %}\n  input_boolean.turn_off\n{% endif %}"
+
+- id: 'known_visitor_presence_toggle'
+  alias: Known Visitor Presence Toggles Visitor Mode
+  description: 'When a visitor that is on the list shows up, visitor mode turns on automatically'
+  trigger:
+  - entity_id: group.known_visitors
+    platform: state
+  condition: []
+  action:
+  - entity_id: input_boolean.visitors
+    service_template: >-
+      {% if is_state('group.known_visitors', 'home') %} input_boolean.turn_on {% else %} input_boolean.turn_off {% endif %}

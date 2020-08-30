@@ -9,3 +9,11 @@ people_who_live_here:
   entities:
     - person.nathan
     - person.sarah
+
+known_visitors:
+  name: Known Visitors
+  entities:
+    - person.becca
+    - person.donna
+    - person.ryan
+    - person.garrett
