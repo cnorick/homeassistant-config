@@ -2,11 +2,11 @@
   alias: Turn On Kitchen When Leaving Bedroom
   description: ''
   trigger:
-  - entity_id: binary_sensor.wyze_door1
+  - entity_id: binary_sensor.bedroom_door
     platform: state
     to: 'on'
   condition: []
   action:
   - data: {}
-    entity_id: group.kitchen_lights
-    service: switch.turn_on
+    entity_id: light.counter
+    service: light.turn_on
