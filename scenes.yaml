@@ -314,62 +314,69 @@
 - id: '1589041501221'
   name: Bedtime
   entities:
-    light.bedroom_door:
-      friendly_name: Bedroom Door
-      state: 'off'
-      supported_features: 41
-    light.bedroom_top:
-      brightness: 84
+    light.bedroom_ceiling:
+      brightness: 60
       effect: none
       effect_list:
       - colorloop
       - random
-      friendly_name: Bedroom Top
+      friendly_name: Bedroom Ceiling
       hs_color:
-      - 268.571
-      - 65.882
+      - 268.619
+      - 93.725
       max_mireds: 500
       min_mireds: 153
       rgb_color:
-      - 166
-      - 87
+      - 129
+      - 16
       - 255
       state: 'on'
       supported_features: 63
       xy_color:
-      - 0.262
-      - 0.134
-    light.desk_lamp:
-      brightness: 84
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Desk Lamp
-      hs_color:
-      - 232.941
-      - 73.333
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 68
-      - 90
-      - 255
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.161
-      - 0.099
+      - 0.219
+      - 0.081
     light.nathan_s_nightstand:
       brightness: 84
+      effect: none
+      effect_list:
+      - colorloop
+      - random
       friendly_name: Nathan's Nightstand
+      hs_color:
+      - 299.718
+      - 83.529
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 253
+      - 42
+      - 255
       state: 'on'
-      supported_features: 41
+      supported_features: 63
+      xy_color:
+      - 0.381
+      - 0.159
     light.sarah_s_nightstand:
       brightness: 84
+      effect: none
+      effect_list:
+      - colorloop
+      - random
       friendly_name: Sarah's Nightstand
+      hs_color:
+      - 196.923
+      - 76.471
+      max_mireds: 500
+      min_mireds: 153
+      rgb_color:
+      - 59
+      - 199
+      - 255
       state: 'on'
-      supported_features: 41
+      supported_features: 63
+      xy_color:
+      - 0.16
+      - 0.253
     switch.nathans_fan:
       friendly_name: Nathan's Fan
       state: 'off'
