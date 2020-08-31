@@ -16,14 +16,14 @@
   - data: {}
     entity_id: media_player.living_room_tv
     service: media_player.turn_off
-  - data:
-      entity_id: alarm_control_panel.alexa_guard_ee9c2
-    service: alarm_control_panel.alarm_arm_away
+  - entity_id: group.fans
+    service: homeassistant.turn_off
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.start
-  - entity_id: group.fans
-    service: homeassistant.turn_off
+  - data:
+      entity_id: alarm_control_panel.alexa_guard_ee9c2
+    service: alarm_control_panel.alarm_arm_away
 
 - id: '1587162726799'
   alias: First Person Home
