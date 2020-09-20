@@ -72,9 +72,9 @@
     name: Family
     track: false
 
-- cal_id: 4ebb2feer1miom8qgjjsk7guodd9grfr@import.calendar.google.com
+- cal_id: 1pd7nr1sa8qj14i73fgsu9odnc@group.calendar.google.com
   entities:
-  - device_id: calendar
+  - device_id: work
     ignore_availability: true
     name: Work
     track: false
