@@ -64,7 +64,7 @@ slow_alarm:
       brightness_pct: 100
       profile: relax
       transition: 900
-    entity_id: light.bedroom
+    entity_id: light.sarah_s_nightstand, light.bedroom_ceiling, light.nathan_s_nightstand
     service: light.turn_on
   - delay: 00:15:00
   - data: {}
