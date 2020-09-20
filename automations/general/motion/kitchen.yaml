@@ -2,7 +2,7 @@
   alias: Turn On Kitchen if Motion
   description: ''
   trigger:
-  - entity_id: binary_sensor.kitchen_motion
+  - entity_id: binary_sensor.wyze_motion3
     platform: state
     to: 'on'
   condition:
