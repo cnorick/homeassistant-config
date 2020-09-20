@@ -53,7 +53,7 @@ public_space_motion:
   device_class: motion
   # TODO: Add other motion sensors once they're set up
   value_template: >-
-    {{ is_state('binary_sensor.office_motion', 'on') }}
+    {{ is_state('binary_sensor.office_motion', 'on') or is_state('binary_sensor.wyze_motion3') }}
 
 is_bedtime:
   friendly_name: "Is Bedtime"
