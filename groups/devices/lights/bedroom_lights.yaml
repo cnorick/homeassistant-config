@@ -4,3 +4,4 @@ bedroom_lights:
     - light.bedroom
     - light.bathroom
     - light.bedroom_closet
+    - light.bathroom
