@@ -15,15 +15,3 @@
   - data: {}
     entity_id: group.fans
     service: homeassistant.turn_off
-
-- id: '1587483555425'
-  alias: Set Theme at Startup
-  description: ''
-  trigger:
-  - event: start
-    platform: homeassistant
-  condition: []
-  action:
-  - data:
-      name: Google Dark Theme
-    service: frontend.set_theme
