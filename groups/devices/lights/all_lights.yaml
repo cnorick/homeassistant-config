@@ -1,0 +1,5 @@
+all_lights:
+  name: All Lights
+  entities:
+    - light.home
+    - switch.kitchen_overhead

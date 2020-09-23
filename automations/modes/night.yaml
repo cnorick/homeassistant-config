@@ -31,7 +31,7 @@
       {% if is_state('input_boolean.night_mode', 'on') %} homeassistant.turn_on {% else %} homeassistant.turn_off {% endif %}
 
 - id: '1587996987502'
-  alias: Turn Off Public Devices When Night Mode Turns On
+  alias: Turn Off All Lights When Night Mode Turns On
   description: ''
   trigger:
   - entity_id: input_boolean.night_mode
@@ -40,7 +40,7 @@
   condition: []
   action:
   - data: {}
-    entity_id: group.public_lights
+    entity_id: group.all_lights
     service: homeassistant.turn_off
   - data: {}
     entity_id: media_player.living_room_tv
