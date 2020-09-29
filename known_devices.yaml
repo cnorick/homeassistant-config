@@ -5,3 +5,10 @@ garretts_phone:
   name: garretts_phone
   picture:
   track: true
+
+beccas_phone:
+  name: beccas_phone
+  mac:
+  icon:
+  picture:
+  track: true
