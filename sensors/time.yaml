@@ -6,6 +6,5 @@
 - platform: template
   sensors:
     timestamp:
-      entity_id: sensor.date_time_iso
       value_template: >-
-        {{ now() | as_timestamp }}
+        {{ states('sensor.date_time_iso') and now() | as_timestamp }}

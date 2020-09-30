@@ -62,6 +62,7 @@ recorder:
     entities:
       - sensor.date_time_iso
       - sensor.time
+      - sensor.timestamp
 
 alexa_media:
   accounts:
