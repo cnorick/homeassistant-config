@@ -315,68 +315,50 @@
   name: Bedtime
   entities:
     light.bedroom_ceiling:
-      brightness: 60
-      effect: none
+      min_mireds: 153
+      max_mireds: 500
       effect_list:
       - colorloop
       - random
-      friendly_name: Bedroom Ceiling
+      brightness: 80
       hs_color:
-      - 268.619
-      - 93.725
-      max_mireds: 500
-      min_mireds: 153
+      - 199.592
+      - 76.863
       rgb_color:
-      - 129
-      - 16
+      - 58
+      - 190
       - 255
-      state: 'on'
-      supported_features: 63
       xy_color:
-      - 0.219
-      - 0.081
-    light.nathan_s_nightstand:
-      brightness: 84
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Nathan's Nightstand
-      hs_color:
-      - 299.718
-      - 83.529
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 253
-      - 42
-      - 255
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.381
       - 0.159
-    light.sarah_s_nightstand:
-      brightness: 84
+      - 0.238
       effect: none
+      friendly_name: Bedroom Ceiling
+      supported_features: 63
+      state: 'on'
+    light.nathan_s_nightstand:
+      min_mireds: 153
+      max_mireds: 500
       effect_list:
       - colorloop
       - random
-      friendly_name: Sarah's Nightstand
-      hs_color:
-      - 196.923
-      - 76.471
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 59
-      - 199
-      - 255
-      state: 'on'
+      brightness: 74
+      color_temp: 500
+      effect: none
+      friendly_name: Nathan's Nightstand
       supported_features: 63
-      xy_color:
-      - 0.16
-      - 0.253
+      state: 'on'
+    light.sarah_s_nightstand:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - colorloop
+      - random
+      brightness: 87
+      color_temp: 500
+      effect: none
+      friendly_name: Sarah's Nightstand
+      supported_features: 63
+      state: 'on'
     switch.nathans_fan:
       friendly_name: Nathan's Fan
       state: 'off'
