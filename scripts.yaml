@@ -18,12 +18,32 @@ alexa_announce:
     service: notify.alexa_media
 notify_sarah_and_nathan:
   alias: Notify Sarah and Nathan
+  fields:
+    message:
+      description: '(required) The message to send to all of the devices'
+      example: 'Hello'
+    more_info:
+      description: '(optional) More information to display on phone notifications. Will not play over Alexa.'
+      example: 'Click here to for more info'
+    url:
+      description: '(optional) The url to open when the notification is clicked. Most often will be a specific dashboard.'
+      example: '/lovelace/default_view'
   sequence:
   - data_template:
-      message: '{{ message }}'
+      title: >-
+        {%- if more_info is defined -%}{{message}}{%- endif -%}
+      message: >-
+        {%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%- endif -%}
+      data:
+        url: '{{ url }}'
     service: notify.mobile_app_iphone
   - data_template:
-      message: '{{ message }}'
+      title: >-
+        {%- if more_info is defined -%}{{message}}{%- endif -%}
+      message: >-
+        {%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%- endif -%}
+      data:
+        clickAction: '{{ url }}'
     service: notify.mobile_app_pixel_4
   - data_template:
       data:

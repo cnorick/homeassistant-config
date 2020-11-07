@@ -78,3 +78,25 @@
     data:
       title: Rooben's Bin is Full
       message: Time to empty the bin.
+
+- id: '1604755622228'
+  alias: Notify When There Is Mail
+  description: 'Sends a notification to everyone when there is mail to be checked.'
+  trigger:
+  - platform: state
+    entity_id: sensor.mail_packages_delivered
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.mail_packages_delivered
+    above: '0'
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Mail Time
+      more_info: Click to see mail status
+      url: /lovelace/mail
+  mode: single
+
