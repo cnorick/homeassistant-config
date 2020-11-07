@@ -41,11 +41,11 @@ tuya:
   country_code: "1"
   platform: smart_life
 
-light:
-  - platform: flux_led
-    devices:
-      192.168.87.186:
-        name: Kitchen String Lights
+# light:
+#   - platform: flux_led
+#     devices:
+#       192.168.87.186:
+#         name: Kitchen String Lights
 
 google:
   client_id: !secret google_cal_client_id
