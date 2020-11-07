@@ -7,18 +7,18 @@
     event: sunset
     # 20 minutes before sunset.
     offset: -00:20:00
-  - entity_id: media_player.living_room_tv
+  - entity_id: media_player.living_room_tv_2
     for: 00:00:10
     platform: state
     to: playing
-  - entity_id: media_player.living_room_tv
+  - entity_id: media_player.living_room_tv_2
     platform: state
     to: paused
-  - entity_id: media_player.living_room_tv
+  - entity_id: media_player.living_room_tv_2
     for: 00:00:22
     platform: state
     to: standby
-  - entity_id: media_player.living_room_tv
+  - entity_id: media_player.living_room_tv_2
     platform: state
     to: 'off'
   condition:
@@ -39,8 +39,8 @@
     value_template: '{{ trigger.from_state.state != "unavailable" }}'
   action:
   - data_template:
-      entity_id: "{% if is_state('media_player.living_room_tv', 'playing') %}\n  scene.tv_playing_at_night\n\
-        {% elif is_state('media_player.living_room_tv', 'standby')\n   or is_state('media_player.living_room_tv',\
+      entity_id: "{% if is_state('media_player.living_room_tv_2', 'playing') %}\n  scene.tv_playing_at_night\n\
+        {% elif is_state('media_player.living_room_tv_2', 'standby')\n   or is_state('media_player.living_room_tv_2',\
         \ 'paused')\n%}\n  scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n\
         {% endif %}\n"
       transition: 10
