@@ -1,5 +1,4 @@
 bedtime_automations:
   name: Automations for When Everyone Is In the Bed
   entities:
-    - automation.turn_on_kitchen_when_leaving_bedroom
     - automation.turn_off_public_lights_after_no_motion
