@@ -80,8 +80,8 @@
       message: Time to empty the bin.
 
 - id: '1604755622228'
-  alias: Notify When There Is Mail
-  description: 'Sends a notification to everyone when there is mail to be checked.'
+  alias: Notify When There Are Packages
+  description: 'Sends a notification to everyone when there are packages to be checked.'
   trigger:
   - platform: state
     entity_id: sensor.mail_packages_delivered
@@ -96,7 +96,28 @@
   - service: script.notify_sarah_and_nathan
     data:
       message: Mail Time
-      more_info: Click to see mail status
+      more_info: Packages have been delivered. Click to see package status.
+      url: /lovelace/mail
+  mode: single
+
+- id: '1604755622229'
+  alias: Notify When There Is Mail
+  description: 'Sends a notification to everyone when there is mail to be checked.'
+  trigger:
+  - platform: time
+    at: input_datetime.mail_time # This is about what time the mail runs
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.mail_usps_mail
+    above: '0'
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Mail Time
+      more_info: Mail has been delivered to the mailbox. Click to see what you have.
       url: /lovelace/mail
   mode: single
 
