@@ -3,3 +3,7 @@ all_lights:
   entities:
     - light.home
     - switch.kitchen_overhead
+    - switch.dining_room
+    # TODO: remove afer christmas
+    - switch.christmas_tree
+    - switch.window_lights
