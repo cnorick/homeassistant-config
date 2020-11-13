@@ -1,11 +1,14 @@
 - id: 'guest_air_freshener'
-  alias: Turn On Air Freshener When There Are Scheduled Visitors
+  alias: Turn On Air Freshener When Bathroom Is Occupied When There Are Scheduled Visitors
   description: ''
   trigger:
-  - entity_id: input_boolean.visitors
+  - entity_id: light.guest_bathroom
     platform: state
-  condition: []
+  condition: 
+  - condition: state
+    entity_id: input_boolean.visitors
+    state: 'on'
   action:
-  - service_template: "{% if is_state('input_boolean.visitors', 'on') %} switch.turn_on {% else %} switch.turn_off {% endif %}"
+  - service_template: "{% if is_state('light.guest_bathroom', 'on') %} switch.turn_on {% else %} switch.turn_off {% endif %}"
     data:
       entity_id: switch.guest_air_freshener
