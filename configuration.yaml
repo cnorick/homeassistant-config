@@ -88,4 +88,9 @@ switch:
     mac: 'f7:37:b9:d5:53:23'
   - platform: template
     switches: !include switches/template_switches.yaml
+
+roomba:
+  - host: !secret roomba_host
+    blid: !secret roomba_blid
+    password: !secret roomba_password
     
