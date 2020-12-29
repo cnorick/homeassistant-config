@@ -119,5 +119,7 @@
       message: Mail Time
       more_info: Mail has been delivered to the mailbox. Click to see what you have.
       url: /lovelace/mail
+      image: /local/mail_and_packages/mail_today.gif
+      image_type: gif
   mode: single
 
