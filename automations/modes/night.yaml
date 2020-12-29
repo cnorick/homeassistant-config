@@ -12,7 +12,7 @@
     to: 'on'
   - platform: template
     value_template: >- 
-      {{ states('sensor.time') >= states('input_datetime.morning') }}'
+      {{ states('sensor.time') >= states('input_datetime.morning') }}
   action:
   - entity_id: input_boolean.night_mode
     service_template: >- 
