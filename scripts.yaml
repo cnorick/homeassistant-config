@@ -20,26 +20,28 @@ notify_sarah_and_nathan:
   alias: Notify Sarah and Nathan
   fields:
     message:
-      description: '(required) The message to send to all of the devices'
-      example: 'Hello'
+      description: (required) The message to send to all of the devices
+      example: Hello
     more_info:
-      description: '(optional) More information to display on phone notifications. Will not play over Alexa.'
-      example: 'Click here to for more info'
+      description: (optional) More information to display on phone notifications.
+        Will not play over Alexa.
+      example: Click here to for more info
     url:
-      description: '(optional) The url to open when the notification is clicked. Most often will be a specific dashboard.'
-      example: '/lovelace/default_view'
+      description: (optional) The url to open when the notification is clicked. Most
+        often will be a specific dashboard.
+      example: /lovelace/default_view
     image:
-      description: '(optional) The public url of the image to be sent to the devices'
-      example: '/local/mail_and_packages/mail_today.gif"'
+      description: (optional) The public url of the image to be sent to the devices
+      example: /local/mail_and_packages/mail_today.gif"
     image_type:
-      description: '(required if image is specified) The filetype of the image. This is required for iphone.'
-      example: 'gif'
+      description: (required if image is specified) The filetype of the image. This
+        is required for iphone.
+      example: gif
   sequence:
   - data_template:
-      title: >-
-        {%- if more_info is defined -%}{{message}}{%- endif -%}
-      message: >-
-        {%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%- endif -%}
+      title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+      message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+        endif -%}'
       data:
         url: '{{ url }}'
         attachment:
@@ -48,13 +50,12 @@ notify_sarah_and_nathan:
           hide-thumbnail: false
     service: notify.mobile_app_iphone
   - data_template:
-      title: >-
-        {%- if more_info is defined -%}{{message}}{%- endif -%}
-      message: >-
-        {%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%- endif -%}
+      title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+      message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+        endif -%}'
       data:
         clickAction: '{{ url }}'
-        image: "{{ image }}"
+        image: '{{ image }}'
     service: notify.mobile_app_pixel_4
   - data_template:
       data:
@@ -74,7 +75,7 @@ alarm:
     service: homeassistant.turn_off
   - data:
       volume_level: 0.7
-    entity_id: media_player.bathroom_echo
+    entity_id: media_player.bathroom_echo, media_player.bedroom_echo
     service: media_player.volume_set
   - data:
       entity_id: media_player.spotify_nathan_orick
@@ -87,6 +88,7 @@ alarm:
   - data: {}
     entity_id: media_player.spotify_nathan_orick
     service: media_player.media_play_pause
+  - wait_for_trigger: []
   mode: single
 slow_alarm:
   alias: Slow Alarm
@@ -114,5 +116,5 @@ notify_random:
   - data_template:
       title: '{{title}}'
       message: '{{message}}'
-    service: '{{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_iphone'']
-      | random }}'
+    service: '{{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_iphone''] | random
+      }}'
