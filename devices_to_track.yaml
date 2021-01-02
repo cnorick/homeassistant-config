@@ -5,5 +5,5 @@
   hosts:
     garretts_phone: 192.168.87.111
     donnas_phone: 192.168.87.112
-    ryans_phone: 192.168.87.113
-    beccas_phone: 192.168.87.114
+    ryans_phone: 192.168.87.40
+    beccas_phone: 192.168.87.36

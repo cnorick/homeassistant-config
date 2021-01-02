@@ -12,3 +12,10 @@ beccas_phone:
   icon:
   picture:
   track: true
+
+ryans_phone:
+  name: ryans_phone
+  mac:
+  icon:
+  picture:
+  track: true
