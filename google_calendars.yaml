@@ -49,7 +49,7 @@
   - device_id: gmail
     ignore_availability: true
     name: Gmail
-    track: false
+    track: true
 
 - cal_id: addressbook#contacts@group.v.calendar.google.com
   entities:
@@ -63,7 +63,7 @@
   - device_id: holidays_in_united_states
     ignore_availability: true
     name: Holidays in United States
-    track: false
+    track: true
 
 - cal_id: family14545398298039458461@group.calendar.google.com
   entities:
@@ -77,4 +77,4 @@
   - device_id: work
     ignore_availability: true
     name: Work
-    track: false
+    track: true
