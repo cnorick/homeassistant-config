@@ -88,6 +88,11 @@ switch:
     mac: 'f7:37:b9:d5:53:23'
   - platform: template
     switches: !include switches/template_switches.yaml
+  - platform: wake_on_lan
+    mac: !secret nathan_pc_mac
+    name: "Tater_PC"
+    host: !secret nathan_pc_ip
+    broadcast_address: !secret nathan_pc_ip
 
 roomba:
   - host: !secret roomba_host
