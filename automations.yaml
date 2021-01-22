@@ -25,3 +25,65 @@
     entity_id: switch.window_lights
     domain: switch
   mode: single
+- id: '1609559449831'
+  alias: Morning Routine
+  description: ''
+  trigger:
+  - platform: state
+    to: 'off'
+    entity_id: input_boolean.night_mode
+  condition:
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  action:
+  - wait_for_trigger:
+    - platform: state
+      entity_id: binary_sensor.wyze_motion2
+      to: 'on'
+    timeout: 03:00:00
+    continue_on_timeout: false
+  - service: media_player.play_media
+    data:
+      media_content_id: Play News
+      media_content_type: routine
+    entity_id: media_player.bathroom_echo
+  - wait_for_trigger:
+    - platform: state
+      entity_id: binary_sensor.bedroom_door
+      to: 'on'
+    timeout: 01:00:00
+    continue_on_timeout: false
+  - service: light.turn_off
+    data:
+      transition: 6
+    entity_id: light.bathroom
+  - service: media_player.turn_off
+    data: {}
+    entity_id: media_player.bathroom_echo
+  - service: media_player.play_media
+    data:
+      media_content_id: Play News
+      media_content_type: routine
+    entity_id: media_player.kitchen_echo
+  - service: media_player.turn_on
+    data: {}
+    entity_id: media_player.living_room_tv
+  - service: cast.show_lovelace_view
+    data:
+      entity_id: media_player.chromecast
+      dashboard_path: lovelace
+      view_path: morning-dashboard
+  - wait_template: '{{ states(''media_player.chromecast'', ''on'') }}'
+    timeout: 00:00:20
+    continue_on_timeout: true
+  - service: cast.show_lovelace_view
+    data:
+      entity_id: media_player.chromecast
+      dashboard_path: lovelace
+      view_path: morning-dashboard
+  - delay: 00:30:00
+  - service: media_player.turn_off
+    data: {}
+    entity_id: media_player.living_room_tv, media_player.chromecast
+  mode: single

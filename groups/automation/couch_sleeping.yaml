@@ -6,3 +6,4 @@ couch_sleeping_automations:
     - automation.turn_off_public_lights_after_no_motion
     - automation.turn_off_public_lights_when_everyone_goes_to_bed
     - automation.turn_on_kitchen_when_leaving_bedroom
+    - automation.morning_routine
