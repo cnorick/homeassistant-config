@@ -74,7 +74,7 @@ alarm:
     entity_id: group.fans
     service: homeassistant.turn_off
   - data:
-      volume_level: 0.7
+      volume_level: 0.5
     entity_id: media_player.bathroom_echo, media_player.bedroom_echo
     service: media_player.volume_set
   - data:
@@ -88,7 +88,9 @@ alarm:
   - data: {}
     entity_id: media_player.spotify_nathan_orick
     service: media_player.media_play_pause
-  - wait_for_trigger: []
+  - service: input_boolean.turn_off
+    data: {}
+    entity_id: input_boolean.night_mode
   mode: single
 slow_alarm:
   alias: Slow Alarm
@@ -118,3 +120,9 @@ notify_random:
       message: '{{message}}'
     service: '{{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_iphone''] | random
       }}'
+wake_tater_pc:
+  alias: Wake Tater PC
+  sequence:
+  - service: switch.turn_on
+    entity_id: switch.tater_pc
+  mode: single
