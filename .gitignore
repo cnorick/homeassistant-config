@@ -16,4 +16,6 @@ zwcfg_0xd48933ca.xml
 zwscene.xml
 home-assistant_v2.db-shm
 home-assistant_v2.db-wal
-www/mail_and_packages/mail_today.*
+www/mail_and_packages/*
+images/mail_and_packages/*
+.cnathanorick@gmail.com.august.conf

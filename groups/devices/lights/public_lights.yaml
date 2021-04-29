@@ -1,8 +1,12 @@
 public_lights:
   name: Public Lights
   entities:
-    - light.living_space
-    - light.storage_closet
     - light.front_door
-    - light.laundry_room
-    - switch.kitchen_overhead
+    - light.living_room
+    - light.dining_room_ceiling
+    - light.kitchen_counter
+    - light.kitchen_overhead
+    - light.office
+    - light.office_lamp_top
+    - light.side_porch
+    - light.string_lights

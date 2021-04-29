@@ -1,8 +1,9 @@
 alexa_everywhere:
   name: Alexa Notify Everywhere
   entities:
-    - media_player.kitchen_echo
     - media_player.bedroom_echo
     - media_player.bathroom_echo
     - media_player.guest_bedroom_echo
     - media_player.guest_bathroom_echo
+    - media_player.kitchen_echo_show
+    - media_player.office_echo

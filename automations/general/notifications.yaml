@@ -68,7 +68,7 @@
     entity_id: binary_sensor.rooben_bin_full
     state: 'on'
   action:
-  - service_template: "{% if trigger.entity_id == 'person.nathan' %} notify.mobile_app_pixel_4 {% else %} notify.mobile_app_iphone {% endif %}"
+  - service: "{% if trigger.entity_id == 'person.nathan' %} notify.mobile_app_pixel_4 {% else %} notify.mobile_app_iphone {% endif %}"
     data:
       title: Rooben's Bin is Full
       message: Time to empty the bin.
@@ -119,7 +119,7 @@
       message: Mail Time
       more_info: Mail has been delivered to the mailbox. Click to see what you have.
       url: /lovelace/mail
-      image: /local/mail_and_packages/mail_today.gif
+      image: "{{ states('sensor.mail_image_url') }}"
       image_type: gif
   mode: single
 

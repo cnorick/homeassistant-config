@@ -1,9 +1,32 @@
+hue_lights:
+  name: Hue Lights
+  entities:
+    - light.home
+
+wyze_lights:
+  name: Wyze Lights
+  entities:
+    - light.office_lamp_top
+    - light.drc1
+    - light.drc2
+
+shelly_lights:
+  name: Shelly Lights
+  entities:
+    - light.bedroom_rope_lights
+    - light.kitchen_counter
+    - light.kitchen_overhead
+    - light.side_porch
+    - light.laundry_room
+    
+tplink_lights:
+  entities:
+    - light.string_lights
+
 all_lights:
   name: All Lights
   entities:
-    - light.home
-    - switch.kitchen_overhead
-    - switch.dining_room
-    # TODO: remove afer christmas
-    - switch.christmas_tree
-    - switch.window_lights
+    - group.hue_lights
+    - group.wyze_lights
+    - group.shelly_lights
+    - group.tplink_lights

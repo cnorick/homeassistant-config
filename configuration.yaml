@@ -41,12 +41,21 @@ tuya:
   country_code: "1"
   platform: smart_life
 
-# light:
+light:
+  - platform: ring
 #   - platform: flux_led
 #     devices:
 #       192.168.87.186:
 #         name: Kitchen String Lights
-
+  - platform: group
+    name: Dining Room Ceiling
+    entities:
+      - light.drc1
+      - light.drc2
+  - platform: switch
+    name: String Lights
+    entity_id: switch.string_lights
+      
 google:
   client_id: !secret google_cal_client_id
   client_secret: !secret google_cal_client_secret
@@ -76,10 +85,10 @@ alexa_media:
       password: !secret amazon_password
       url: amazon.com
 
-camera:
-  - platform: local_file
-    file_path: /config/www/mail_and_packages/mail_today.gif
-    name: mail_usps
+wyzeapi:
+  username: !secret wyze_username
+  password: !secret wyze_password
+  sensors: false
 
 switch:
   - platform: switchmate

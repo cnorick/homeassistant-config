@@ -1,5 +1,5 @@
 kitchen_lights:
   name: Kitchen Lights
   entities:
-    - light.counter
-    - switch.kitchen_overhead
+    - light.kitchen_counter
+    - light.kitchen_overhead

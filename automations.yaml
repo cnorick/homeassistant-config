@@ -32,6 +32,7 @@
   - platform: state
     to: 'off'
     entity_id: input_boolean.night_mode
+    from: 'on'
   condition:
   - condition: state
     entity_id: binary_sensor.occupied
@@ -41,49 +42,171 @@
     - platform: state
       entity_id: binary_sensor.wyze_motion2
       to: 'on'
+      from: 'off'
     timeout: 03:00:00
     continue_on_timeout: false
+  - data:
+      volume_level: 0.8
+    service: media_player.volume_set
+    target:
+      entity_id:
+      - media_player.bathroom_echo
+      - media_player.kitchen_echo_show
   - service: media_player.play_media
     data:
-      media_content_id: Play News
-      media_content_type: routine
-    entity_id: media_player.bathroom_echo
+      entity_id: media_player.bathroom_echo
+      media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+      media_content_type: skill
   - wait_for_trigger:
     - platform: state
       entity_id: binary_sensor.bedroom_door
       to: 'on'
+      from: 'off'
     timeout: 01:00:00
     continue_on_timeout: false
-  - service: light.turn_off
-    data:
-      transition: 6
-    entity_id: light.bathroom
-  - service: media_player.turn_off
-    data: {}
-    entity_id: media_player.bathroom_echo
+  - type: turn_on
+    device_id: 4727b2015d290faf287bd1a335620fab
+    entity_id: light.kitchen_counter
+    domain: light
+  - type: turn_on
+    device_id: a634fea07a944853cfa4fe710f25fd04
+    entity_id: light.kitchen_overhead
+    domain: light
   - service: media_player.play_media
     data:
-      media_content_id: Play News
-      media_content_type: routine
-    entity_id: media_player.kitchen_echo
-  - service: media_player.turn_on
+      media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+      media_content_type: skill
+    target:
+      entity_id:
+      - media_player.kitchen_echo_show
+  - service: media_player.media_stop
+    target:
+      entity_id: media_player.bathroom_echo
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: calendar.wfh
+        state: 'on'
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.office_lamp_top
+          - light.office_ceiling_2
+          - light.hue_color_downlight_1
+          - light.office_ceiling_1
+        data:
+          brightness: 255
+    default: []
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: calendar.wfh
+        state: 'on'
+      sequence:
+      - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.office_door
+          to: 'off'
+          from: 'on'
+        timeout: 01:00:00
+        continue_on_timeout: false
+      - service: media_player.media_stop
+        target:
+          entity_id: media_player.kitchen_echo_show
+      - service: media_player.select_source
+        data:
+          source: Office Echo
+        target:
+          entity_id: media_player.spotify_nathan_orick
+      - service: media_player.media_play
+        target:
+          entity_id: media_player.spotify_nathan_orick
+    default: []
+  - wait_for_trigger:
+    - platform: template
+      value_template: "{{\n  is_state('person.sarah', 'away') \n  and is_state('calendar.wfh',\
+        \ 'on')\n  and is_state('binary_sensor.office_door', 'on')\n  and is_state('binary_sensor.public_space_motion',\
+        \ 'off')\n}}"
+    timeout: 00:30:00
+  - service: light.turn_off
     data: {}
-    entity_id: media_player.living_room_tv
-  - service: cast.show_lovelace_view
-    data:
-      entity_id: media_player.chromecast
-      dashboard_path: lovelace
-      view_path: morning-dashboard
-  - wait_template: '{{ states(''media_player.chromecast'', ''on'') }}'
-    timeout: 00:00:20
-    continue_on_timeout: true
-  - service: cast.show_lovelace_view
-    data:
-      entity_id: media_player.chromecast
-      dashboard_path: lovelace
-      view_path: morning-dashboard
-  - delay: 00:30:00
-  - service: media_player.turn_off
-    data: {}
-    entity_id: media_player.living_room_tv, media_player.chromecast
+    entity_id: light.bedroom
+  - service: media_player.media_stop
+    target:
+      entity_id: media_player.kitchen_echo_show
   mode: single
+- id: '1619291764637'
+  alias: Side Door Motion
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.side_door_motion
+      light_target:
+        device_id: bfb84aed37592b8dc4fa3621915f54f5
+      elevation_check: 10
+- id: '1619296919322'
+  alias: Dimmer -- Office
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: a01dd1e3ea560f4fb0afcf5354493abb
+      light:
+        area_id: a78dc9b8222b47eebe4561988e57b0b0
+- id: '1619298602418'
+  alias: Dimmer -- Guest Bedroom
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: 224e0e9a1113cc16236212cc415e37e2
+      light:
+        area_id: 78d9e7596f014179b37ca4129fcb9a68
+- id: '1619298756428'
+  alias: Dimmer -- Guest Bathroom
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: a6c46ea29be9e854e67b05d5ca0d01fc
+      light:
+        area_id: 5972569ba2994df483c55163a2d8fd2a
+- id: '1619298991377'
+  alias: Dimmer -- Living Room
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: 9ebcf9676a38312a754423049e5ef143
+      light:
+        area_id: 87c768ba445d4b398f17ec723dc54377
+- id: '1619299286679'
+  alias: Dimmer -- Dining Room
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: 43c144534af08ead226fb0b11c2ab85b
+      light:
+        entity_id: light.dining_room_ceiling
+- id: '1619299919120'
+  alias: Dimmer -- Bedroom
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: e765caaa40236417c67b4aebc0c1a8ac
+      light:
+        area_id: b2672f722c53428e92427703040fb764
+- id: '1619300410823'
+  alias: Dimmer -- Bathroom
+  description: ''
+  use_blueprint:
+    path: bjpetit/zha_lutron_aurora_blueprint.yaml
+    input:
+      remote: f0a96177eb7693b52288825ef15218bd
+      light:
+        entity_id: light.bathroom

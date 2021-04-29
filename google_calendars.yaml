@@ -78,3 +78,13 @@
     ignore_availability: true
     name: Work
     track: true
+  - device_id: ooo
+    ignore_availability: true
+    name: Out of Office
+    search: 'OOO'
+    track: true
+  - device_id: work_holiday
+    ignore_availability: true
+    name: Work Holiday
+    search: '#Holiday'
+    track: true

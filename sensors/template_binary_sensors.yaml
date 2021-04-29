@@ -5,10 +5,18 @@ occupied:
     {{ is_state('person.sarah', 'home')
       or is_state('person.nathan', 'home') }}
 
-is_during_workday:
+is_workday:
   value_template: >-
     {{
-      states('sensor.time') > states('input_datetime.work_start_time').rsplit(':',1)[0]
+          is_state('calendar.ooo', 'off')
+      and is_state('calendar.work_holiday', 'off')
+      and now().weekday() < 5
+    }}
+
+is_during_workday:
+  value_template: >-
+    {{    is_state('binary_sensor.is_workday', 'on')
+      and states('sensor.time') > states('input_datetime.work_start_time').rsplit(':',1)[0]
       and states('sensor.time') < states('input_datetime.work_end_time').rsplit(':',1)[0]
     }}
 

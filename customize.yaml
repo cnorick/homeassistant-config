@@ -16,3 +16,11 @@ person.ryan:
   entity_picture: /local/photos/ryan.png
 binary_sensor.office_motion:
   device_class: motion
+binary_sensor.living_room_motion:
+  device_class: motion
+binary_sensor.bathroom_door:
+  device_class: door
+binary_sensor.guest_bathroom_door:
+  device_class: door
+binary_sensor.guest_bedroom_door:
+  device_class: door

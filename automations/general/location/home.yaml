@@ -11,10 +11,6 @@
   - data: {}
     entity_id: group.all_lights
     service: homeassistant.turn_off
-  # TODO: Remove plug after Christmas
-  - data: {}
-    entity_id: switch.tuya_plug1
-    service: switch.turn_off
   - data: {}
     entity_id: media_player.living_room_tv
     service: media_player.turn_off
@@ -23,9 +19,6 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.start
-  - data:
-      entity_id: alarm_control_panel.alexa_guard_ee9c2
-    service: alarm_control_panel.alarm_arm_away
 
 - id: '1587162726799'
   alias: First Person Home
@@ -38,17 +31,23 @@
   condition: []
   action:
   - service: light.turn_on
-    data:
-      brightness_pct: 100
-      entity_id: light.front_door
+    entity_id: group.kitchen_lights
+  - choose:
+    - conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      sequence:
+      - service: light.turn_on
+        entity_id: light.string_lights
+      - service: light.turn_on
+        entity_id: light.side_porch
+    default: []
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
-  - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
+  - wait_template: '{{ is_state(''vacuum.rooben'', ''paused'') }}'
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
-  - data:
-      entity_id: alarm_control_panel.alexa_guard_ee9c2
-    service: alarm_control_panel.alarm_disarm
 

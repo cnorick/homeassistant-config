@@ -320,114 +320,72 @@
       effect_list:
       - colorloop
       - random
-      brightness: 80
-      hs_color:
-      - 199.592
-      - 76.863
-      rgb_color:
-      - 58
-      - 190
-      - 255
-      xy_color:
-      - 0.159
-      - 0.238
-      effect: none
+      is_hue_group: true
       friendly_name: Bedroom Ceiling
       supported_features: 63
-      state: 'on'
+      state: 'off'
     light.nathan_s_nightstand:
       min_mireds: 153
       max_mireds: 500
       effect_list:
       - colorloop
       - random
-      brightness: 74
-      color_temp: 500
-      effect: none
       friendly_name: Nathan's Nightstand
       supported_features: 63
-      state: 'on'
+      state: 'off'
     light.sarah_s_nightstand:
       min_mireds: 153
       max_mireds: 500
       effect_list:
       - colorloop
       - random
-      brightness: 87
-      color_temp: 500
-      effect: none
       friendly_name: Sarah's Nightstand
       supported_features: 63
-      state: 'on'
+      state: 'off'
     switch.nathans_fan:
       friendly_name: Nathan's Fan
       state: 'off'
     switch.sarahs_fan:
       friendly_name: Sarah's Fan
       state: 'off'
+    light.bedroom_rope_lights:
+      friendly_name: Bedroom Rope Lights
+      supported_features: 0
+      state: 'on'
 - id: '1589242846422'
   name: WFH
   entities:
-    light.bedroom_door:
-      brightness: 255
-      friendly_name: Bedroom Door
-      state: 'on'
-      supported_features: 41
-    light.bedroom_top:
-      brightness: 255
-      effect: none
+    light.office:
+      min_mireds: 153
+      max_mireds: 500
       effect_list:
       - colorloop
       - random
-      friendly_name: Bedroom Top
-      hs_color:
-      - 38.667
-      - 52.941
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 207
-      - 120
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.457
-      - 0.41
-    light.desk_lamp:
-      brightness: 138
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Desk Lamp
-      hs_color:
-      - 38.222
-      - 52.941
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 205
-      - 120
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.459
-      - 0.408
-    light.nathan_s_nightstand:
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
       brightness: 255
-      friendly_name: Nathan's Nightstand
+      color_temp: 288
+      is_hue_group: true
+      friendly_name: Office
+      supported_features: 63
       state: 'on'
-      supported_features: 41
-    light.sarah_s_nightstand:
+    light.office_lamp_top:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      color_mode: color_temp
       brightness: 255
-      friendly_name: Sarah's Nightstand
+      color_temp: 365
+      attribution: Data provided by Wyze
       state: 'on'
-      supported_features: 41
-    switch.closet:
-      friendly_name: Closet
-      state: 'off'
+      available: true
+      device model: WLPA19
+      mac: 2CAA8E3D63D7
+      friendly_name: Office Lamp Top
+      supported_features: 3
 - id: '1589595243203'
   name: Video Games
   entities:
@@ -491,60 +449,71 @@
 - id: '1592253048242'
   name: WFH Relax
   entities:
-    light.bedroom_door:
-      friendly_name: Bedroom Door
-      state: 'off'
-      supported_features: 41
-    light.bedroom_top:
-      brightness: 211
-      effect: none
+    light.office_lamp_top:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      color_mode: color_temp
+      brightness: 24.09090909090909
+      color_temp: 500
+      attribution: Data provided by Wyze
+      state: 'on'
+      available: true
+      device model: WLPA19
+      mac: 2CAA8E3D63D7
+      friendly_name: Office Lamp Top
+      supported_features: 3
+    light.office_ceiling:
+      min_mireds: 153
+      max_mireds: 500
       effect_list:
       - colorloop
       - random
-      friendly_name: Bedroom Top
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 64
       hs_color:
-      - 35.426
-      - 73.725
-      max_mireds: 500
-      min_mireds: 153
+      - 37.778
+      - 52.941
       rgb_color:
       - 255
-      - 178
-      - 67
-      state: 'on'
-      supported_features: 63
+      - 205
+      - 120
       xy_color:
-      - 0.525
-      - 0.413
-    light.desk_lamp:
-      brightness: 61
-      effect: none
+      - 0.459
+      - 0.408
+      is_hue_group: true
+      friendly_name: Office Ceiling
+      supported_features: 63
+      state: 'on'
+    light.hue_color_downlight_1:
+      min_mireds: 153
+      max_mireds: 500
       effect_list:
       - colorloop
       - random
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 3
+      hs_color:
+      - 37.778
+      - 52.941
+      rgb_color:
+      - 255
+      - 205
+      - 120
+      xy_color:
+      - 0.459
+      - 0.408
+      effect: none
       friendly_name: Desk Lamp
-      hs_color:
-      - 35.426
-      - 73.725
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 178
-      - 67
-      state: 'on'
       supported_features: 63
-      xy_color:
-      - 0.525
-      - 0.413
-    light.nathan_s_nightstand:
-      friendly_name: Nathan's Nightstand
-      state: 'off'
-      supported_features: 41
-    light.sarah_s_nightstand:
-      friendly_name: Sarah's Nightstand
-      state: 'off'
-      supported_features: 41
+      state: 'on'
 - id: '1597976182065'
   name: Bathroom Night
   entities:
@@ -588,46 +557,18 @@
 - id: '1598012344427'
   name: Guest Bathroom Day
   entities:
-    light.guest_bath_1:
+    light.guest_bathroom:
       brightness: 255
-      friendly_name: Guest Bath 1
-      state: 'on'
+      is_hue_group: true
+      friendly_name: Guest Bathroom
       supported_features: 41
-    light.guest_bath_2:
-      brightness: 255
-      friendly_name: Guest Bath 2
       state: 'on'
-      supported_features: 41
-    light.guest_bath_3:
-      brightness: 255
-      friendly_name: Guest Bath 3
-      state: 'on'
-      supported_features: 41
-    light.guest_bath_4:
-      brightness: 255
-      friendly_name: Guest Bath 4
-      state: 'on'
-      supported_features: 41
 - id: '1598012440242'
   name: Bathroom Day
   entities:
-    light.bath_1:
+    light.bathroom:
       brightness: 255
-      friendly_name: Bath 1
-      state: 'on'
+      is_hue_group: true
+      friendly_name: Bathroom
       supported_features: 41
-    light.bath_2:
-      brightness: 255
-      friendly_name: Bath 2
       state: 'on'
-      supported_features: 41
-    light.bath_3:
-      brightness: 255
-      friendly_name: Bath 3
-      state: 'on'
-      supported_features: 41
-    light.bath_4:
-      brightness: 255
-      friendly_name: Bath 4
-      state: 'on'
-      supported_features: 41

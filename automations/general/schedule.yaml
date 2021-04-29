@@ -18,10 +18,8 @@
   alias: Run Roomba Every Morning
   description: ''
   trigger:
-  - entity_id: calendar.vacuum
-    from: 'off'
-    platform: state
-    to: 'on'
+  - platform: time
+    at: input_datetime.roomba_run_time
   condition: []
   action:
   - data: {}
@@ -32,7 +30,7 @@
   alias: Turn On Master Bedroom Before Bed
   description: ''
   trigger:
-  - at: '21:00'
+  - at: '21:00:00'
     platform: time
   condition:
   - condition: state
