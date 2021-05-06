@@ -85,23 +85,20 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: calendar.wfh
+        entity_id: input_boolean.wfh
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.is_workday
         state: 'on'
       sequence:
-      - service: light.turn_on
+      - service: scene.turn_on
         target:
-          entity_id:
-          - light.office_lamp_top
-          - light.office_ceiling_2
-          - light.hue_color_downlight_1
-          - light.office_ceiling_1
-        data:
-          brightness: 255
+          entity_id: scene.wfh
     default: []
   - choose:
     - conditions:
       - condition: state
-        entity_id: calendar.wfh
+        entity_id: input_boolean.wfh
         state: 'on'
       sequence:
       - wait_for_trigger:
@@ -109,7 +106,7 @@
           entity_id: binary_sensor.office_door
           to: 'off'
           from: 'on'
-        timeout: 01:00:00
+        timeout: 03:00:00
         continue_on_timeout: false
       - service: media_player.media_stop
         target:
@@ -125,7 +122,7 @@
     default: []
   - wait_for_trigger:
     - platform: template
-      value_template: "{{\n  is_state('person.sarah', 'away') \n  and is_state('calendar.wfh',\
+      value_template: "{{\n  is_state('person.sarah', 'away') \n  and is_state('input_boolean.wfh',\
         \ 'on')\n  and is_state('binary_sensor.office_door', 'on')\n  and is_state('binary_sensor.public_space_motion',\
         \ 'off')\n}}"
     timeout: 00:30:00
@@ -210,3 +207,24 @@
       remote: f0a96177eb7693b52288825ef15218bd
       light:
         entity_id: light.bathroom
+- id: '1620251075858'
+  alias: Send Unlock Notification When Coming Home
+  description: ''
+  use_blueprint:
+    path: Martinnygaard/actionable-notifications-for-android-when-entering-or-leaving-a-zone.yaml
+    input:
+      notify_device: 58748fca30234e8a822e3b1600d14200
+      trigger_entity: person.nathan
+      trigger_event: enter
+      trigger_zone: zone.home
+      notification_title: Unlock Door?
+      action_1_title: Unlock
+      first_action:
+      - service: lock.unlock
+        target:
+          entity_id: lock.back_door_lock
+      action_2_title: Lock
+      second_action:
+      - service: lock.lock
+        target:
+          entity_id: lock.back_door_lock
