@@ -50,16 +50,24 @@ action:
     selected_light: !input 'light'
     sensitivity: "{% if sensitivity_input == \"3\" %}\n  1\n{% elif sensitivity_input\
       \ == \"2\" %}\n  5\n{% else %}\n  15\n{% endif %}  \n"
-    prior_brightness: '{{ brightness | default }}'
     command: '{{ trigger.event.data.command }}'
     brightness: '{{ (trigger.event.data.args[0]|int) / (sensitivity|int) * (sensitivity|int)
       }}'
+    action_num: '{{(trigger.event.data.args[1]|int)}}'
 - choose:
   - conditions:
     - '{{ command == ''move_to_level_with_on_off'' }}'
-    - '{{ brightness != prior_brightness }}'
     sequence:
-    - service: light.turn_on
-      target: '{{ selected_light }}'
-      data:
-        brightness: '{{ brightness }}'
+    - choose:
+      - conditions: # adjust the brightness
+        - '{{ action_num == 2 }}'
+        sequence:
+        - service: light.turn_on
+          target: '{{ selected_light }}'
+          data:
+            brightness: '{{ brightness }}'
+      - conditions: # toggle
+        - '{{ action_num == 7 }}'
+        sequence:
+        - service: light.toggle
+          target: '{{ selected_light }}'
