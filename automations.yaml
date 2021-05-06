@@ -228,3 +228,22 @@
       - service: lock.lock
         target:
           entity_id: lock.back_door_lock
+- id: '1620332636293'
+  alias: Low battery level detection & notification for all battery sensors
+  description: ''
+  use_blueprint:
+    path: sbyx/low-battery-level-detection-notification-for-all-battery-sensors.yaml
+    input:
+      exclude:
+        entity_id:
+        - sensor.iphone_battery_state
+        - sensor.iphone_battery_level
+        - sensor.nathan_s_pixel_battery_level
+        - sensor.pixel_4_battery_state
+        - sensor.rooben_battery_level
+      actions:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Battery is Dying
+          url: /lovelace/data
+          more_info: The battery is dying for {{ sensors }}
