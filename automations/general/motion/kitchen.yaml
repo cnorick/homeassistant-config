@@ -19,7 +19,8 @@
   description: ''
   trigger:
   - entity_id: binary_sensor.wyze_motion3
-    for: 0:01:00
+    for: 
+      seconds: "{{ states('input_number.kitchen_motion_timeout') | int * 60 }}"
     platform: state
     to: 'off'
   condition: []
