@@ -59,7 +59,7 @@
       media_content_type: skill
   - wait_for_trigger:
     - platform: state
-      entity_id: binary_sensor.bedroom_door
+      entity_id: binary_sensor.wyze_motion3
       to: 'on'
       from: 'off'
     timeout: 01:00:00
@@ -82,50 +82,12 @@
   - service: media_player.media_stop
     target:
       entity_id: media_player.bathroom_echo
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.wfh
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.is_workday
-        state: 'on'
-      sequence:
-      - service: scene.turn_on
-        target:
-          entity_id: scene.wfh
-    default: []
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.wfh
-        state: 'on'
-      sequence:
-      - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.office_door
-          to: 'off'
-          from: 'on'
-        timeout: 03:00:00
-        continue_on_timeout: false
-      - service: media_player.media_stop
-        target:
-          entity_id: media_player.kitchen_echo_show
-      - service: media_player.select_source
-        data:
-          source: Office Echo
-        target:
-          entity_id: media_player.spotify_nathan_orick
-      - service: media_player.media_play
-        target:
-          entity_id: media_player.spotify_nathan_orick
-    default: []
   - wait_for_trigger:
     - platform: template
       value_template: "{{\n  is_state('person.sarah', 'away') \n  and is_state('input_boolean.wfh',\
         \ 'on')\n  and is_state('binary_sensor.office_door', 'on')\n  and is_state('binary_sensor.public_space_motion',\
         \ 'off')\n}}"
-    timeout: 00:30:00
+    timeout: 01:00:00
   - service: light.turn_off
     data: {}
     entity_id: light.bedroom
@@ -134,7 +96,7 @@
       entity_id: media_player.kitchen_echo_show
   mode: single
 - id: '1619291764637'
-  alias: Side Door Motion
+  alias: Motion -- Side Door
   description: ''
   use_blueprint:
     path: networkingcat/yet_another_motion_automation.yaml
@@ -142,8 +104,16 @@
       time_scene_night: 0:00:00
       motion_entity: binary_sensor.side_door_motion
       light_target:
-        device_id: bfb84aed37592b8dc4fa3621915f54f5
+        entity_id:
+        - light.side_porch
+        - light.laundry_room
       elevation_check: 10
+      time_scene_evening: 0:00:00
+      time_scene_day: 0:00:00
+      time_scene_morning: 0:00:00
+      automation_blocker: input_boolean.outside_motion_lights
+      time_scene_ambient_end: 0:00:00
+      automation_blocker_boolean: true
 - id: '1619296919322'
   alias: Dimmer -- Office
   description: ''
@@ -247,3 +217,139 @@
           message: Battery is Dying
           url: /lovelace/data
           more_info: The battery is dying for {{ sensors }}
+- id: '1620357325146'
+  alias: Motion -- Back Yard
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.back_yard
+      elevation_check: 10
+      time_scene_evening: 0:00:00
+      time_scene_day: 0:00:00
+      time_scene_morning: 0:00:00
+      time_scene_ambient_end: 0:00:00
+      time_scene_ambient_start: 0:00:00
+      automation_blocker: input_boolean.outside_motion_lights
+      light_target:
+        entity_id: light.back_porch
+      automation_blocker_boolean: true
+- id: '1620360426386'
+  alias: Alarm -- Trigger when Armed Away
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.public_space_motion
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.wyze_motion1
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.wyze_motion2
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.back_door_the_current_status_of_the_door
+    from: 'on'
+    to: 'off'
+  condition:
+  - condition: state
+    entity_id: alarm_control_panel.home_alarm
+    state: armed_away
+  action:
+  - service: alarm_control_panel.alarm_trigger
+    target:
+      entity_id: alarm_control_panel.home_alarm
+  mode: single
+- id: alexa_media_player_authentication_required
+  alias: Alexa Media Player Authentication Required
+  trigger:
+    platform: event
+    event_type: alexa_media_relogin_required
+  condition: []
+  action:
+  - service: notify.mobile_app_pixel_4
+    data:
+      title: Alexa Media Player Integration
+      message: 🔑 Authentication Required
+- id: '1620443082110'
+  alias: Alarm -- Run Alarm when Triggered
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: alarm_control_panel.home_alarm
+    to: triggered
+  condition: []
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Intruder Alert
+      more_info: The house alarm is going off
+  - service: media_player.volume_set
+    target:
+      device_id: 28e026b391880a6a90ba262b30514dcc
+    data:
+      volume_level: 1
+  - service: notify.alexa_media
+    data:
+      data:
+        type: tts
+      target: group.alexa_everywhere
+      message: Alarm will sound in 10 seconds
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 14
+      milliseconds: 0
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.home_alarm
+      state: disarmed
+  - service: media_player.volume_set
+    data:
+      volume_level: 1
+    target:
+      entity_id: media_player.everywhere
+  - service: script.turn_on
+    target:
+      entity_id:
+      - script.alarm_flash_while_triggered
+      - script.alarm_beep_while_triggered
+  mode: single
+- id: '1621301311010'
+  alias: Motion -- Front Door
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.front_door_motion
+      time_scene_evening: 0:00:00
+      time_scene_day: 0:00:00
+      light_target:
+        entity_id:
+        - light.front_porch
+        - light.front_door
+      time_scene_morning: 0:00:00
+      time_scene_ambient_end: 0:00:00
+      automation_blocker: input_boolean.outside_motion_lights
+      time_scene_ambient_start: 0:00:00
+      automation_blocker_boolean: true
+- id: '1621799711823'
+  alias: Motion -- Mudroom
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.mudroom_camera
+    to: 'on'
+  condition: []
+  action:
+  - service: notify.mobile_app_iphone
+    data:
+      title: The Cat is Eating
+      message: Check Wyze for camera feed
+  mode: single
