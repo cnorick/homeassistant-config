@@ -16,6 +16,8 @@
     service: media_player.turn_off
   - entity_id: group.fans
     service: homeassistant.turn_off
+  - service: switch.turn_on
+    entity_id: switch.mudroom_camera
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.start
@@ -28,10 +30,16 @@
     from: 'off'
     platform: state
     to: 'on'
+  variables:
+    lights:
+      - light.front_porch
+      - light.back_porch
+      - light.side_porch
+      - light.laundry_room
+      - light.back_door
+      - light.front_door
   condition: []
   action:
-  - service: light.turn_on
-    entity_id: group.kitchen_lights
   - choose:
     - conditions:
       - condition: sun
@@ -39,15 +47,22 @@
         after_offset: "-01:00:00"
       sequence:
       - service: light.turn_on
-        entity_id: light.string_lights
-      - service: light.turn_on
-        entity_id: light.side_porch
+        target:
+          entity_id: "{{ lights }}"
     default: []
+  - service: switch.turn_off
+    entity_id: switch.mudroom_camera
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
   - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
+    continue_on_timeout: true
+    timeout: 00:00:10
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
+  - delay: 00:10:00
+  - service: light.turn_off
+    target:
+      entity_id: "{{ lights }}"
 
