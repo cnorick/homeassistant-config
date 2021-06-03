@@ -1,15 +1,3 @@
-# - id: '1587673576123'
-#   alias: Toggle Automations When WFH
-#   description: ''
-#   trigger:
-#   - entity_id: input_boolean.wfh
-#     platform: state
-#   condition: []
-#   action:
-#   - entity_id: group.wfh_automations
-#     service_template: "{% if is_state('input_boolean.wfh', 'on') %}\n  homeassistant.turn_on\n\
-#       {% else %}\n  homeassistant.turn_off\n{% endif %}"
-
 - id: '1587668411958'
   alias: Calendar Toggles WFH
   description: ''
@@ -25,85 +13,10 @@
     service: "{% if is_state('binary_sensor.is_workday', 'on') %}\n\
       \  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif %}"
 
-# - id: start_wfh
-#   alias: Start WFH
-#   description: 'Turns on office lights when workday starts if working from home'
-#   trigger:
-#   - platform: time
-#     at:
-#       - input_datetime.work_start_time
-#   condition:
-#   - condition: state
-#     # We have to use calendar instead of input_boolean here because the input boolean
-#     # isn't turned on until work_start_time
-#     entity_id: calendar.wfh
-#     state: 'on'
-#   action:
-#   - service: scene.turn_on
-#     data:
-#       entity_id: scene.wfh
-#       transition: 600
-
-# - id: start_wfh_lunch
-#   alias: Start WFH Lunch
-#   description: 'Sets lights in office to relax in preparation for lunch'
-#   trigger:
-#   - platform: template
-#     value_template: >-
-#       {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-#         >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
-#       }}
-#   condition:
-#   - condition: state
-#     entity_id: input_boolean.wfh
-#     state: 'on'
-#   action:
-#   - service: scene.turn_on
-#     data:
-#       entity_id: scene.wfh_relax
-#       transition: 600
-
-# - id: end_wfh_lunch
-#   alias: End WFH Lunch
-#   description: 'Sets lights in office to WFH after lunch'
-#   trigger:
-#   - platform: template
-#     # Trigger this one hour after lunch.
-#     value_template: >-
-#       {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-#         >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
-#       }}
-#   condition:
-#   - condition: state
-#     entity_id: input_boolean.wfh
-#     state: 'on'
-#   action:
-#   - service: scene.turn_on
-#     data:
-#       entity_id: scene.wfh
-#       transition: 600
-
-# - id: end_wfh
-#   alias: End WFH
-#   description: 'Turns on relax at the end of the day'
-#   trigger:
-#   - platform: template
-#     value_template: >-
-#       {{   as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-#         >= as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
-#       }}
-#   condition:
-#   - condition: state
-#     entity_id: input_boolean.wfh
-#     state: 'on'
-#   action:
-#   - service: scene.turn_on
-#     data:
-#       entity_id: scene.wfh_relax
-#       transition: 600
 
 - id: wfh
   alias: Work from Home
+  mode: restart
   trigger:
   - platform: state
     entity_id: binary_sensor.is_during_workday
@@ -117,6 +30,8 @@
     entity_id: binary_sensor.occupied
     from: 'off'
     to: 'on'
+  - platform: homeassistant
+    event: start
   condition:
   - condition: state
     entity_id: input_boolean.wfh
@@ -128,45 +43,38 @@
     entity_id: binary_sensor.occupied
     state: 'on'
   action:
-  - variables:
-      is_morning: >- 
-        {{
-          as_timestamp(strptime(states('sensor.time'), '%H:%M'))
-          < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
-        }}
-      is_lunch: >-
-        {{
-          as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-          >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
-          and
-          as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-          < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
-        }}
-      is_afternoon: >-
-        {{
-          as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-          >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
-          and
-          as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-          < as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
-        }}
-      is_evening: >-
-        {{
-            as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
-            >= as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
-        }}
   # Morning
   - choose:
     - conditions:
-      - condition: template
-        value_template: "{{ is_morning }}"
+      - condition: state
+        entity_id: binary_sensor.is_morning
+        state: 'on'
       sequence:
-        # Do morning stuff
-        - wait_template: "{{ is_lunch }}"
-          timeout:
-            hours: "5"
+        - service: scene.turn_on
+          target:
+            entity_id: scene.wfh
+        - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.office_door
+            to: 'off'
+            from: 'on'
+          timeout: 03:00:00
+          continue_on_timeout: true
+        - service: media_player.media_stop
+          target: 
+            entity_id: media_player.kitchen_echo_show
+        - service: media_player.select_source
+          data:
+            source: Office Echo
+          target:
+            entity_id: media_player.spotify_nathan_orick
+        - delay: '00:00:05'
+        - service: media_player.media_play
+          target:
+            entity_id: media_player.spotify_nathan_orick
+        - wait_template: "{{ is_state('binary_sensor.is_lunch', 'on') }}"
+          timeout: 05:00:00
           continue_on_timeout: false
-
   - condition: and
     conditions:
     - condition: state
@@ -179,14 +87,27 @@
   # Start of Lunch
   - choose:
     - conditions:
-      - condition: template
-        value_template: "{{ is_lunch }}"
+      - condition: state
+        entity_id: binary_sensor.is_lunch
+        state: 'on'
       sequence:
       - service: scene.turn_on
         data:
           entity_id: scene.wfh_relax
           transition: 600
-      - wait_template: "{{ is_afternoon }}"
+      - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.wyze_motion3
+          to: 'on'
+
+      - service: media_player.play_media
+        data:
+          media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+          media_content_type: skill
+        target:
+          entity_id:
+          - media_player.kitchen_echo_show
+      - wait_template: "{{ is_state('binary_sensor.is_afternoon', 'on') }}"
         timeout:
             hours: "5"
         continue_on_timeout: false
@@ -203,14 +124,15 @@
   # End of Lunch
   - choose:
     - conditions:
-      - condition: template
-        value_template: "{{ is_afternoon }}"
+      - condition: state
+        entity_id: binary_sensor.is_afternoon
+        state: 'on'
       sequence:
       - service: scene.turn_on
         data:
           entity_id: scene.wfh
           transition: 600
-      - wait_template: "{{ is_evening }}"
+      - wait_template: "{{ is_state('binary_sensor.is_evening', 'on') }}"
         timeout:
             hours: "5"
         continue_on_timeout: false
@@ -224,13 +146,26 @@
       entity_id: input_boolean.wfh
       state: 'on'
 
-    # End of Day
+  # End of Day
   - choose:
     - conditions:
-      - condition: template
-        value_template: "{{ is_evening }}"
+      - condition: state
+        entity_id: binary_sensor.is_evening
+        state: 'on'
       sequence:
       - service: scene.turn_on
         data:
           entity_id: scene.wfh_relax
           transition: 600
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.wfh
+      - delay: "00:10:00"
+      - service: light.turn_off
+        data:
+          transition: 10
+        target:
+          area_id: a78dc9b8222b47eebe4561988e57b0b0
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.wfh

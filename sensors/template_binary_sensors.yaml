@@ -20,6 +20,40 @@ is_during_workday:
       and states('sensor.time') < states('input_datetime.work_end_time').rsplit(':',1)[0]
     }}
 
+is_morning: 
+  value_template: >- 
+    {{
+      as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+      < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
+    }}
+
+is_lunch: 
+  value_template: >-
+    {{
+      as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+      >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
+      and
+      as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+      < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
+    }}
+
+is_afternoon: 
+  value_template: >-
+    {{
+      as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+      >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
+      and
+      as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+      < as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
+    }}
+
+is_evening: 
+  value_template: >-
+    {{
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
+    }}
+
 everyone_in_bed:
   value_template: >-
     {{ 
