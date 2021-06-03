@@ -57,11 +57,15 @@ notify_sarah_and_nathan:
         clickAction: '{{ url }}'
         image: '{{ image }}'
     service: notify.mobile_app_pixel_4
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
   - data_template:
       data:
         type: announce
       message: '{{ message }}'
     service: notify.alexa_media_everywhere
+  mode: single
 alarm:
   alias: Alarm
   sequence:
@@ -156,4 +160,70 @@ show_morning_dashboard:
       entity_id: media_player.chromecast
       dashboard_path: lovelace
       view_path: morning-dashboard
+  mode: single
+alarm_beep_while_triggered:
+  alias: Alarm -- Beep While Triggered
+  sequence:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state: triggered
+      sequence:
+      - service: media_player.play_media
+        data:
+          media_content_type: sound
+          media_content_id: buzzers_pistols_01
+        target:
+          entity_id:
+          - media_player.guest_bathroom_echo
+          - media_player.bedroom_echo
+          - media_player.bedroom_tv_2
+          - media_player.bathroom_echo
+          - media_player.kitchen_echo_show
+          - media_player.office_echo
+          - media_player.living_room_echo
+          - media_player.guest_bedroom_echo
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 2
+          milliseconds: 0
+  mode: single
+alarm_flash_while_triggered:
+  alias: Alarm -- Flash Lights While Triggered
+  sequence:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state: triggered
+      sequence:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: group.all_lights
+            state: 'on'
+          sequence:
+          - service: light.turn_off
+            target:
+              entity_id: group.all_lights
+            data: {}
+        default:
+        - service: light.turn_on
+          data:
+            effect: random
+            brightness: 255
+          target:
+            entity_id: group.all_lights
+        - service: light.turn_on
+          target:
+            entity_id: group.all_lights
+          data:
+            flash: long
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 7
+          milliseconds: 0
   mode: single
