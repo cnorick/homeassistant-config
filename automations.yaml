@@ -333,7 +333,6 @@
       light_target:
         entity_id:
         - light.front_porch
-        - light.front_door
       time_scene_morning: 0:00:00
       time_scene_ambient_end: 0:00:00
       automation_blocker: input_boolean.outside_motion_lights
