@@ -3,3 +3,4 @@ kitchen_lights:
   entities:
     - light.kitchen_counter
     - light.kitchen_overhead
+    - light.island

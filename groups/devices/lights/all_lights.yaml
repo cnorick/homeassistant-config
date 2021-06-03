@@ -16,6 +16,10 @@ shelly_lights:
     - light.bedroom_rope_lights
     - light.kitchen_counter
     - light.kitchen_overhead
+    - light.island
+    - light.back_door
+    - light.front_porch
+    - light.back_porch
     - light.side_porch
     - light.laundry_room
     
