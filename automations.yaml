@@ -52,14 +52,27 @@
       entity_id:
       - media_player.bathroom_echo
       - media_player.kitchen_echo_show
-  - service: media_player.play_media
-    data:
-      entity_id: media_player.bathroom_echo
-      media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
-      media_content_type: skill
+  - choose:
+    - conditions:
+      - condition: and
+        conditions:
+        - condition: not
+          conditions:
+          - condition: state
+            entity_id: sensor.pixel_4_battery_state
+            state: charging
+        - condition: state
+          entity_id: binary_sensor.pixel_4_device_locked
+          state: 'on'
+      sequence:
+      - service: media_player.play_media
+        data:
+          entity_id: media_player.bathroom_echo
+          media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+          media_content_type: skill
   - wait_for_trigger:
     - platform: state
-      entity_id: binary_sensor.wyze_motion3
+      entity_id: binary_sensor.bedroom_door
       to: 'on'
       from: 'off'
     timeout: 01:00:00
@@ -72,13 +85,26 @@
     device_id: a634fea07a944853cfa4fe710f25fd04
     entity_id: light.kitchen_overhead
     domain: light
-  - service: media_player.play_media
-    data:
-      media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
-      media_content_type: skill
-    target:
-      entity_id:
-      - media_player.kitchen_echo_show
+  - choose:
+    - conditions:
+      - condition: and
+        conditions:
+        - condition: not
+          conditions:
+          - condition: state
+            entity_id: sensor.pixel_4_battery_state
+            state: charging
+        - condition: state
+          entity_id: binary_sensor.pixel_4_device_locked
+          state: 'on'
+      sequence:
+      - service: media_player.play_media
+        data:
+          media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+          media_content_type: skill
+        target:
+          entity_id:
+          - media_player.kitchen_echo_show
   - service: media_player.media_stop
     target:
       entity_id: media_player.bathroom_echo
@@ -111,9 +137,10 @@
       time_scene_evening: 0:00:00
       time_scene_day: 0:00:00
       time_scene_morning: 0:00:00
-      automation_blocker: input_boolean.outside_motion_lights
+      automation_blocker: input_boolean.people_outside
       time_scene_ambient_end: 0:00:00
-      automation_blocker_boolean: true
+      automation_blocker_boolean: false
+      no_motion_wait: 300
 - id: '1619296919322'
   alias: Dimmer -- Office
   description: ''
@@ -231,10 +258,11 @@
       time_scene_morning: 0:00:00
       time_scene_ambient_end: 0:00:00
       time_scene_ambient_start: 0:00:00
-      automation_blocker: input_boolean.outside_motion_lights
+      automation_blocker: input_boolean.people_outside
       light_target:
         entity_id: light.back_porch
-      automation_blocker_boolean: true
+      automation_blocker_boolean: false
+      no_motion_wait: 300
 - id: '1620360426386'
   alias: Alarm -- Trigger when Armed Away
   description: ''
@@ -335,11 +363,12 @@
         - light.front_porch
       time_scene_morning: 0:00:00
       time_scene_ambient_end: 0:00:00
-      automation_blocker: input_boolean.outside_motion_lights
+      automation_blocker: input_boolean.people_outside
       time_scene_ambient_start: 0:00:00
-      automation_blocker_boolean: true
+      automation_blocker_boolean: false
+      no_motion_wait: 300
 - id: '1621799711823'
-  alias: Motion -- Mudroom
+  alias: Motion -- Mudroom Camera
   description: ''
   trigger:
   - platform: state
@@ -351,4 +380,120 @@
     data:
       title: The Cat is Eating
       message: Check Wyze for camera feed
+  mode: single
+- id: '1622924827820'
+  alias: Motion -- Bomb Shelter
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.wyze_motion4
+      light_target:
+        entity_id: light.bomb_shelter
+- id: '1622936976816'
+  alias: Motion -- Mudroom
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.wyze_motion5
+      light_target:
+        entity_id: light.laundry_room
+- id: '1622937162847'
+  alias: Turn on Basement When Door is Opened
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.basement_door
+    to: 'on'
+  condition: []
+  action:
+  - service: light.turn_on
+    target:
+      entity_id:
+      - light.basement_stairs
+      - light.basement_lights
+    data:
+      brightness: 255
+  mode: single
+- id: '1622939127924'
+  alias: Toggle Basement Lights
+  description: WIP
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.basement_door
+    to: 'on'
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{\n  states.binary_sensor.basement_door.last_changed | as_timestamp\
+          \ -\n  states.binary_sensor.wyze_motion5.last_changed | as_timestamp > 0\n\
+          }}"
+      sequence: []
+    default: []
+  mode: parallel
+  max: 10
+- id: '1622946307084'
+  alias: Door -- Back Door
+  description: ''
+  use_blueprint:
+    path: networkingcat/yet_another_motion_automation.yaml
+    input:
+      time_scene_night: 0:00:00
+      motion_entity: binary_sensor.back_door_the_current_status_of_the_door
+      light_target:
+        device_id: 29856b1eb3bc143dc0aad2cc7f6013e6
+      no_motion_wait: 300
+      elevation_check: 4
+- id: '1623941903977'
+  alias: Outside Mode
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.people_outside
+    to: 'on'
+  - platform: state
+    entity_id: input_boolean.people_outside
+    to: 'off'
+  - platform: sun
+    event: sunset
+    offset: -00:10:00
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.people_outside
+        state: 'on'
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.back_yard
+      - service: climate.set_preset_mode
+        target:
+          entity_id: climate.kitchen
+        data:
+          preset_mode: eco
+      - condition: sun
+        after: sunset
+        after_offset: -00:10:00
+      - service: light.turn_on
+        target:
+          entity_id: light.string_lights
+    default:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.back_yard
+    - service: light.turn_off
+      target:
+        entity_id: light.string_lights
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.kitchen
+      data:
+        preset_mode: none
   mode: single
