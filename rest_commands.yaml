@@ -1,0 +1,6 @@
+wall_panel:
+  url: !secret wall_panel_url
+  method: POST
+  #payload: '{"speak": "hello"}'
+  payload: '{"{{ command }}":{{ data }}}'
+  content_type:  'application/json; charset=utf-8'
