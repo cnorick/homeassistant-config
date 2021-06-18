@@ -451,6 +451,56 @@
       mac: 2CAA8E3D63D7
       friendly_name: Office Lamp Top
       supported_features: 3
+    light.under_desk_lights:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blue_fade
+      - blue_strobe
+      - colorjump
+      - colorloop
+      - colorstrobe
+      - cyan_fade
+      - cyan_strobe
+      - gb_cross_fade
+      - green_fade
+      - green_strobe
+      - purple_fade
+      - purple_strobe
+      - rb_cross_fade
+      - red_fade
+      - red_strobe
+      - rg_cross_fade
+      - white_fade
+      - white_strobe
+      - yellow_fade
+      - yellow_strobe
+      - random
+      supported_color_modes:
+      - color_temp
+      - hs
+      - rgbw
+      color_mode: rgbw
+      brightness: 84
+      hs_color:
+      - 307.143
+      - 100
+      rgb_color:
+      - 255
+      - 0
+      - 224
+      rgbw_color:
+      - 255
+      - 0
+      - 224
+      - 0
+      xy_color:
+      - 0.427
+      - 0.174
+      white_value: 0
+      friendly_name: Under Desk Lights
+      supported_features: 151
+      state: 'on'
 - id: '1592253048242'
   name: WFH Relax
   entities:
