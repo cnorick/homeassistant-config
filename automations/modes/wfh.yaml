@@ -13,6 +13,56 @@
     service: "{% if is_state('binary_sensor.is_workday', 'on') %}\n\
       \  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif %}"
 
+- id: wfh_fan
+  alias: WFH -- Fan
+  mode: single
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.living_room_motion_sensor_air_temperature
+      above: input_number.fan_temperature
+    - platform: numeric_state
+      entity_id: sensor.living_room_motion_sensor_air_temperature
+      below: input_number.fan_temperature
+    - platform: state
+      entity_id: binary_sensor.is_during_workday
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: input_boolean.wfh
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.occupied
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: input_number.fan_temperature
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.is_during_workday
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  action:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.living_room_motion_sensor_air_temperature
+        above: input_number.fan_temperature
+      sequence:
+        - service: switch.turn_on
+          target:
+            entity_id: switch.office_plug
+    default:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.office_plug
+    
+  
 
 - id: wfh
   alias: Work from Home
@@ -95,11 +145,12 @@
         data:
           entity_id: scene.wfh_relax
           transition: 600
+      - service: switch.turn_off
+        entity_id: switch.office_plug
       - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.wyze_motion3
           to: 'on'
-
       - service: media_player.play_media
         data:
           media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
@@ -131,7 +182,9 @@
       - service: scene.turn_on
         data:
           entity_id: scene.wfh
-          transition: 600
+          transition: 60
+      - service: automation.trigger
+        entity_id: automation.wfh_fan
       - wait_template: "{{ is_state('binary_sensor.is_evening', 'on') }}"
         timeout:
             hours: "5"
@@ -166,6 +219,8 @@
           transition: 10
         target:
           area_id: a78dc9b8222b47eebe4561988e57b0b0
+      - service: switch.turn_off
+        entity_id: switch.office_plug
       - service: input_boolean.turn_off
         data:
           entity_id: input_boolean.wfh
