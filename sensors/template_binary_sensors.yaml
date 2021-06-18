@@ -58,10 +58,6 @@ everyone_in_bed:
   value_template: >-
     {{ 
         (
-          is_state('media_player.living_room_tv', 'off')
-          or is_state('media_player.living_room_tv', 'unavailable')
-        )
-        and (
           is_state('binary_sensor.public_space_motion', 'off')
           and states('sensor.timestamp') | float >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
         )
@@ -93,9 +89,14 @@ are_master_bedroom_people_home:
 public_space_motion:
   friendly_name: "Public Space Motion"
   device_class: motion
-  # TODO: Add other motion sensors once they're set up
   value_template: >-
-    {{ is_state('binary_sensor.office_motion', 'on') or is_state('binary_sensor.wyze_motion3', 'on') }}
+    {{ 
+      is_state('binary_sensor.living_room_motion', 'on')
+      or is_state('binary_sensor.wyze_motion3', 'on')
+      or is_state('binary_sensor.wyze_motion4', 'on')
+      or is_state('binary_sensor.wyze_motion5', 'on')
+    }}
+
 
 is_bedtime:
   friendly_name: "Is Bedtime"
