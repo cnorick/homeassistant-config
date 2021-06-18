@@ -20,6 +20,19 @@
       title: Hide Yo Kids, Hide Yo Wife!
     service: notify.notify
 
+- id: 'shed-notifications'
+  alias: Notify when Shed Door is Opened
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.shed_door
+    platform: state
+    to: 'on'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Shed Door Was Opened
+  mode: single
+
 - id: '1587614908680'
   alias: Notify If Bedroom Door Changes When We're Away
   description: ''
