@@ -9,6 +9,10 @@ wyze_lights:
     - light.office_lamp_top
     - light.drc1
     - light.drc2
+    - light.bl1
+    - light.bl2
+    - light.basement_stairs
+    - light.bomb_shelter
 
 shelly_lights:
   name: Shelly Lights
@@ -26,6 +30,10 @@ shelly_lights:
 tplink_lights:
   entities:
     - light.string_lights
+
+other_lights:
+  entities:
+    - light.under_desk_lights
 
 all_lights:
   name: All Lights

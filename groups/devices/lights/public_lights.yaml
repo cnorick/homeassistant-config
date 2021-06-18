@@ -10,3 +10,7 @@ public_lights:
     - light.office_lamp_top
     - light.side_porch
     - light.string_lights
+    - light.front_porch
+    - light.back_door
+    - light.back_porch
+    - light.laundry_room

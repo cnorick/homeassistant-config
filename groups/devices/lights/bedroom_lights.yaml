@@ -3,5 +3,4 @@ bedroom_lights:
   entities:
     - light.bedroom
     - light.bathroom
-    - light.bedroom_closet
-    - light.bathroom
+    - light.bedroom_rope_lights
