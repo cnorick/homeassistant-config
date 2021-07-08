@@ -627,3 +627,13 @@
       friendly_name: Bathroom
       supported_features: 41
       state: 'on'
+- id: '1625238957387'
+  name: WFH Unmuted
+  entities:
+    switch.office_plug:
+      attribution: Data provided by Wyze
+      state: 'off'
+      available: true
+      device model: WLPP1
+      mac: 2CAA8E57E995-switch
+      friendly_name: Office Fan
