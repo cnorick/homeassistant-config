@@ -129,12 +129,21 @@
     entity_id: input_boolean.night_mode
     state: 'off'
   action:
-  - service: script.notify_sarah_and_nathan
-    data:
-      message: Mail Time
-      more_info: Mail has been delivered to the mailbox. Click to see what you have.
-      url: /lovelace/mail
-      image: "{{ states('sensor.mail_image_url') }}"
-      image_type: gif
+  - choose:
+    - conditions:
+        condition: state
+        entity_id:
+          - input_boolean.mail_in_box
+        state: 'off'
+      sequence:
+        - service: script.notify_sarah_and_nathan
+          data:
+            message: Mail Time
+            more_info: Mail has been delivered to the mailbox. Click to see what you have.
+            url: /lovelace/mail
+            image: "{{ states('sensor.mail_image_url') }}"
+            image_type: gif
+  - service: input_boolean.toggle
+    entity_id: input_boolean.mail_in_box
   mode: single
 
