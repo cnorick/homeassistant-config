@@ -573,22 +573,51 @@
   name: Bathroom Night
   entities:
     light.bath_1:
-      brightness: 45
+      supported_color_modes:
+      - brightness
+      color_mode: brightness
+      brightness: 90
       friendly_name: Bath 1
+      supported_features: 41
       state: 'on'
-      supported_features: 41
     light.bath_2:
+      supported_color_modes:
+      - brightness
       friendly_name: Bath 2
-      state: 'off'
       supported_features: 41
+      state: 'off'
     light.bath_3:
+      supported_color_modes:
+      - brightness
       friendly_name: Bath 3
-      state: 'off'
       supported_features: 41
+      state: 'off'
     light.bath_4:
+      supported_color_modes:
+      - brightness
       friendly_name: Bath 4
-      state: 'off'
       supported_features: 41
+      state: 'off'
+    light.bath_5:
+      supported_color_modes:
+      - brightness
+      friendly_name: Bath 5
+      supported_features: 41
+      state: 'off'
+    light.bath_6:
+      supported_color_modes:
+      - brightness
+      color_mode: brightness
+      brightness: 90
+      friendly_name: Bath 6
+      supported_features: 41
+      state: 'on'
+    light.bath_ceiling:
+      supported_color_modes:
+      - brightness
+      friendly_name: Bath Ceiling
+      supported_features: 41
+      state: 'off'
 - id: '1598011635236'
   name: Guest Bathroom Night
   entities:
