@@ -20,6 +20,19 @@
       title: Hide Yo Kids, Hide Yo Wife!
     service: notify.notify
 
+- id: 'jammed-lock-notifications'
+  alias: Notify when Door is Jammed
+  description: ''
+  trigger:
+  - entity_id: lock.back_door
+    platform: state
+    to: 'jammed'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Back Door is Jammed
+  mode: single
+
 - id: 'shed-notifications'
   alias: Notify when Shed Door is Opened
   description: ''
@@ -27,6 +40,11 @@
   - entity_id: binary_sensor.shed_door
     platform: state
     to: 'on'
+  condition: 
+  - condition: state
+    entity_id:
+      - input_boolean.people_outside
+    state: 'off'
   action:
   - service: script.notify_sarah_and_nathan
     data:
@@ -121,20 +139,25 @@
     entity_id:
       - binary_sensor.mailbox_vibration
     to: 'on'
-  condition:
-  - condition: numeric_state
-    entity_id: sensor.mail_usps_mail
-    above: '0'
-  - condition: state
-    entity_id: input_boolean.night_mode
-    state: 'off'
+    id: 'vibration'
+  - platform: time
+    at: "00:00:00"
+    id: 'midnight'
   action:
   - choose:
     - conditions:
-        condition: state
-        entity_id:
-          - input_boolean.mail_in_box
-        state: 'off'
+        - condition: numeric_state
+          entity_id: sensor.mail_usps_mail
+          above: '0'
+        - condition: state
+          entity_id: input_boolean.night_mode
+          state: 'off'
+        - condition: state
+          entity_id:
+            - input_boolean.mail_in_box
+          state: 'off'
+        - condition: trigger
+          id: 'vibration'
       sequence:
         - service: script.notify_sarah_and_nathan
           data:
@@ -143,7 +166,10 @@
             url: /lovelace/mail
             image: "{{ states('sensor.mail_image_url') }}"
             image_type: gif
-  - service: input_boolean.toggle
-    entity_id: input_boolean.mail_in_box
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.mail_in_box
+    default:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.mail_in_box
   mode: single
 
