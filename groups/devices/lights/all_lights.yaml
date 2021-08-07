@@ -42,3 +42,4 @@ all_lights:
     - group.wyze_lights
     - group.shelly_lights
     - group.tplink_lights
+    - group.other_lights
