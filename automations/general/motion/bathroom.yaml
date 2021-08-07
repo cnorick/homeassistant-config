@@ -19,8 +19,9 @@
         seconds: >-
           {% set pee_timeout = states('input_number.pee_timeout') | int * 60 %}
           {% set poo_timeout = states('input_number.poo_timeout') | int * 60 %}
+          {% set night_timeout = states('input_number.night_timeout') | int * 60 %}
           {% if is_state("binary_sensor.bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
-          {% if action == "poo" %} {{ poo_timeout }} {% else %} {{ pee_timeout }} {% endif %}
+          {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
     timeout: 3600
     continue_on_timeout: true
   - service: light.turn_off
@@ -49,8 +50,9 @@
         seconds: >-
           {% set pee_timeout = states('input_number.pee_timeout') | int * 60 %}
           {% set poo_timeout = states('input_number.poo_timeout') | int * 60 %}
+          {% set night_timeout = states('input_number.night_timeout') | int * 60 %}
           {% if is_state("binary_sensor.guest_bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
-          {% if action == "poo" %} {{ poo_timeout }} {% else %} {{ pee_timeout }} {% endif %}
+          {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
     timeout: 3600
     continue_on_timeout: true
   - service: light.turn_off
