@@ -110,10 +110,10 @@
       entity_id: media_player.bathroom_echo
   - wait_for_trigger:
     - platform: template
-      value_template: "{{\n  is_state('person.sarah', 'away') \n  and is_state('input_boolean.wfh',\
-        \ 'on')\n  and is_state('binary_sensor.office_door', 'on')\n  and is_state('binary_sensor.public_space_motion',\
+      value_template: "{{\n    is_state('person.sarah', 'not_home') \n    and is_state('input_boolean.wfh',\
+        \ 'on')\n    and is_state('binary_sensor.office_door', 'off')\n    and is_state('binary_sensor.public_space_motion',\
         \ 'off')\n}}"
-    timeout: 01:00:00
+    timeout: 02:00:00
   - service: light.turn_off
     data: {}
     entity_id: light.bedroom
@@ -204,27 +204,6 @@
       remote: f0a96177eb7693b52288825ef15218bd
       light:
         entity_id: light.bathroom
-- id: '1620251075858'
-  alias: Send Unlock Notification When Coming Home
-  description: ''
-  use_blueprint:
-    path: Martinnygaard/actionable-notifications-for-android-when-entering-or-leaving-a-zone.yaml
-    input:
-      notify_device: 58748fca30234e8a822e3b1600d14200
-      trigger_entity: person.nathan
-      trigger_event: enter
-      trigger_zone: zone.home
-      notification_title: Unlock Door?
-      action_1_title: Unlock
-      first_action:
-      - service: lock.unlock
-        target:
-          entity_id: lock.back_door_lock
-      action_2_title: Lock
-      second_action:
-      - service: lock.lock
-        target:
-          entity_id: lock.back_door_lock
 - id: '1620332636293'
   alias: Low battery level detection & notification for all battery sensors
   description: ''
@@ -280,7 +259,7 @@
     from: 'off'
     to: 'on'
   - platform: state
-    entity_id: binary_sensor.back_door_the_current_status_of_the_door
+    entity_id: binary_sensor.back_door_open
     from: 'on'
     to: 'off'
   condition:
@@ -372,8 +351,8 @@
   description: ''
   trigger:
   - platform: state
-    entity_id: binary_sensor.mudroom_camera
     to: 'on'
+    entity_id: binary_sensor.mudroom_camera
   condition: []
   action:
   - service: notify.mobile_app_iphone
@@ -444,7 +423,7 @@
     path: networkingcat/yet_another_motion_automation.yaml
     input:
       time_scene_night: 0:00:00
-      motion_entity: binary_sensor.back_door_the_current_status_of_the_door
+      motion_entity: binary_sensor.back_door_open
       light_target:
         device_id: 29856b1eb3bc143dc0aad2cc7f6013e6
       no_motion_wait: 300
@@ -496,4 +475,164 @@
         entity_id: climate.kitchen
       data:
         preset_mode: none
+  mode: single
+- id: '1625057398961'
+  alias: Charging Phones Turns on Night Mode
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.iphone_battery_state
+    to: Charging
+    from: Not Charging
+  - platform: state
+    entity_id: binary_sensor.pixel_4_is_charging
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.is_bedtime
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  - condition: state
+    entity_id: sensor.iphone_battery_state
+    state: Charging
+  - condition: state
+    entity_id: binary_sensor.pixel_4_is_charging
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.is_bedtime
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.visitors
+    state: 'off'
+  action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.night_mode
+  mode: single
+- id: '1625057755379'
+  alias: Notify of Basement Water
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.basement_water_sensor_water_detected
+    to: 'on'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Warning, Basement Flooding
+      more_info: Water has been detected in the basement. Check the water sensor attached
+        to the water heater. Turn off the water main if there is active flooding.
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - repeat:
+      while:
+      - condition: state
+        entity_id: binary_sensor.basement_water_sensor_water_detected
+        state: 'on'
+      sequence:
+      - service: notify.alexa_media_nathan_s_2nd_echo_dot
+        data:
+          message: Inspect the water sensor attached to the water heater. If there
+            is active flooding from the water line, turn off the main water valve
+            located on the ceiling in the northwest corner of the basement, directly
+            under the guest bedroom, and diagonally opposite of the breaker box. Look
+            for a yellow handle on a blue pipe. To stop notifications, pull the water
+            sensor out of the water and dry it off. Otherwise, turn off the automation
+            named Notify of Basement Water in Home Assistant.
+          data:
+            type: announce
+      - service: notify.alexa_media_upstairs
+        data:
+          message: Warning! The basement is flooding. Inspect the water sensor near
+            the water heater.
+          data:
+            type: announce
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 45
+          milliseconds: 0
+  mode: single
+- id: '1626990104585'
+  alias: Send Data to OCS
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /10
+  condition: []
+  action:
+  - service: rest_command.ocs
+  mode: single
+- id: '1627506438431'
+  alias: Turn on Lights When Doors are Opened
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.bedroom_door
+    to: 'on'
+    id: bedroom_door
+  - platform: state
+    entity_id: binary_sensor.office_door
+    id: office_door
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.guest_bedroom_door
+    id: guest_bedroom_door
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: input_boolean.couch_sleepers
+    state: 'off'
+  - condition: numeric_state
+    entity_id: sensor.living_room_motion_sensor_illuminance
+    below: '5'
+  action:
+  - service: light.turn_on
+    target:
+      area_id: dining_room
+    data:
+      transition: 5
+      brightness_pct: 40
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - service: light.turn_off
+    target:
+      area_id: dining_room
+    data:
+      transition: 9
+  mode: single
+- id: '1628378848989'
+  alias: Alexa, I'm Leaving
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.alexa_leaving
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - wait_for_trigger:
+    - platform: state
+      entity_id: binary_sensor.back_door_open
+      from: 'on'
+      to: 'off'
+    continue_on_timeout: true
+    timeout: '60'
+  - service: lock.lock
+    target:
+      entity_id: lock.back_door
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.alexa_leaving
   mode: single
