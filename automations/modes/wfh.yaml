@@ -20,9 +20,11 @@
     - platform: numeric_state
       entity_id: sensor.bme280_temperature
       above: input_number.fan_temperature
+      for: '00:01:00'
     - platform: numeric_state
       entity_id: sensor.bme280_temperature
       below: input_number.fan_temperature
+      for: '00:01:00'
     - platform: state
       entity_id: binary_sensor.is_during_workday
       from: 'off'
