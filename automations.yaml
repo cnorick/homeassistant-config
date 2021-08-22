@@ -463,6 +463,10 @@
       - service: light.turn_on
         target:
           entity_id: light.string_lights
+      - device_id: 853415c2bf390dc15ae0e2bf6f7569b4
+        domain: vacuum
+        entity_id: vacuum.rooben
+        type: clean
     default:
     - service: switch.turn_on
       target:
@@ -475,6 +479,10 @@
         entity_id: climate.kitchen
       data:
         preset_mode: none
+    - device_id: 853415c2bf390dc15ae0e2bf6f7569b4
+      domain: vacuum
+      entity_id: vacuum.rooben
+      type: dock
   mode: single
 - id: '1625057398961'
   alias: Charging Phones Turns on Night Mode
