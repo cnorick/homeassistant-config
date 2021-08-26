@@ -1,0 +1,15 @@
+- platform: generic
+  name: parking_pad
+  still_image_url: !secret channel0_still_url
+  stream_source: !secret camera1_stream_url
+- platform: local_file
+  name: parking_pad_processed
+  file_path: /config/images/doods/parking_pad.jpg
+  
+- platform: generic
+  name: back_porch
+  still_image_url: !secret channel1_still_url
+  stream_source: !secret camera2_stream_url
+- platform: local_file
+  name: back_porch_processed
+  file_path: /config/images/doods/back_porch.jpg

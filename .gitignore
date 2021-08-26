@@ -18,6 +18,7 @@ home-assistant_v2.db-shm
 home-assistant_v2.db-wal
 www/mail_and_packages/*
 images/mail_and_packages/*
+images/doods/*
 .cnathanorick@gmail.com.august.conf
 home-assistant_v2.db*
 esphome/*

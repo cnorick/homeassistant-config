@@ -34,6 +34,21 @@ binary_sensor:
 
 sensor: !include_dir_merge_list ./sensors
 
+template:
+  - sensor:
+    - name: Number of People at Home
+      unique_id: 'number_of_people_at_home'
+      state: >-
+        {{ dict((states.person)|groupby('state'))['home']|count }}
+  - trigger:
+    - platform: state
+      entity_id: sensor.number_of_people_at_home
+    sensor:
+    - name: Last Number of People at Home
+      unique_id: 'last_number_of_people_at_home'
+      state: >-
+        {{ trigger.from_state.state }}
+
 light:
   - platform: flux_led
     devices:
@@ -122,3 +137,6 @@ alarm_control_panel:
       delay_time: 0
 
 rest_command: !include rest_commands.yaml
+
+camera: !include cameras.yaml
+image_processing: !include image_processing.yaml

@@ -12,3 +12,11 @@ bathroom_turned_on_automatically:
 
 guest_air_freshener:
   initial_value: 'off'
+
+# Camera notifications
+parking_pad_last_notified:
+  value_template: '{{ now() }}'
+  initial_value: '{{ now() }}'
+back_porch_last_notified:
+  value_template: '{{ now() }}'
+  initial_value: '{{ now() }}'

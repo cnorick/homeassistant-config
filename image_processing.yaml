@@ -1,0 +1,29 @@
+- platform: doods
+  url: !secret doods_url
+  detector: default
+  source:
+    - entity_id: camera.parking_pad
+  # Use for debugging. Doing this always slows down the processing time.
+  # file_out: /config/images/doods/{{ camera_entity.split('.')[1] }}.jpg
+  scan_interval: 2 # Consider turning down when you add more cameras
+  confidence: 60
+  labels:
+    - name: person
+      confidence: 60
+    - name: car
+      confidence: 65
+    - name: cat
+
+- platform: doods
+  url: !secret doods_url
+  detector: default
+  source:
+    - entity_id: camera.back_porch
+  # Use for debugging. Doing this always slows down the processing time.
+  file_out: /config/images/doods/{{ camera_entity.split('.')[1] }}.jpg
+  scan_interval: 2 # Consider turning down when you add more cameras
+  confidence: 60
+  labels:
+    - name: person
+      confidence: 73
+    - name: cat

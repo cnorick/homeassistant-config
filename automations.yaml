@@ -223,6 +223,7 @@
           message: Battery is Dying
           url: /lovelace/data
           more_info: The battery is dying for {{ sensors }}
+          use_alexa: true
 - id: '1620357325146'
   alias: Motion -- Back Yard
   description: ''
@@ -295,6 +296,7 @@
     data:
       message: Intruder Alert
       more_info: The house alarm is going off
+      use_alexa: true
   - service: media_player.volume_set
     target:
       device_id: 28e026b391880a6a90ba262b30514dcc
@@ -535,6 +537,7 @@
       message: Warning, Basement Flooding
       more_info: Water has been detected in the basement. Check the water sensor attached
         to the water heater. Turn off the water main if there is active flooding.
+      use_alexa: true
   - delay:
       hours: 0
       minutes: 0
@@ -640,7 +643,104 @@
   - service: lock.lock
     target:
       entity_id: lock.back_door
+  - delay:
+      hours: 0
+      minutes: 2
+      seconds: 0
+      milliseconds: 0
   - service: input_boolean.turn_off
     target:
       entity_id: input_boolean.alexa_leaving
   mode: single
+- id: '1629672385421'
+  alias: Notify of Object Detection
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{ state_attr(''image_processing.doods_parking_pad'', ''summary'').person
+      | default(0) > 0}}'
+    id: person
+  - platform: template
+    id: person
+    value_template: '{{ state_attr(''image_processing.doods_back_porch'', ''summary'').person
+      | default(0) > 0}}'
+  - platform: template
+    value_template: '{{ state_attr(''image_processing.doods_parking_pad'', ''summary'').cat
+      | default(0) > 0}}'
+    id: cat
+  - platform: template
+    id: cat
+    value_template: '{{ state_attr(''image_processing.doods_back_porch'', ''summary'').cat|
+      default(0) > 0}}'
+  condition:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ trigger.entity_id == ''image_processing.doods_back_porch''
+        and states(''var.back_porch_last_notified'') | as_timestamp < now() | as_timestamp
+        - 60 * states(''input_number.camera_notification_refractory_period'') | float
+        }}'
+    - condition: template
+      value_template: '{{ trigger.entity_id == ''image_processing.doods_parking_pad''
+        and states(''var.parking_pad_last_notified'') | as_timestamp < now() | as_timestamp
+        - 60 * states(''input_number.camera_notification_refractory_period'') | float
+        }}'
+  - condition: state
+    entity_id: input_boolean.people_outside
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.alexa_leaving
+    state: 'off'
+  - condition: template
+    value_template: '{{ states.binary_sensor.back_door_open.last_changed | as_timestamp
+      < now() | as_timestamp - 60* states(''input_number.camera_notification_refractory_period'')
+      | float }}'
+  - condition: template
+    value_template: "{{\n   states.sensor.number_of_people_at_home.last_changed |\
+      \ as_timestamp < now() | as_timestamp - 60 * states('input_number.camera_notification_refractory_period')\
+      \ | float or states('sensor.number_of_people_at_home') | int < states('sensor.last_number_of_people_at_home')\
+      \ | int\n}}"
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.entity_id == ''image_processing.doods_parking_pad''
+          }}'
+      sequence:
+      - service: camera.snapshot
+        target:
+          entity_id: camera.parking_pad
+        data:
+          filename: /config/www/doods/parking_pad.jpg
+      - service: var.update
+        data:
+          entity_id: var.parking_pad_last_notified
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.entity_id == ''image_processing.doods_back_porch''
+          }}'
+      sequence:
+      - service: camera.snapshot
+        data:
+          filename: /config/www/doods/back_porch.jpg
+        target:
+          entity_id: camera.back_porch
+      - service: var.update
+        data:
+          entity_id: var.back_porch_last_notified
+    default: []
+  - service: script.notify_sarah_and_nathan
+    data_template:
+      use_alexa: false
+      message: '{% if trigger.id == ''person'' %} Person {% elif trigger.id == ''cat''
+        %} Cat {% else %} Motion {% endif %} Detected {% if trigger.entity_id == ''image_processing.doods_back_porch''
+        %} on Back Porch {% elif trigger.entity_id == ''image_processing.doods_parking_pad''
+        %} on Parking Pad {% endif %}'
+      image: https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/doods/{%-
+        if trigger.entity_id == 'image_processing.doods_back_porch' -%} back_porch.jpg
+        {%- elif trigger.entity_id == 'image_processing.doods_parking_pad' -%} parking_pad.jpg
+        {%- endif -%}
+      image_type: jpg
+      url: /lovelace/Cameras
+  mode: queued
+  max: 10

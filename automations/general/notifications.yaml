@@ -31,6 +31,7 @@
   - service: script.notify_sarah_and_nathan
     data:
       message: Back Door is Jammed
+      use_alexa: True
   mode: single
 
 - id: 'shed-notifications'
@@ -49,6 +50,7 @@
   - service: script.notify_sarah_and_nathan
     data:
       message: Shed Door Was Opened
+      use_alexa: True
   mode: single
 
 - id: '1587614908680'
@@ -129,6 +131,7 @@
       message: Package Delivered
       more_info: Packages have been delivered. Click to see package status.
       url: /lovelace/mail
+      use_alexa: True
   mode: single
 
 - id: '1604755622229'
@@ -166,6 +169,7 @@
             url: /lovelace/mail
             image: "{{ states('sensor.mail_image_url') }}"
             image_type: gif
+            use_alexa: True
         - service: input_boolean.turn_on
           entity_id: input_boolean.mail_in_box
     default:
