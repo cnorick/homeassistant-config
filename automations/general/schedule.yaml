@@ -1,18 +1,39 @@
 - id: '1587264300585'
-  alias: Pixel Alarm Sync
+  alias: Phone Alarm Sync
   description: 'Turns on alarm in bedroom when Pixel alarm goes off'
   trigger:
   - platform: template
+    id: ease_on_lights
     # 15 minutes before android alarm
     value_template: >-
       {{ now() | as_timestamp > (state_attr('sensor.pixel_4_next_alarm', 'Time in Milliseconds') / 1000) - (15 * 60) }}
+  - platform: template
+    id: play_alarm
+    value_template: >-
+      {{ now() | as_timestamp > (state_attr('sensor.pixel_4_next_alarm', 'Time in Milliseconds') / 1000) }}
   condition:
   - condition: state
-    entity_id: group.master_room_people
+    entity_id: person.nathan
     state: home
   action:
-  - data: {}
-    service: script.slow_alarm
+  - alias: "either turn on lights or play alarm"
+    choose:
+    - conditions:
+      - condition: trigger
+        id: ease_on_lights
+      sequence:
+        service: script.turn_on
+        target:
+          entity_id:
+            - script.slow_alarm
+    - conditions:
+      - condition: trigger
+        id: play_alarm
+      sequence:
+        service: script.turn_on
+        target:
+          entity_id:
+            - script.alarm
 
 - id: '1587255222033'
   alias: Run Roomba Every Morning
