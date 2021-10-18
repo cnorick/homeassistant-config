@@ -21,6 +21,10 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.start
+  - service: alarm_control_panel.alarm_arm_away
+    entity_id: alarm_control_panel.alexa_guard_ee9c2
+  - service: switch.turn_off
+    entity_id: switch.truck
 
 - id: '1587162726799'
   alias: First Person Home
@@ -52,6 +56,8 @@
     default: []
   - service: switch.turn_off
     entity_id: switch.mudroom_camera
+  - service: alarm_control_panel.alarm_disarm
+    entity_id: alarm_control_panel.alexa_guard_ee9c2
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
