@@ -20,3 +20,12 @@ parking_pad_last_notified:
 back_porch_last_notified:
   value_template: '{{ now() }}'
   initial_value: '{{ now() }}'
+front_yard_last_notified:
+  value_template: '{{ now() }}'
+  initial_value: '{{ now() }}'
+side_porch_last_notified:
+  value_template: '{{ now() }}'
+  initial_value: '{{ now() }}'
+front_gate_last_notified:
+  value_template: '{{ now() }}'
+  initial_value: '{{ now() }}'
