@@ -23,3 +23,5 @@ images/doods/*
 home-assistant_v2.db*
 esphome/*
 wyze_config.ini
+www/doods/*
+home-assistant.log*
