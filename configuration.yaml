@@ -40,14 +40,24 @@ template:
       unique_id: 'number_of_people_at_home'
       state: >-
         {{ dict((states.person)|groupby('state'))['home']|count }}
-  - trigger:
-    - platform: state
-      entity_id: sensor.number_of_people_at_home
-    sensor:
+  - sensor:
     - name: Last Number of People at Home
       unique_id: 'last_number_of_people_at_home'
       state: >-
         {{ trigger.from_state.state }}
+    trigger:
+    - platform: state
+      entity_id: sensor.number_of_people_at_home
+  - binary_sensor:
+    - name: Back Yard Floodlight Motion
+      state: >-
+        {{states("input_boolean.alexa_back_yard_floodlight_motion")}}
+      device_class: motion
+  - binary_sensor:
+    - name: Parking Pad Floodlight Motion
+      state: >-
+        {{states("input_boolean.alexa_parking_pad_floodlight_motion")}}
+      device_class: motion
 
 light:
   - platform: flux_led
@@ -73,7 +83,31 @@ light:
     entities:
       - light.bl1
       - light.bl2
-      
+# Alexa routines don't support light toggle as a trigger. yet?
+#  - platform: template
+#    lights:
+#      back_yard_floodlight:
+#        friendly_name: Back Yard Floodlight
+#        value_template: >-
+#          {{states("input_boolean.alexa_back_yard_floodlight")}}
+#        turn_off:
+#          service: input_boolean.turn_off
+#          entity_id: input_boolean.alexa_back_yard_floodlight
+#        turn_on:
+#          service: input_boolean.turn_on
+#          entity_id: input_boolean.alexa_back_yard_floodlight
+#      parking_pad_floodlight:
+#        friendly_name: Parking Pad Floodlight
+#        value_template: >-
+#          {{states("input_boolean.alexa_parking_pad_floodlight")}}
+#        turn_off:
+#          service: input_boolean.turn_off
+#          entity_id: input_boolean.alexa_parking_pad_floodlight
+#        turn_on:
+#          service: input_boolean.turn_on
+#          entity_id: input_boolean.alexa_parking_pad_floodlight
+        
+
 google:
   client_id: !secret google_cal_client_id
   client_secret: !secret google_cal_client_secret
@@ -140,3 +174,14 @@ rest_command: !include rest_commands.yaml
 
 camera: !include cameras.yaml
 image_processing: !include image_processing.yaml
+
+proximity:
+  home:
+    ignored_zones:
+      - zone.project_access
+      - zone.osi
+    devices:
+      - person.nathan
+      - person.sarah
+    tolerance: 100
+    unit_of_measurement: mi
