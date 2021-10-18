@@ -118,11 +118,31 @@
     from: 'off'
     to: 'on'
   - platform: state
+    entity_id: person.nathan
+    from: 'not_home'
+    to: 'home'
+  - platform: state
+    entity_id: person.sarah
+    from: 'not_home'
+    to: 'home'
+    id: 'sarah_left'
+  - platform: state
+    entity_id: person.nathan
+    from: 'home'
+    to: 'not_home'
+    id: 'nathan_left'
+  - platform: state
+    entity_id: person.sarah
+    from: 'home'
+    to: 'not_home'
+  - platform: state
     entity_id: binary_sensor.occupied
     from: 'off'
     to: 'on'
   - platform: homeassistant
     event: start
+  - platform: event
+    event_type: automation_reloaded
   condition:
   - condition: state
     entity_id: input_boolean.wfh
@@ -134,6 +154,24 @@
     entity_id: binary_sensor.occupied
     state: 'on'
   action:
+  # Person Leaves
+  - alias: "Someone leaves during work day"
+    choose:
+    - conditions:
+      - condition: trigger
+        id: 'nathan_left'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            area_id: a78dc9b8222b47eebe4561988e57b0b0
+    - conditions:
+      - condition: trigger
+        id: 'sarah_left'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            area_id: b2672f722c53428e92427703040fb764
+
   # Morning
   - choose:
     - conditions:
@@ -141,31 +179,53 @@
         entity_id: binary_sensor.is_morning
         state: 'on'
       sequence:
-        - service: scene.turn_on
-          target:
-            entity_id: scene.wfh
-        - wait_for_trigger:
-          - platform: state
-            entity_id: binary_sensor.office_door
-            to: 'off'
-            from: 'on'
-          timeout: 03:00:00
-          continue_on_timeout: true
-        - service: media_player.media_stop
-          target: 
-            entity_id: media_player.kitchen_echo_show
-        - service: media_player.select_source
-          data:
-            source: Office Echo
-          target:
-            entity_id: media_player.spotify_nathan_orick
-        - delay: '00:00:05'
-        - service: media_player.media_play
-          target:
-            entity_id: media_player.spotify_nathan_orick
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.wfh_bedroom
+
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.wfh
+              - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.office_door
+                  to: 'off'
+                  from: 'on'
+                timeout: 03:00:00
+                continue_on_timeout: true
+              - service: media_player.media_stop
+                target: 
+                  entity_id: media_player.kitchen_echo_show
+              - service: media_player.select_source
+                data:
+                  source: Office Echo
+                target:
+                  entity_id: media_player.spotify_nathan_orick
+              - delay: '00:00:05'
+              - service: media_player.media_play
+                target:
+                  entity_id: media_player.spotify_nathan_orick
+
         - wait_template: "{{ is_state('binary_sensor.is_lunch', 'on') }}"
           timeout: 05:00:00
           continue_on_timeout: false
+
   - condition: and
     conditions:
     - condition: state
@@ -182,27 +242,48 @@
         entity_id: binary_sensor.is_lunch
         state: 'on'
       sequence:
-      - service: scene.turn_on
-        data:
-          entity_id: scene.wfh_relax
-          transition: 600
-      - service: switch.turn_off
-        entity_id: switch.office_plug
-      - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.wyze_motion3
-          to: 'on'
-      - service: media_player.play_media
-        data:
-          media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
-          media_content_type: skill
-        target:
-          entity_id:
-          - media_player.kitchen_echo_show
-      - wait_template: "{{ is_state('binary_sensor.is_afternoon', 'on') }}"
-        timeout:
-            hours: "5"
-        continue_on_timeout: false
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax
+                  transition: 600
+              - service: switch.turn_off
+                entity_id: switch.office_plug
+              - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.wyze_motion3
+                  to: 'on'
+              - service: media_player.play_media
+                data:
+                  media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+                  media_content_type: skill
+                target:
+                  entity_id:
+                  - media_player.kitchen_echo_show
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax_bedroom
+                  transition: 600
+
+        - wait_template: "{{ is_state('binary_sensor.is_afternoon', 'on') }}"
+          timeout:
+              hours: "5"
+          continue_on_timeout: false
         
   - condition: and
     conditions:
@@ -220,16 +301,37 @@
         entity_id: binary_sensor.is_afternoon
         state: 'on'
       sequence:
-      - service: scene.turn_on
-        data:
-          entity_id: scene.wfh
-          transition: 60
-      - service: automation.trigger
-        entity_id: automation.wfh_fan
-      - wait_template: "{{ is_state('binary_sensor.is_evening', 'on') }}"
-        timeout:
-            hours: "5"
-        continue_on_timeout: false
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh
+                  transition: 60
+              - service: automation.trigger
+                entity_id: automation.wfh_fan
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_bedroom
+                  transition: 60
+
+        - wait_template: "{{ is_state('binary_sensor.is_evening', 'on') }}"
+          timeout:
+              hours: "5"
+          continue_on_timeout: false
                 
   - condition: and
     conditions:
@@ -247,21 +349,44 @@
         entity_id: binary_sensor.is_evening
         state: 'on'
       sequence:
-      - service: scene.turn_on
-        data:
-          entity_id: scene.wfh_relax
-          transition: 600
-      - service: input_boolean.turn_off
-        data:
-          entity_id: input_boolean.wfh
-      - delay: "00:10:00"
-      - service: light.turn_off
-        data:
-          transition: 10
-        target:
-          area_id: a78dc9b8222b47eebe4561988e57b0b0
-      - service: switch.turn_off
-        entity_id: switch.office_plug
-      - service: input_boolean.turn_off
-        data:
-          entity_id: input_boolean.wfh
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax
+                  transition: 600
+              - service: switch.turn_off
+                entity_id: switch.office_plug
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax_bedroom
+                  transition: 600
+
+        - delay: "00:10:00"
+        - service: light.turn_off
+          data:
+            transition: 10
+          target:
+            area_id: a78dc9b8222b47eebe4561988e57b0b0
+        - service: light.turn_off
+          data:
+            transition: 10
+          target:
+            area_id: b2672f722c53428e92427703040fb764
+        - service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.wfh
