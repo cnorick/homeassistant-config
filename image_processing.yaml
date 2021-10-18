@@ -9,7 +9,7 @@
   confidence: 60
   labels:
     - name: person
-      confidence: 60
+      confidence: 63
     - name: car
       confidence: 65
     - name: cat
@@ -26,4 +26,43 @@
   labels:
     - name: person
       confidence: 73
+    - name: cat
+
+- platform: doods
+  url: !secret doods_url
+  detector: default
+  source:
+    - entity_id: camera.front_yard
+  # Use for debugging. Doing this always slows down the processing time.
+  file_out: /config/images/doods/{{ camera_entity.split('.')[1] }}.jpg
+  scan_interval: 2 # Consider turning down when you add more cameras
+  confidence: 60
+  labels:
+    - name: person
+    - name: cat
+
+- platform: doods
+  url: !secret doods_url
+  detector: default
+  source:
+    - entity_id: camera.front_gate
+  # Use for debugging. Doing this always slows down the processing time.
+  file_out: /config/images/doods/{{ camera_entity.split('.')[1] }}.jpg
+  scan_interval: 2 # Consider turning down when you add more cameras
+  confidence: 60
+  labels:
+    - name: person
+    - name: cat
+
+- platform: doods
+  url: !secret doods_url
+  detector: default
+  source:
+    - entity_id: camera.side_porch
+  # Use for debugging. Doing this always slows down the processing time.
+  file_out: /config/images/doods/{{ camera_entity.split('.')[1] }}.jpg
+  scan_interval: 2 # Consider turning down when you add more cameras
+  confidence: 60
+  labels:
+    - name: person
     - name: cat
