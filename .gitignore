@@ -21,7 +21,6 @@ images/mail_and_packages/*
 images/doods/*
 .cnathanorick@gmail.com.august.conf
 home-assistant_v2.db*
-esphome/*
 wyze_config.ini
 www/doods/*
 home-assistant.log*

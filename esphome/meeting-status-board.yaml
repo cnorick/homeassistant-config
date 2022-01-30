@@ -1,0 +1,168 @@
+substitutions:
+  lcd_width: '16'
+  lcd_height: '2'
+  scroll_speed: 1s
+
+esphome:
+  name: meeting-status-board
+  platform: ESP8266
+  board: nodemcuv2
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Meeting-Status-Board"
+    password: !secret ap_password
+
+captive_portal:
+
+text_sensor:
+  - platform: homeassistant
+    id: meeting_title
+    entity_id: calendar.work
+    attribute: message
+    name: "Meeting Title"
+    disabled_by_default: true
+  - platform: homeassistant
+    id: meeting_start
+    entity_id: calendar.work
+    attribute: start_time
+    name: "Meeting Start Time"
+    disabled_by_default: true
+  - platform: homeassistant
+    id: meeting_end
+    entity_id: calendar.work
+    attribute: end_time
+    name: "Meeting End Time"
+    disabled_by_default: true
+  - platform: template
+    name: "Current Light"
+    lambda: |-
+      if (id(in_meeting).state) {
+        return {"red"};
+      }
+      else if (id(meeting_started).state) {
+        return {"yellow"};
+      }
+      else {
+        return {"green"};
+      }
+    update_interval: 5s
+    id: current_light
+    disabled_by_default: true
+    on_value:
+      then:
+        - switch.turn_off: green_light
+        - switch.turn_off: yellow_light
+        - switch.turn_off: red_light
+        - if:
+            condition:
+              binary_sensor.is_on: in_meeting
+            then:
+              - switch.turn_on: red_light
+            else:
+              - if:
+                  condition:
+                    binary_sensor.is_on: meeting_started
+                  then:
+                    - switch.turn_on: yellow_light
+                  else:
+                    - switch.turn_on: green_light
+    
+binary_sensor:
+  - platform: homeassistant
+    id: meeting_started
+    entity_id: calendar.work
+    name: "Meeting Started"
+    disabled_by_default: true
+  - platform: homeassistant
+    id: in_meeting
+    entity_id: binary_sensor.in_meeting
+    name: "In Meeting"
+    disabled_by_default: true
+
+switch:
+  - platform: gpio
+    pin: D7
+    name: "Green Light"
+    internal: true
+    id: green_light
+  - platform: gpio
+    pin: D8
+    name: "Yellow Light"
+    internal: true
+    id: yellow_light
+  - platform: gpio
+    pin: 9
+    name: "Red Light"
+    internal: true
+    id: red_light
+
+display:
+  - platform: lcd_gpio
+    dimensions: ${lcd_width}x${lcd_height}
+    data_pins:
+      - D0
+      - D1
+      - D2
+      - D3
+    enable_pin: D6
+    rs_pin: D5
+    id: lcd
+    update_interval: $scroll_speed
+    lambda: |-
+      static int p1 = 0;
+      static int p2 = 0;
+      
+      char line1[$lcd_width];
+      char startString[$lcd_width/2];
+      char endString[$lcd_width/2];
+      struct tm start;
+      memset(&start, 0, sizeof(tm));
+      struct tm end;
+      memset(&end, 0, sizeof(tm));
+      strptime(id(meeting_start).state.c_str(), "%Y-%m-%d %H:%M:%S", &start);
+      strftime(startString, sizeof(startString), "%I:%M", &start);
+      
+      strptime(id(meeting_end).state.c_str(), "%Y-%m-%d %H:%M:%S", &end);
+      strftime(endString, sizeof(endString), "%I:%M", &end);
+      sprintf(line1, "%s - %s", startString, endString);
+      
+      int length1 = strlen(line1);
+            
+      const char* line2 = id(meeting_title).state.c_str();
+      int length2 = strlen(line2);
+      if (length2 > $lcd_width) length2 = $lcd_width;
+      
+      int spacesLength = length1 >= $lcd_width ? 0 : $lcd_width - length1 + 1;
+      char spaces[spacesLength];
+      for (int i = 0; i < spacesLength - 1; i++) spaces[i] = ' ';
+      spaces[spacesLength - 1] = '\0';
+      
+      it.printf("%.*s%s%.*s", length1, line1 + p1, spaces, length2, line2 + p2);
+
+      p1++;
+      if(p1 > (int)strlen(line1) - $lcd_width) {
+        p1 = 0;
+      }
+      p2++;
+      if(p2 > (int)strlen(line2) - $lcd_width) {
+        p2 = 0;
+      }
+      
+
+
+
