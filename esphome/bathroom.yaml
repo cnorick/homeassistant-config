@@ -44,6 +44,8 @@ sensor:
   - name: "Bathroom Temperature"
     unit_of_measurement: °C
     accuracy_decimals: 1
+    device_class: temperature
   - name: "Bathroom Humidity"
     unit_of_measurement: '%'
     accuracy_decimals: 1
+    device_class: humidity

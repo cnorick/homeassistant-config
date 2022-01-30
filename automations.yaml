@@ -1105,3 +1105,85 @@
     default: []
   mode: parallel
   max: 2
+- id: '1643585268012'
+  alias: Bathroom Fan
+  description: Toggle Fan Based on Humidity and Motion
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.bathroom_humidity
+    above: input_number.bathroom_humidity_threshold
+    id: too_humid
+  - platform: state
+    entity_id: switch.bathroom_fan
+    id: run_for_small_time
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+  - platform: state
+    entity_id: switch.bathroom_fan
+    id: run_for_long_time
+    to: 'on'
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+  - platform: numeric_state
+    entity_id: sensor.bathroom_humidity
+    id: humidity_lowered
+    below: input_number.bathroom_humidity_threshold
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: too_humid
+      sequence:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bathroom_fan
+    - conditions:
+      - condition: trigger
+        id: run_for_small_time
+      - condition: numeric_state
+        entity_id: sensor.bathroom_humidity
+        below: input_number.bathroom_humidity_threshold
+      - condition: state
+        entity_id: binary_sensor.wyze_motion2
+        state: 'off'
+        for:
+          hours: 0
+          minutes: 5
+          seconds: 0
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bathroom_fan
+    - conditions:
+      - condition: trigger
+        id: run_for_long_time
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bathroom_fan
+    - conditions:
+      - condition: trigger
+        id: humidity_lowered
+      - condition: state
+        entity_id: binary_sensor.wyze_motion2
+        state: 'off'
+        for:
+          hours: 0
+          minutes: 5
+          seconds: 0
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bathroom_fan
+    default: []
+  mode: restart
