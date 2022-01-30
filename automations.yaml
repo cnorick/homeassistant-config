@@ -1,30 +1,3 @@
-- id: '1604973848959'
-  alias: Turn On Christmas Lights at Dark
-  description: ''
-  trigger:
-  - platform: sun
-    event: sunset
-    offset: -00:45:00
-  - platform: state
-    entity_id: binary_sensor.occupied
-    to: 'on'
-  condition:
-  - condition: sun
-    after: sunset
-    after_offset: -01:00:00
-  - condition: state
-    entity_id: binary_sensor.occupied
-    state: 'on'
-  action:
-  - type: turn_on
-    device_id: 1ee080bf6cfe8f1b778b60fdeee68564
-    entity_id: switch.christmas_tree
-    domain: switch
-  - type: turn_on
-    device_id: 7f8f4ff7210eb78288672c2394f4c1af
-    entity_id: switch.window_lights
-    domain: switch
-  mode: single
 - id: '1609559449831'
   alias: Morning Routine
   description: ''
@@ -70,6 +43,23 @@
           entity_id: media_player.bathroom_echo
           media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
           media_content_type: skill
+    default: []
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: weather.home
+        attribute: temperature
+        below: '55'
+      sequence:
+      - service: climate.turn_on
+        target:
+          area_id: b2672f722c53428e92427703040fb764
+      - service: climate.set_temperature
+        target:
+          area_id: b2672f722c53428e92427703040fb764
+        data:
+          temperature: '{{states(''input_number.fireplace_temperature_when_showering'')}}'
+    default: []
   - wait_for_trigger:
     - platform: state
       entity_id: binary_sensor.bedroom_door
@@ -110,15 +100,51 @@
       entity_id: media_player.bathroom_echo
   - wait_for_trigger:
     - platform: template
-      value_template: "{{\n    is_state('input_boolean.wfh', 'on')\n    and is_state('binary_sensor.office_door',\
-        \ 'off')\n    and is_state('binary_sensor.public_space_motion', 'off')\n}}"
+      value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n    and\
+        \ is_state('binary_sensor.public_space_motion', 'off')\n}}"
+      id: in_office
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      from: 'off'
+      to: 'on'
+      id: in_livingroom
     timeout: 02:00:00
-  - service: media_player.media_stop
-    target:
-      entity_id: media_player.kitchen_echo_show
+    continue_on_timeout: false
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{wait.trigger.id == "in_office"}}'
+      sequence:
+      - service: media_player.media_stop
+        target:
+          entity_id: media_player.kitchen_echo_show
+    - conditions:
+      - condition: template
+        value_template: '{{wait.trigger.id == "in_livingroom"}}'
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id: light.living_room_lamp
+        data:
+          transition: 6
+          brightness: 255
+      - service: media_player.media_stop
+        target:
+          entity_id: media_player.kitchen_echo_show
+      - wait_for_trigger:
+        - platform: template
+          value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n\
+            \    and is_state('binary_sensor.public_space_motion', 'off')\n}}"
+        timeout: 02:00:00
+        continue_on_timeout: false
+      - service: light.turn_off
+        target:
+          entity_id: light.living_room_lamp
+        data:
+          transition: 20
+    default: []
   - condition: state
     entity_id: person.sarah
-    attribute: editable
     state: not_home
   - service: light.turn_off
     data: {}
@@ -372,22 +398,77 @@
       light_target:
         entity_id: light.laundry_room
 - id: '1622937162847'
-  alias: Turn on Basement When Door is Opened
+  alias: Basement Lights
   description: ''
   trigger:
   - platform: state
     entity_id: binary_sensor.basement_door
     to: 'on'
+    id: door_open
+  - platform: state
+    entity_id: binary_sensor.basement_motion_sensor
+    id: motion_on
+    to: 'on'
+    from: 'off'
+  - platform: state
+    entity_id: binary_sensor.basement_motion_sensor
+    id: motion_off
+    to: 'off'
+    from: 'on'
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
   condition: []
   action:
-  - service: light.turn_on
-    target:
-      entity_id:
-      - light.basement_stairs
-      - light.basement_lights
-    data:
-      brightness: 255
-  mode: single
+  - choose:
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: door_open
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.basement_stairs
+          - light.laundry_room
+      - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.basement_door
+          from: 'on'
+          to: 'off'
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 30
+        timeout: 00:10:00
+        continue_on_timeout: true
+      - service: light.turn_off
+        target:
+          area_id: basement
+        data:
+          transition: 14
+    - conditions:
+      - condition: trigger
+        id: motion_off
+      sequence:
+      - service: light.turn_off
+        target:
+          area_id: basement
+        data:
+          transition: 30
+    - conditions:
+      - condition: trigger
+        id: motion_on
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.basement_stairs
+          - light.basement_lights
+    default: []
+  mode: restart
 - id: '1622939127924'
   alias: Toggle Basement Lights
   description: WIP
@@ -413,12 +494,17 @@
   use_blueprint:
     path: networkingcat/yet_another_motion_automation.yaml
     input:
-      time_scene_night: 0:00:00
+      time_scene_night: 00:00:00
       motion_entity: binary_sensor.back_door_open
       light_target:
-        device_id: 29856b1eb3bc143dc0aad2cc7f6013e6
+        device_id:
+        - 29856b1eb3bc143dc0aad2cc7f6013e6
+        - b52c6034f5332b5f7f795cfaa4bf7eea
+        entity_id: light.string_lights
       no_motion_wait: 300
       elevation_check: 4
+      no_motion_blocker: automation.people_outside
+      no_motion_blocker_boolean: true
 - id: '1623941903977'
   alias: Outside Mode
   description: ''
@@ -601,6 +687,19 @@
     data:
       transition: 5
       brightness_pct: 40
+  - choose:
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: office_door
+        - condition: trigger
+          id: guest_bedroom_door
+      sequence:
+      - service: light.turn_on
+        target:
+          area_id: hallway
+    default: []
   - delay:
       hours: 0
       minutes: 5
@@ -611,7 +710,11 @@
       area_id: dining_room
     data:
       transition: 9
-  mode: single
+  - service: light.turn_off
+    target:
+      area_id: hallway
+  mode: parallel
+  max: 2
 - id: '1628378848989'
   alias: Alexa, I'm Leaving
   description: ''
@@ -835,7 +938,7 @@
   trigger:
   - platform: numeric_state
     entity_id: proximity.home
-    below: '90'
+    below: '80'
   condition: []
   action:
   - service: script.notify_sarah_and_nathan
@@ -857,3 +960,148 @@
     target:
       entity_id: climate.kitchen
   mode: single
+- id: '1637193742323'
+  alias: Christmas Lights
+  description: ''
+  trigger:
+  - platform: sun
+    event: sunset
+    id: sunset
+    offset: -01:00:00
+  - platform: state
+    entity_id: input_boolean.night_mode
+    id: sleep
+    to: 'on'
+    from: 'off'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  - platform: state
+    entity_id: binary_sensor.occupied
+    id: occupation
+  - platform: state
+    entity_id: input_boolean.night_mode
+    id: wake
+    from: 'on'
+    to: 'off'
+  - platform: time
+    at: 00:00:00
+    id: midnight
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sunset
+      sequence:
+      - service: switch.turn_on
+        target:
+          entity_id:
+          - switch.outside_christmas_lights
+          - switch.wp1_smart_socket_2_socket
+          - switch.wp1_smart_socket_socket
+          - switch.sarah_s_fan_socket_1
+          - switch.christmas_tree_socket_1
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.side_porch
+          - light.front_porch
+          - light.garland
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: sleep
+        - condition: trigger
+          id: midnight
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id:
+          - switch.outside_christmas_lights
+          - switch.wp1_smart_socket_2_socket
+          - switch.wp1_smart_socket_socket
+          - switch.sarah_s_fan_socket_1
+          - switch.christmas_tree_socket_1
+      - service: light.turn_off
+        target:
+          entity_id:
+          - light.front_porch
+          - light.side_porch
+          - light.garland
+    - conditions:
+      - condition: trigger
+        id: wake
+      - condition: state
+        entity_id: input_boolean.visitors
+        state: 'on'
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id: light.garland
+    default: []
+  mode: queued
+  max: 10
+- id: '1643038941823'
+  alias: Birthday Reminders
+  description: ''
+  trigger:
+  - platform: time
+    at: input_datetime.birthday_reminder_time
+    id: notification_time
+  - platform: state
+    entity_id: calendar.birthdays
+    id: next_birthday
+    from: 'on'
+    to: 'off'
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: notification_time
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{% set reminderDate = ((state_attr(''calendar.birthdays'',
+              ''start_time'') | as_datetime - timedelta(days=states(''input_number.birthday_reminder_offset'')
+              | int)) | as_local) %}
+
+              {{ reminderDate.month == now().month and reminderDate.day == now().day
+              }}'
+          sequence:
+          - service: script.notify_sarah_and_nathan
+            data:
+              message: '{{ state_attr(''calendar.birthdays'', ''message'') }} 🎉'
+              more_info: '{{ state_attr(''calendar.birthdays'', ''message'') }} is
+                coming up on {{ state_attr(''calendar.birthdays'', ''start_time'')
+                | as_timestamp | timestamp_custom("%A, %B %d", True)}}'
+        - conditions:
+          - condition: state
+            entity_id: calendar.birthdays
+            state: 'on'
+          sequence:
+          - service: script.notify_sarah_and_nathan
+            data:
+              message: '{{ state_attr(''calendar.birthdays'', ''message'') }}'
+              more_info: Today is {{ state_attr('calendar.birthdays', 'message') }}
+                🎂
+    - conditions:
+      - condition: trigger
+        id: next_birthday
+      sequence:
+      - wait_for_trigger:
+        - platform: time
+          at: input_datetime.birthday_reminder_time
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: '{{ state_attr(''calendar.birthdays'', ''message'') }} 🎉'
+          more_info: '{{ state_attr(''calendar.birthdays'', ''message'') }} is coming
+            up on {{ state_attr(''calendar.birthdays'', ''start_time'') | as_timestamp
+            | timestamp_custom("%A, %B %d", True)}}'
+    default: []
+  mode: parallel
+  max: 2

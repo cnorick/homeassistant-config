@@ -5,10 +5,6 @@
   - entity_id: binary_sensor.wyze_motion3
     platform: state
     to: 'on'
-  condition:
-  - condition: state
-    entity_id: input_boolean.night_mode
-    state: 'off'
   action:
   - data: {}
     entity_id: group.kitchen_lights
@@ -28,3 +24,5 @@
   - data: {}
     entity_id: group.kitchen_lights
     service: homeassistant.turn_off
+  - service: light.turn_off
+    entity_id: light.back_door

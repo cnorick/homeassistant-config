@@ -24,3 +24,5 @@ binary_sensor.guest_bathroom_door:
   device_class: door
 binary_sensor.guest_bedroom_door:
   device_class: door
+climate.bedroom_thermostat:
+  target_temp_step: 1

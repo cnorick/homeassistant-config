@@ -108,3 +108,15 @@
     service: media_player.turn_off
   - service: switch.turn_off
     entity_id: switch.truck
+
+  - alias: "Reminder to Let Water Drip"
+    choose:
+    - conditions: "{{ state_attr('weather.home', 'forecast') | map(attribute='templow') | first < 32}}"
+      sequence:
+        - service: notify.alexa_media
+          data:
+            data:
+              type: tts
+            message: "Don't forget to let the water drip. The low for tonight is {{ state_attr('weather.home', 'forecast') | map(attribute='templow') | first}}"
+            target: media_player.bedroom_echo
+    default: []

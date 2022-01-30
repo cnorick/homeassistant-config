@@ -53,10 +53,10 @@
 
 - cal_id: addressbook#contacts@group.v.calendar.google.com
   entities:
-  - device_id: contacts
+  - device_id: birthdays
     ignore_availability: true
-    name: Contacts
-    track: false
+    name: Birthdays
+    track: true
 
 - cal_id: en.usa#holiday@group.v.calendar.google.com
   entities:

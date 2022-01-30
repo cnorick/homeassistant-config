@@ -78,6 +78,17 @@ light:
     entities:
       - light.drc1
       - light.drc2
+  - platform: switch
+    name: g1
+    entity_id: switch.g1
+  - platform: switch
+    name: g2
+    entity_id: switch.g2
+  - platform: group
+    name: Garland
+    entities:
+      - light.g1
+      - light.g2
   - platform: group
     name: Basement Lights
     entities:

@@ -16,6 +16,8 @@
     service: media_player.turn_off
   - entity_id: group.fans
     service: homeassistant.turn_off
+  - service: climate.turn_off
+    entity_id: climate.bedroom_thermostat
   - service: switch.turn_on
     entity_id: switch.mudroom_camera
   - data: {}

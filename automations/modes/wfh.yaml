@@ -125,7 +125,6 @@
     entity_id: person.sarah
     from: 'not_home'
     to: 'home'
-    id: 'sarah_left'
   - platform: state
     entity_id: person.nathan
     from: 'home'
@@ -135,6 +134,7 @@
     entity_id: person.sarah
     from: 'home'
     to: 'not_home'
+    id: 'sarah_left'
   - platform: state
     entity_id: binary_sensor.occupied
     from: 'off'
@@ -279,6 +279,25 @@
                 data:
                   entity_id: scene.wfh_relax_bedroom
                   transition: 600
+
+        - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - binary_sensor.living_room_motion
+            to: 'on'
+          timeout:
+            minutes: 30
+        - service: media_player.media_stop
+          target: 
+            entity_id: media_player.kitchen_echo_show
+        - service: media_player.turn_on
+          target:
+            entity_id: media_player.living_room_tv
+        - service: media_player.select_source
+          target:
+            entity_id: media_player.living_room_tv
+          data:
+            source: '{{states("input_select.lunch_tv_app")}}'
 
         - wait_template: "{{ is_state('binary_sensor.is_afternoon', 'on') }}"
           timeout:
