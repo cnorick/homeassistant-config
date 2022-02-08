@@ -94,7 +94,7 @@ public_space_motion:
       is_state('binary_sensor.living_room_motion', 'on')
       or is_state('binary_sensor.wyze_motion3', 'on')
       or is_state('binary_sensor.wyze_motion4', 'on')
-      or is_state('binary_sensor.wyze_motion5', 'on')
+      or is_state('binary_sensor.laundry_room_motion', 'on')
       or is_state('binary_sensor.basement_motion_sensor', 'on')
     }}
 

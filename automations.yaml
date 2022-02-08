@@ -394,7 +394,7 @@
     path: networkingcat/yet_another_motion_automation.yaml
     input:
       time_scene_night: 0:00:00
-      motion_entity: binary_sensor.wyze_motion5
+      motion_entity: binary_sensor.laundry_room_motion
       light_target:
         entity_id: light.laundry_room
 - id: '1622937162847'
@@ -482,7 +482,7 @@
     - conditions:
       - condition: template
         value_template: "{{\n  states.binary_sensor.basement_door.last_changed | as_timestamp\
-          \ -\n  states.binary_sensor.wyze_motion5.last_changed | as_timestamp > 0\n\
+          \ -\n  states.binary_sensor.laundry_room_motion.last_changed | as_timestamp > 0\n\
           }}"
       sequence: []
     default: []
