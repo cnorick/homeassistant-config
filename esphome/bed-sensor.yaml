@@ -1,0 +1,89 @@
+esphome:
+  name: bed-sensor
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Bed-Sensor Fallback Hotspot"
+    password: !secret ap_password 
+
+captive_portal:
+
+#binary_sensor:
+#  - platform: template
+#    name: "Master Bed Occupied"
+#    id: mb_o
+#    lambda: |-
+#      if (id(master_bed_sensor).state < id(trigger_level).state) {
+#        return true;
+#      } else {
+#        return false;
+#      }
+
+sensor:
+  - platform: adc
+    pin: 34
+    # internal: true
+    attenuation: 11db
+    name: Master Bed Sensor Sarah's Side
+    id: master_bed_sarah_side
+    icon: mdi:bed
+    update_interval: 0.5s
+    accuracy_decimals: 4
+    filters:
+      - sliding_window_moving_average:
+          window_size: 10
+          send_every: 1
+      - or:
+          - throttle: 180s
+          - delta: 0.02
+  - platform: adc
+    pin: 35
+    # internal: true
+    attenuation: 11db
+    name: Master Bed Sensor Nathan's Side
+    id: master_bed_nathan_side
+    icon: mdi:bed
+    accuracy_decimals: 4
+    update_interval: 0.5s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 10
+          send_every: 1
+      - or:
+          - throttle: 180s
+          - delta: 0.02
+  
+  - platform: template
+    id: total_bed_voltage
+    name: Master Bed Sensor
+    accuracy_decimals: 4
+    lambda: |-
+      return id(master_bed_nathan_side).state + id(master_bed_sarah_side).state;
+    update_interval: 0.5s
+    filters:
+      - or:
+          - throttle: 180s
+          - delta: 0.04
+
+#  - platform: homeassistant
+#    name: "Trigger Level"
+#    id: "trigger_level"
+#    entity_id: input_number.master_bed_trigger_level
