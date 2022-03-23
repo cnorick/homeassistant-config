@@ -274,3 +274,290 @@ notify_sarah_leaving_work_or_arriving_home:
       data:
         clickAction: /lovelace/map
   mode: single
+tier_toggle_devices:
+  fields:
+    action:
+      name: Action
+      description: Whether the entities should be turned on or off
+      selector:
+        boolean:
+      required: true
+    delay:
+      name: Delay
+      description: Amount of time to wait in between toggling devices
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: milliseconds
+          mode: box
+      default: 500
+      required: true
+    entity_1:
+      name: Entity 1
+      description: The first entity to toggle
+      selector:
+        target:
+    entity_2:
+      name: Entity 2
+      description: The second entity to toggle
+      selector:
+        target:
+    entity_3:
+      name: Entity 3
+      description: The third entity to toggle
+      selector:
+        target:
+    entity_4:
+      name: Entity 4
+      description: The fourth entity to toggle
+      selector:
+        target:
+    entity_5:
+      name: Entity 5
+      description: The fifth entity to toggle
+      selector:
+        target:
+    entity_6:
+      name: Entity 6
+      description: The sixth entity to toggle
+      selector:
+        target:
+    entity_7:
+      name: Entity 7
+      description: The seventh entity to toggle
+      selector:
+        target:
+    entity_8:
+      name: Entity 8
+      description: The eighth entity to toggle
+      selector:
+        target:
+    entity_9:
+      name: Entity 9
+      description: The ninth entity to toggle
+      selector:
+        target:
+    entity_10:
+      name: Entity 10
+      description: The tenth entity to toggle
+      selector:
+        target:
+  sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_1 is defined and entity_1 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_1}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_1}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_2 is defined and entity_2 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_2}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_2}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_3 is defined and entity_3 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_3}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_3}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_4 is defined and entity_4 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_4}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_4}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_5 is defined and entity_5 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_5}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_5}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_6 is defined and entity_6 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_6}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_6}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_7 is defined and entity_7 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_7}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_7}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_8 is defined and entity_8 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_8}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_8}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_9 is defined and entity_9 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_9}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_9}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_10 is defined and entity_10 != none }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{action}}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_10}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_10}}'
+  mode: single
+  alias: Turn on Entities One at a Time
