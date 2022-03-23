@@ -1266,3 +1266,1186 @@
       entity_id: climate.kitchen
   mode: queued
   max: 10
+- id: '1587852659451'
+  alias: Tv Night Scenes
+  description: Turns on the appropriate living room scenes when the tv is playing
+    at night
+  trigger:
+  - platform: sun
+    event: sunset
+    # 20 minutes before sunset.
+    offset: -00:20:00
+  - entity_id: media_player.living_room_tv_2
+    for: 00:00:10
+    platform: state
+    to: playing
+  - entity_id: media_player.living_room_tv_2
+    platform: state
+    to: paused
+  - entity_id: media_player.living_room_tv_2
+    for: 00:00:22
+    platform: state
+    to: standby
+  - entity_id: media_player.living_room_tv_2
+    platform: state
+    to: 'off'
+  condition:
+  - condition: or
+    conditions:
+    - after: sunset
+      condition: sun
+      after_offset: -00:25:00
+    - before: sunrise
+      condition: sun
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  - condition: template
+    value_template: '{{ trigger.from_state.state != "unavailable" }}'
+  action:
+  - data_template:
+      entity_id: "{% if is_state('media_player.living_room_tv_2', 'playing') %}\n  scene.tv_playing_at_night\n\
+        {% elif is_state('media_player.living_room_tv_2', 'standby')\n   or is_state('media_player.living_room_tv_2',\
+        \ 'paused')\n%}\n  scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n\
+        {% endif %}\n"
+      transition: 10
+    service: scene.turn_on
+- id: '1587264300585'
+  alias: Phone Alarm Sync
+  description: 'Turns on alarm in bedroom when Pixel alarm goes off'
+  mode: parallel
+  trigger:
+  - platform: template
+    id: ease_on_lights
+    # 15 minutes before android alarm
+    value_template: >-
+      {{ now() > states('sensor.pixel_4_next_alarm') | as_datetime - timedelta(minutes = 15) }}
+    #{{ now() | as_timestamp > (state_attr('sensor.pixel_4_next_alarm', 'Time in Milliseconds') / 1000) - (15 * 60) }}
+  - platform: template
+    id: play_alarm
+    # Play alarm 10 seconds before alarm goes off, since the next alarm changes to the next day as it rings.
+    value_template: >-
+      {{ now() > states('sensor.pixel_4_next_alarm') | as_datetime - timedelta(minutes = 1) }} 
+    #{{ now() | as_timestamp > (state_attr('sensor.pixel_4_next_alarm', 'Time in Milliseconds') / 1000) - 10 }}
+  condition:
+  - condition: state
+    entity_id: person.nathan
+    state: home
+  action:
+  - alias: "either turn on lights or play alarm"
+    choose:
+    - conditions:
+      - condition: trigger
+        id: ease_on_lights
+      sequence:
+        service: script.turn_on
+        target:
+          entity_id:
+            - script.slow_alarm
+    - conditions:
+      - condition: trigger
+        id: play_alarm
+      sequence:
+        service: script.turn_on
+        target:
+          entity_id:
+            - script.alarm
+
+- id: '1587255222033'
+  alias: Run Roomba Every Morning
+  description: ''
+  trigger:
+  - platform: time
+    at: input_datetime.roomba_run_time
+  condition: []
+  action:
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.start
+
+- id: '1586661602545'
+  alias: Turn On Master Bedroom Before Bed
+  description: ''
+  trigger:
+  - at: '21:00:00'
+    platform: time
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: home
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - service: scene.turn_on
+    data:
+      entity_id: scene.bedtime
+      transition: 15
+- id: '1587443561409'
+  alias: Notify of Intruder
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.kitchen_motion
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.alexa_guard_ee9c2
+      state: armed_away
+    - condition: state
+      entity_id: binary_sensor.occupied
+      state: 'off'
+  action:
+  - data:
+      message: Motion Detected in Living Room
+      title: Hide Yo Kids, Hide Yo Wife!
+    service: notify.notify
+
+- id: 'jammed-lock-notifications'
+  alias: Notify when Door is Jammed
+  description: ''
+  trigger:
+  - entity_id: lock.back_door
+    platform: state
+    to: 'jammed'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Back Door is Jammed
+      use_alexa: True
+  mode: single
+
+- id: 'shed-notifications'
+  alias: Notify when Shed Door is Opened
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.shed_door
+    platform: state
+    to: 'on'
+  condition: 
+  - condition: state
+    entity_id:
+      - input_boolean.people_outside
+    state: 'off'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Shed Door Was Opened
+      use_alexa: True
+  mode: single
+
+- id: '1587614908680'
+  alias: Notify If Bedroom Door Changes When We're Away
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_door1
+    platform: state
+    to: 'off'
+  - entity_id: binary_sensor.wyze_door1
+    platform: state
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: group.master_room_people
+    state: not_home
+  action:
+  - data:
+      message: The bedroom door was {% if is_state('binary_sensor.wyze_door1', 'on')
+        %}opened{% else %}closed{% endif %}!
+      title: Someone is in your room
+    service: notify.mobile_app_iphone
+  - data:
+      message: The bedroom door was {% if is_state('binary_sensor.wyze_door1', 'on')
+        %}opened{% else %}closed{% endif %}!
+      title: Someone is in your room
+    service: notify.mobile_app_pixel_4
+
+- id: '1590193462462'
+  alias: Notify Rooben's Bin is Full
+  mode: parallel
+  description: Send notification when the bin becomes full, then again each time the
+    person comes home
+  trigger:
+  - entity_id: vacuum.rooben
+    platform: state
+    to: docked
+  - entity_id: person.nathan
+    for: 00:03:00
+    platform: state
+    to: home
+  - entity_id: person.sarah
+    for: 00:03:00
+    platform: state
+    to: home
+  condition:
+  - condition: state
+    entity_id: binary_sensor.rooben_bin_full
+    state: 'on'
+  action:
+  - service: "{% if trigger.entity_id == 'person.nathan' %} notify.mobile_app_pixel_4 {% else %} notify.mobile_app_iphone {% endif %}"
+    data:
+      title: Rooben's Bin is Full
+      message: Time to empty the bin.
+  - condition: template
+    value_template: "{{ trigger.entity_id == 'vacuum.rooben'}}"
+  - service: notify.mobile_app_pixel_4
+    data:
+      title: Rooben's Bin is Full
+      message: Time to empty the bin.
+
+- id: '1604755622228'
+  alias: Notify When There Are Packages
+  description: 'Sends a notification to everyone when there are packages to be checked.'
+  trigger:
+  - platform: state
+    entity_id: sensor.mail_packages_delivered
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.mail_packages_delivered
+    above: '0'
+  - condition: state
+    entity_id: input_boolean.night_mode
+    state: 'off'
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Package Delivered
+      more_info: Packages have been delivered. Click to see package status.
+      url: /lovelace/mail
+      use_alexa: True
+  mode: single
+
+- id: '1604755622229'
+  alias: Notify When There Is Mail
+  description: 'Sends a notification to everyone when there is mail to be checked.'
+  trigger:
+  - platform: state
+    entity_id:
+      - binary_sensor.mailbox_vibration
+    to: 'on'
+    id: 'vibration'
+  - platform: time
+    at: "00:00:00"
+    id: 'midnight'
+  action:
+  - choose:
+    - conditions:
+        - condition: numeric_state
+          entity_id: sensor.mail_usps_mail
+          above: '0'
+        - condition: state
+          entity_id: input_boolean.night_mode
+          state: 'off'
+        - condition: state
+          entity_id:
+            - input_boolean.mail_in_box
+          state: 'off'
+        - condition: trigger
+          id: 'vibration'
+      sequence:
+        - service: script.notify_sarah_and_nathan
+          data:
+            message: Mail Time
+            more_info: Mail has been delivered to the mailbox. Click to see what you have.
+            url: /lovelace/mail
+            image: "{{ states('sensor.mail_image_url') }}"
+            image_type: gif
+            use_alexa: True
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.mail_in_box
+    default:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.mail_in_box
+  mode: single
+- id: '1586306345598'
+  alias: Turn Off Fans When Cold
+  description: Turn off the fans if the temperature drops below 40 and we're in bed
+  trigger:
+  - below: '60'
+    entity_id: weather.home
+    platform: numeric_state
+    value_template: '{{ state.attributes.temperature }}'
+  condition:
+  - after: sunset
+    before: sunrise
+    before_offset: '+3:00:00'
+    condition: sun
+  action:
+  - data: {}
+    entity_id: group.fans
+    service: homeassistant.turn_off
+- id: '1587668411958'
+  alias: Calendar Toggles WFH
+  description: ''
+  trigger:
+  - entity_id: calendar.wfh
+    platform: state
+  condition:
+  - condition: state
+    entity_id: binary_sensor.is_workday
+    state: 'on'
+  action:
+  - entity_id: input_boolean.wfh
+    service: "{% if is_state('binary_sensor.is_workday', 'on') %}\n\
+      \  input_boolean.turn_on\n{% else %}\n  input_boolean.turn_off\n{% endif %}"
+
+- id: wfh_fan
+  alias: WFH -- Fan
+  mode: single
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.bme280_temperature
+      above: input_number.fan_temperature
+      for: '00:01:00'
+    - platform: numeric_state
+      entity_id: sensor.bme280_temperature
+      below: input_number.fan_temperature
+      for: '00:01:00'
+    - platform: state
+      entity_id: binary_sensor.is_during_workday
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: input_boolean.wfh
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.occupied
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: input_number.fan_temperature
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.is_during_workday
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  action:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.bme280_temperature
+        above: input_number.fan_temperature
+      sequence:
+        - service: switch.turn_on
+          target:
+            entity_id: switch.office_plug
+    default:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.office_plug
+    
+- id: mutesync
+  alias: WFH -- Unmuting
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.muted
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.in_meeting
+    state: 'on'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.muted
+        state: 'on'
+      sequence:
+        - service: scene.turn_on
+          target:
+            entity_id: scene.before_unmute
+        - service: scene.create
+          data:
+            scene_id: before_unmute
+            snapshot_entities: []
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.muted
+        state: 'off'
+      sequence:
+        - service: scene.create
+          data:
+            scene_id: before_unmute
+            snapshot_entities:
+            - switch.office_plug
+        - service: scene.turn_on
+          target:
+            entity_id: scene.wfh_unmuted
+
+
+- id: wfh
+  alias: Work from Home
+  mode: restart
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.is_during_workday
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: input_boolean.wfh
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: person.nathan
+    from: 'not_home'
+    to: 'home'
+  - platform: state
+    entity_id: person.sarah
+    from: 'not_home'
+    to: 'home'
+  - platform: state
+    entity_id: person.nathan
+    from: 'home'
+    to: 'not_home'
+    id: 'nathan_left'
+  - platform: state
+    entity_id: person.sarah
+    from: 'home'
+    to: 'not_home'
+    id: 'sarah_left'
+  - platform: state
+    entity_id: binary_sensor.occupied
+    from: 'off'
+    to: 'on'
+  - platform: homeassistant
+    event: start
+  - platform: event
+    event_type: automation_reloaded
+  condition:
+  - condition: state
+    entity_id: input_boolean.wfh
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.is_during_workday
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.occupied
+    state: 'on'
+  action:
+  # Person Leaves
+  - alias: "Someone leaves during work day"
+    choose:
+    - conditions:
+      - condition: trigger
+        id: 'nathan_left'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            area_id: a78dc9b8222b47eebe4561988e57b0b0
+    - conditions:
+      - condition: trigger
+        id: 'sarah_left'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            area_id: b2672f722c53428e92427703040fb764
+
+  # Morning
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.is_morning
+        state: 'on'
+      sequence:
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.wfh_bedroom
+
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.wfh
+              - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.office_door
+                  to: 'off'
+                  from: 'on'
+                timeout: 03:00:00
+                continue_on_timeout: true
+              - service: media_player.media_stop
+                target: 
+                  entity_id: media_player.kitchen_echo_show
+              - service: media_player.select_source
+                data:
+                  source: Office Echo
+                target:
+                  entity_id: media_player.spotify_nathan_orick
+              - delay: '00:00:05'
+              - service: media_player.media_play
+                target:
+                  entity_id: media_player.spotify_nathan_orick
+
+        - wait_template: "{{ is_state('binary_sensor.is_lunch', 'on') }}"
+          timeout: 05:00:00
+          continue_on_timeout: false
+
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.occupied
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.wfh
+      state: 'on'
+
+  # Start of Lunch
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.is_lunch
+        state: 'on'
+      sequence:
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax
+                  transition: 600
+              - service: switch.turn_off
+                entity_id: switch.office_plug
+              - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.wyze_motion3
+                  to: 'on'
+              - service: media_player.play_media
+                data:
+                  media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+                  media_content_type: skill
+                target:
+                  entity_id:
+                  - media_player.kitchen_echo_show
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax_bedroom
+                  transition: 600
+
+        - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - binary_sensor.living_room_motion
+            to: 'on'
+          timeout:
+            minutes: 30
+        - service: media_player.media_stop
+          target: 
+            entity_id: media_player.kitchen_echo_show
+        - service: media_player.turn_on
+          target:
+            entity_id: media_player.living_room_tv
+        - service: media_player.select_source
+          target:
+            entity_id: media_player.living_room_tv
+          data:
+            source: '{{states("input_select.lunch_tv_app")}}'
+
+        - wait_template: "{{ is_state('binary_sensor.is_afternoon', 'on') }}"
+          timeout:
+              hours: "5"
+          continue_on_timeout: false
+        
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.occupied
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.wfh
+      state: 'on'
+
+  # End of Lunch
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.is_afternoon
+        state: 'on'
+      sequence:
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh
+                  transition: 60
+              - service: automation.trigger
+                entity_id: automation.wfh_fan
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_bedroom
+                  transition: 60
+
+        - wait_template: "{{ is_state('binary_sensor.is_evening', 'on') }}"
+          timeout:
+              hours: "5"
+          continue_on_timeout: false
+                
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.occupied
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.wfh
+      state: 'on'
+
+  # End of Day
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.is_evening
+        state: 'on'
+      sequence:
+        # Nathan
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.nathan
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax
+                  transition: 600
+              - service: switch.turn_off
+                entity_id: switch.office_plug
+        # Sarah
+        - choose:
+          - conditions:
+            - condition: state
+              entity_id:
+                - person.sarah
+              state: 'home'
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.wfh_relax_bedroom
+                  transition: 600
+
+        - delay: "00:10:00"
+        - service: light.turn_off
+          data:
+            transition: 10
+          target:
+            area_id: a78dc9b8222b47eebe4561988e57b0b0
+        - service: light.turn_off
+          data:
+            transition: 10
+          target:
+            area_id: b2672f722c53428e92427703040fb764
+        - service: input_boolean.turn_off
+          data:
+            entity_id: input_boolean.wfh
+- id: '1586737651295'
+  alias: Toggle Automations When There Are Visitors
+  description: ''
+  trigger:
+  - entity_id: input_boolean.visitors
+    platform: state
+  condition: []
+  action:
+  - entity_id: group.visitor_automations
+    service_template: "{% if is_state('input_boolean.visitors', 'on') %}\n  homeassistant.turn_off\n\
+      {% else %}\n  homeassistant.turn_on\n{% endif %}"
+
+- id: '1587273614675'
+  alias: Calendar Toggles Visitors
+  description: ''
+  trigger:
+  - entity_id: calendar.visitors
+    platform: state
+  condition: []
+  action:
+  - entity_id: input_boolean.visitors
+    service_template: "{% if is_state('calendar.visitors', 'on') %}\n  input_boolean.turn_on\n\
+      {% else %}\n  input_boolean.turn_off\n{% endif %}"
+
+- id: 'known_visitor_presence_toggle'
+  alias: Known Visitor Presence Toggles Visitor Mode
+  description: 'When a visitor that is on the list shows up, visitor mode turns on automatically'
+  trigger:
+  - entity_id: group.known_visitors
+    platform: state
+  condition: []
+  action:
+  - entity_id: input_boolean.visitors
+    service_template: >-
+      {% if is_state('group.known_visitors', 'home') %} input_boolean.turn_on {% else %} input_boolean.turn_off {% endif %}
+- id: '1588639275094'
+  alias: Toggle Night Mode
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.everyone_in_bed
+    from: 'off'
+    platform: state
+    to: 'on'
+  - entity_id: calendar.alarm
+    from: 'off'
+    platform: state
+    to: 'on'
+  - platform: template
+    value_template: >- 
+      {{ states('sensor.time') >= states('input_datetime.morning') }}
+  action:
+  - entity_id: input_boolean.night_mode
+    service_template: >- 
+      {% if trigger.entity_id == 'binary_sensor.everyone_in_bed' %} input_boolean.turn_on {% else %} input_boolean.turn_off {% endif %}
+
+- id: '1587677710011'
+  alias: Toggle Night Automations
+  description: ''
+  trigger:
+  - entity_id: input_boolean.night_mode
+    platform: state
+  condition: []
+  action:
+  - entity_id: group.bedtime_automations
+    service_template: >- 
+      {% if is_state('input_boolean.night_mode', 'on') %} homeassistant.turn_on {% else %} homeassistant.turn_off {% endif %}
+
+- id: '1587996987502'
+  alias: Night Mode -- Set Night State for All Devices
+  description: ''
+  trigger:
+  - entity_id: input_boolean.night_mode
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+
+  # No one sleeping anywhere weird
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.couch_sleepers
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.office_sleepers
+        state: 'off'
+      sequence:
+        - entity_id: group.all_lights
+          service: homeassistant.turn_off
+        - service: switch.turn_off
+          entity_id: switch.office_plug
+
+  # Only sleeping in office
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.couch_sleepers
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.office_sleepers
+        state: 'on'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            entity_id: group.public_lights
+
+  # Only sleeping on couch
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.couch_sleepers
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.office_sleepers
+        state: 'off'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            area_id: a78dc9b8222b47eebe4561988e57b0b0
+        - service: homeassistant.turn_off
+          target:
+            entity_id: group.kitchen_lights
+        - service: switch.turn_off
+          entity_id: switch.office_plug
+
+  # Sleeping in both
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.couch_sleepers
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.office_sleepers
+        state: 'on'
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            entity_id: group.kitchen_lights
+
+  - service: switch.turn_on
+    entity_id: switch.nathans_fan
+  - service: lock.lock
+    entity_id: lock.back_door
+  - data: {}
+    entity_id: media_player.living_room_tv
+    service: media_player.turn_off
+  - service: switch.turn_off
+    entity_id: switch.truck
+
+  - alias: "Reminder to Let Water Drip"
+    choose:
+    - conditions: "{{ state_attr('weather.home', 'forecast') | map(attribute='templow') | first < 32}}"
+      sequence:
+        - service: notify.alexa_media
+          data:
+            data:
+              type: tts
+            message: "Don't forget to let the water drip. The low for tonight is {{ state_attr('weather.home', 'forecast') | map(attribute='templow') | first}}"
+            target: media_player.bedroom_echo
+    default: []
+- id: 'couch_sleepers'
+  alias: Toggle Automations When Someone is Sleeping on the Couch
+  description: ''
+  trigger:
+  - entity_id: input_boolean.couch_sleepers
+    platform: state
+  condition: []
+  action:
+  - entity_id: group.couch_sleeping_automations
+    service_template: >-
+      {% if is_state('input_boolean.couch_sleepers', 'on') %} homeassistant.turn_off {% else %} homeassistant.turn_on {% endif %}
+- id: '1589240357141'
+  alias: Turn Off Public Lights After No Motion
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.public_space_motion
+    for: 0:05:00
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.public_lights
+    service: homeassistant.turn_off
+- id: '1587438080867'
+  alias: Turn On Kitchen if Motion
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_motion3
+    platform: state
+    to: 'on'
+  action:
+  - data: {}
+    entity_id: group.kitchen_lights
+    service: homeassistant.turn_on
+
+- id: '1587438080868'
+  alias: Turn Off Kitchen After No Motion
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.wyze_motion3
+    for: 
+      seconds: "{{ states('input_number.kitchen_motion_timeout') | int * 60 }}"
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.kitchen_lights
+    service: homeassistant.turn_off
+  - service: light.turn_off
+    entity_id: light.back_door
+- id: 'bathroom_on_motion'
+  alias: Toggle Bathroom on Motion
+  description: ''
+  mode: restart
+  trigger:
+  - entity_id: binary_sensor.wyze_motion2
+    platform: state
+    to: 'on'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "off"
+      sequence:
+      - service: script.tier_toggle_devices
+        data:
+          action: true
+          entity_1:
+            entity_id: light.bath_1
+          entity_2:
+            entity_id: light.bath_2
+          entity_3:
+            entity_id: light.bath_3
+          entity_4:
+            entity_id: light.bath_4
+          entity_5:
+            entity_id: light.bath_5
+          entity_6:
+            entity_id: light.bath_6
+          entity_7:
+            entity_id: light.bath_ceiling
+          delay: 250
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "on"
+      sequence:
+      - service: scene.turn_on
+        entity_id: scene.bathroom_night
+  - service: scene.turn_on
+    data_template: 
+      entity_id: >-
+        {% if is_state("input_boolean.night_mode", "on") %} scene.bathroom_night {% else %} scene.bathroom_day {% endif %}
+  - wait_for_trigger:
+    - platform: state
+      entity_id: binary_sensor.wyze_motion2
+      to: 'off'
+      for:
+        seconds: >-
+          {% set pee_timeout = states('input_number.pee_timeout') | int * 60 %}
+          {% set poo_timeout = states('input_number.poo_timeout') | int * 60 %}
+          {% set night_timeout = states('input_number.night_timeout') | int * 60 %}
+          {% if is_state("binary_sensor.bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+          {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
+    timeout: 3600
+    continue_on_timeout: true
+  - service: script.tier_toggle_devices
+    data:
+      action: false
+      entity_1:
+        entity_id: light.bath_1
+      entity_2:
+        entity_id: light.bath_2
+      entity_3:
+        entity_id: light.bath_3
+      entity_4:
+        entity_id: light.bath_4
+      entity_5:
+        entity_id: light.bath_5
+      entity_6:
+        entity_id: light.bath_6
+      entity_7:
+        entity_id: light.bath_ceiling
+      delay: 1000
+
+- id: 'guest_bathroom_on_motion'
+  alias: Toggle Guest Bathroom on Motion
+  description: ''
+  mode: restart
+  trigger:
+  - entity_id: binary_sensor.wyze_motion1
+    platform: state
+    to: 'on'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "off"
+      sequence:
+      - service: script.tier_toggle_devices
+        data:
+          action: true
+          entity_1:
+            entity_id: light.guest_bath_1
+          entity_2:
+            entity_id: light.guest_bath_3
+          entity_3:
+            entity_id: light.guest_bath_2
+          delay: 250
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "on"
+      sequence:
+      - service: scene.turn_on
+        entity_id: scene.guest_bathroom_night
+  - wait_for_trigger:
+    - platform: state
+      entity_id: binary_sensor.wyze_motion1
+      to: 'off'
+      for:
+        seconds: >-
+          {% set pee_timeout = states('input_number.pee_timeout') | int * 60 %}
+          {% set poo_timeout = states('input_number.poo_timeout') | int * 60 %}
+          {% set night_timeout = states('input_number.night_timeout') | int * 60 %}
+          {% if is_state("binary_sensor.guest_bathroom_door", "off") %} {% set action = "poo" %} {% else %} {% set action = "pee" %} {% endif %}
+          {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
+    timeout: 3600
+    continue_on_timeout: true
+  - service: script.tier_toggle_devices
+    data:
+      action: false
+      entity_1:
+        entity_id: light.guest_bath_1
+      entity_2:
+        entity_id: light.guest_bath_3
+      entity_3:
+        entity_id: light.guest_bath_2
+      delay: 1000
+- id: 'guest_air_freshener'
+  alias: Turn On Air Freshener When Bathroom Is Occupied When There Are Scheduled Visitors
+  description: ''
+  trigger:
+  - entity_id: light.guest_bathroom
+    platform: state
+  condition: 
+  - condition: state
+    entity_id: input_boolean.visitors
+    state: 'on'
+  action:
+  - service_template: "{% if is_state('light.guest_bathroom', 'on') %} switch.turn_on {% else %} switch.turn_off {% endif %}"
+    data:
+      entity_id: switch.guest_air_freshener
+- id: '1586735161292'
+  alias: Turn Off Everything When Everyone Leaves
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.occupied
+    for: 00:05:00
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.all_lights
+    service: homeassistant.turn_off
+  - data: {}
+    entity_id: media_player.living_room_tv
+    service: media_player.turn_off
+  - entity_id: group.fans
+    service: homeassistant.turn_off
+  - service: climate.turn_off
+    entity_id: climate.bedroom_thermostat
+  - service: switch.turn_on
+    entity_id: switch.mudroom_camera
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.start
+  - service: alarm_control_panel.alarm_arm_away
+    entity_id: alarm_control_panel.alexa_guard_ee9c2
+  - service: switch.turn_off
+    entity_id: switch.truck
+  - service: climate.set_preset_mode
+    target:
+      entity_id: climate.kitchen
+    data:
+      preset_mode: eco
+  - service: input_boolean.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.keep_ac_in_eco
+- id: '1587162726799'
+  alias: First Person Home
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.occupied
+    from: 'off'
+    platform: state
+    to: 'on'
+  variables:
+    lights:
+      - light.front_porch
+      - light.back_porch
+      - light.side_porch
+      - light.laundry_room
+      - light.back_door
+      - light.front_door
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id: "{{ lights }}"
+    default: []
+  - service: switch.turn_off
+    entity_id: switch.mudroom_camera
+  - service: alarm_control_panel.alarm_disarm
+    entity_id: alarm_control_panel.alexa_guard_ee9c2
+  - service: input_boolean.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.keep_ac_in_eco
+  - service: climate.set_preset_mode
+    target:
+      entity_id: climate.kitchen
+    data:
+      preset_mode: none
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.stop
+  - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
+    continue_on_timeout: true
+    timeout: 00:00:10
+  - data: {}
+    entity_id: vacuum.rooben
+    service: vacuum.return_to_base
+  - delay: 00:10:00
+  - service: light.turn_off
+    target:
+      entity_id: "{{ lights }}"
+- id: '1587673304305'
+  alias: Turn On Kitchen When Leaving Bedroom
+  description: ''
+  trigger:
+  - entity_id: binary_sensor.bedroom_door
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    target:
+      area_id: 1f75029558cd46f69ddb7d3a9f537726
+    service: light.turn_on
