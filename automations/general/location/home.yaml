@@ -32,6 +32,10 @@
       entity_id: climate.kitchen
     data:
       preset_mode: eco
+  - service: input_boolean.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.keep_ac_in_eco
 
 - id: '1587162726799'
   alias: First Person Home
@@ -65,6 +69,10 @@
     entity_id: switch.mudroom_camera
   - service: alarm_control_panel.alarm_disarm
     entity_id: alarm_control_panel.alexa_guard_ee9c2
+  - service: input_boolean.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.keep_ac_in_eco
   - service: climate.set_preset_mode
     target:
       entity_id: climate.kitchen
