@@ -7,6 +7,37 @@
     platform: state
     to: 'on'
   action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "off"
+      sequence:
+      - service: script.tier_toggle_devices
+        data:
+          action: true
+          entity_1:
+            entity_id: light.bath_1
+          entity_2:
+            entity_id: light.bath_2
+          entity_3:
+            entity_id: light.bath_3
+          entity_4:
+            entity_id: light.bath_4
+          entity_5:
+            entity_id: light.bath_5
+          entity_6:
+            entity_id: light.bath_6
+          entity_7:
+            entity_id: light.bath_ceiling
+          delay: 250
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "on"
+      sequence:
+      - service: scene.turn_on
+        entity_id: scene.bathroom_night
   - service: scene.turn_on
     data_template: 
       entity_id: >-
@@ -24,10 +55,24 @@
           {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
     timeout: 3600
     continue_on_timeout: true
-  - service: light.turn_off
+  - service: script.tier_toggle_devices
     data:
-      transition: 6
-    entity_id: light.bathroom
+      action: false
+      entity_1:
+        entity_id: light.bath_1
+      entity_2:
+        entity_id: light.bath_2
+      entity_3:
+        entity_id: light.bath_3
+      entity_4:
+        entity_id: light.bath_4
+      entity_5:
+        entity_id: light.bath_5
+      entity_6:
+        entity_id: light.bath_6
+      entity_7:
+        entity_id: light.bath_ceiling
+      delay: 1000
 
 - id: 'guest_bathroom_on_motion'
   alias: Toggle Guest Bathroom on Motion
@@ -38,10 +83,29 @@
     platform: state
     to: 'on'
   action:
-  - service: scene.turn_on
-    data_template: 
-      entity_id: >-
-        {% if is_state("input_boolean.night_mode", "on") %} scene.guest_bathroom_night {% else %} scene.guest_bathroom_day {% endif %}
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "off"
+      sequence:
+      - service: script.tier_toggle_devices
+        data:
+          action: true
+          entity_1:
+            entity_id: light.guest_bath_1
+          entity_2:
+            entity_id: light.guest_bath_3
+          entity_3:
+            entity_id: light.guest_bath_2
+          delay: 250
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: "on"
+      sequence:
+      - service: scene.turn_on
+        entity_id: scene.guest_bathroom_night
   - wait_for_trigger:
     - platform: state
       entity_id: binary_sensor.wyze_motion1
@@ -55,7 +119,13 @@
           {% if action == "poo" %} {{ poo_timeout }} {% elif is_state('input_boolean.night_mode', 'on') %} {{ night_timeout }} {% else %} {{ pee_timeout }} {% endif %}
     timeout: 3600
     continue_on_timeout: true
-  - service: light.turn_off
+  - service: script.tier_toggle_devices
     data:
-      transition: 6
-    entity_id: light.guest_bathroom
+      action: false
+      entity_1:
+        entity_id: light.guest_bath_1
+      entity_2:
+        entity_id: light.guest_bath_3
+      entity_3:
+        entity_id: light.guest_bath_2
+      delay: 1000
