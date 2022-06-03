@@ -10,6 +10,7 @@ tts:
   - platform: google_translate
 homeassistant:
   customize: !include customize.yaml
+
 group: !include_dir_merge_named ./groups
 automation: !include automations.yaml
 script: !include scripts.yaml
@@ -62,6 +63,11 @@ template:
       state: >-
         {{states("input_boolean.alexa_parking_pad_floodlight_motion")}}
       device_class: motion
+  - sensor:
+    - name: Tesla Home Monthly Charging Cost
+      unit_of_measurement: $
+      state: >-
+        {{(states("sensor.tesla_home_charging") | float / 1000 * states("sensor.brightridge_electricity_price") | float) | round(2, "half")}}
 
 light:
   - platform: flux_led
@@ -77,11 +83,6 @@ light:
   - platform: switch
     name: BL2
     entity_id: switch.bl2
-  - platform: group
-    name: Dining Room Ceiling
-    entities:
-      - light.drc1
-      - light.drc2
   - platform: switch
     name: g1
     entity_id: switch.g1
@@ -145,6 +146,14 @@ recorder:
       - sensor.date_time_iso
       - sensor.time
       - sensor.timestamp
+      - sensor.vehicle_state_data_sensor
+      - sensor.climate_state_data_sensor
+      - sensor.drive_state_data_sensor
+      - sensor.gui_settings_data_sensor
+      - sensor.sensor
+      - sensor.software_data_sensor
+      - sensor.speed_limit_data_sensor
+      - sensor.vehicle_config_data_sensor
 
 alexa_media:
   accounts:
@@ -169,11 +178,6 @@ switch:
     name: "Tater_PC"
     host: !secret nathan_pc_ip
     broadcast_address: !secret nathan_pc_ip
-
-roomba:
-  - host: !secret roomba_host
-    blid: !secret roomba_blid
-    password: !secret roomba_password
 
 alarm_control_panel:
   - platform: manual

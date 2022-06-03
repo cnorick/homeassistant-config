@@ -1,124 +1,46 @@
 - id: '1587847979565'
   name: Tv Playing at Night
   entities:
-    automation.kitchen_motion:
-      friendly_name: Turn On Kitchen If Motion
-      id: '1587438080867'
-      last_triggered: '2020-06-04T03:48:10.783376+00:00'
+    light.living_room_ceiling:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      is_hue_group: true
+      hue_scenes: []
+      hue_type: zone
+      lights:
+      - LRC1
+      - LRC2
+      dynamics: false
+      icon: mdi:lightbulb
+      friendly_name: Living Room Ceiling
+      supported_features: 40
       state: 'off'
-    light.bookshelf_bottom:
-      brightness: 16
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Bookshelf Bottom
+    light.living_room_lamp:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      mode: normal
+      dynamics: none
+      friendly_name: Living Room Lamp
+      supported_features: 40
+      color_mode: xy
+      brightness: 116
       hs_color:
-      - 269.822
-      - 66.275
-      max_mireds: 500
-      min_mireds: 153
+      - 234.688
+      - 75.294
       rgb_color:
-      - 169
-      - 85
+      - 63
+      - 80
       - 255
-      state: 'on'
-      supported_features: 63
       xy_color:
-      - 0.266
-      - 0.134
-    light.bookshelf_top:
-      brightness: 16
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Bookshelf Top
-      hs_color:
-      - 8.158
-      - 89.412
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 57
-      - 26
+      - 0.1541
+      - 0.0813
       state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.674
-      - 0.313
-    light.front_door:
-      friendly_name: Front Door
-      state: 'off'
-      supported_features: 41
-    light.hallway_1:
-      friendly_name: Hallway 1
-      state: 'off'
-      supported_features: 41
-    light.hallway_2:
-      friendly_name: Hallway 2
-      state: 'off'
-      supported_features: 41
-    light.kitchen_string_lights:
-      effect_list:
-      - blue_fade
-      - blue_strobe
-      - colorjump
-      - colorloop
-      - colorstrobe
-      - cyan_fade
-      - cyan_strobe
-      - gb_cross_fade
-      - green_fade
-      - green_strobe
-      - purple_fade
-      - purple_strobe
-      - rb_cross_fade
-      - red_fade
-      - red_strobe
-      - rg_cross_fade
-      - white_fade
-      - white_strobe
-      - yellow_fade
-      - yellow_strobe
-      - random
-      friendly_name: Kitchen String Lights
-      max_mireds: 500
-      min_mireds: 153
-      state: 'off'
-      supported_features: 151
-    light.overhead:
-      friendly_name: Overhead
-      state: 'off'
-      supported_features: 41
-    light.tv_lamp:
-      brightness: 16
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Tv Lamp
-      hs_color:
-      - 27.444
-      - 87.451
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 134
-      - 31
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.597
-      - 0.377
-    switch.kitchen_counter:
-      friendly_name: Kitchen Counter
-      state: 'off'
-    switch.kitchen_overhead:
-      friendly_name: Kitchen Overhead
-      state: 'off'
 - id: '1587849548722'
   name: Tv Paused at Night
   entities:
@@ -233,84 +155,30 @@
 - id: '1587849799364'
   name: Tv Off at Night
   entities:
-    automation.kitchen_motion:
-      friendly_name: Turn On Kitchen If Motion
-      id: '1587438080867'
-      last_triggered: '2020-06-04T03:48:10.783376+00:00'
-      state: 'on'
-    light.bookshelf_bottom:
-      brightness: 170
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Bookshelf Bottom
-      hs_color:
-      - 36.213
-      - 66.275
-      max_mireds: 500
+    light.living_room_lamp:
       min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      mode: normal
+      dynamics: none
+      friendly_name: Living Room Lamp
+      supported_features: 40
+      color_mode: color_temp
+      brightness: 166
+      color_temp: 366
+      hs_color:
+      - 28.327
+      - 64.71
       rgb_color:
       - 255
-      - 187
-      - 85
-      state: 'on'
-      supported_features: 63
+      - 167
+      - 89
       xy_color:
-      - 0.503
-      - 0.413
-    light.bookshelf_top:
-      brightness: 191
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Bookshelf Top
-      hs_color:
-      - 36.213
-      - 66.275
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 187
-      - 85
+      - 0.524
+      - 0.387
       state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.503
-      - 0.413
-    light.hallway_1:
-      brightness: 157
-      friendly_name: Hallway 1
-      state: 'on'
-      supported_features: 41
-    light.hallway_2:
-      brightness: 189
-      friendly_name: Hallway 2
-      state: 'on'
-      supported_features: 41
-    light.tv_lamp:
-      brightness: 150
-      effect: none
-      effect_list:
-      - colorloop
-      - random
-      friendly_name: Tv Lamp
-      hs_color:
-      - 36.213
-      - 66.275
-      max_mireds: 500
-      min_mireds: 153
-      rgb_color:
-      - 255
-      - 187
-      - 85
-      state: 'on'
-      supported_features: 63
-      xy_color:
-      - 0.503
-      - 0.413
 - id: '1589041501221'
   name: Bedtime
   entities:
@@ -322,22 +190,22 @@
       - xy
       is_hue_group: true
       hue_scenes:
-      - Concentrate
-      - Bright
-      - Tropical twilight
       - Nightlight
-      - Savanna sunset
-      - Spring blossom
       - Energize
-      - Arctic aurora
-      - Dimmed
       - Read
       - Relax
+      - Spring blossom
+      - Savanna sunset
+      - Concentrate
+      - Tropical twilight
+      - Bright
+      - Arctic aurora
+      - Dimmed
       hue_type: zone
       lights:
       - BRC2
-      - BRC3
       - BRC1
+      - BRC3
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Bedroom Ceiling
@@ -382,9 +250,9 @@
       min_temp: 50
       max_temp: 86
       target_temp_step: 1
-      current_temperature: 69.6
-      temperature: 72
-      hvac_action: heating
+      current_temperature: 72
+      temperature: 70
+      hvac_action: idle
       friendly_name: Bedroom Thermostat
       supported_features: 1
       state: heat

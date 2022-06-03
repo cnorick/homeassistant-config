@@ -6,7 +6,6 @@ hue_lights:
 wyze_lights:
   name: Wyze Lights
   entities:
-    - light.office_lamp_top
     - light.drc1
     - light.drc2
     - light.bl1
@@ -26,6 +25,7 @@ shelly_lights:
     - light.back_porch
     - light.side_porch
     - light.laundry_room
+    - light.hallway
     
 tplink_lights:
   entities:

@@ -33,4 +33,3 @@
   duration:
     days: 10
   end: "{{ now() }}"
-

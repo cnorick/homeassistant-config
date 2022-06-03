@@ -1,0 +1,122 @@
+blueprint:
+  name: Notify All
+  description: >-
+    A script that sends an actionable notification with a confirmation before
+    running the specified action.
+  domain: script
+  #source_url: ""
+  input:
+    notify_device1:
+      name: Device to Notify
+      description: ""
+      selector:
+        device:
+          integration: mobile_app
+    notify_device1_type:
+      name: Device Type
+      description: "The title of the button shown in the notification."
+      default: ""
+      selector:
+        select:
+          options:
+            - IPhone
+            - Android
+            - Alexa
+
+mode: restart
+fields:
+  message:
+    description: (required) The message to send to all of the devices
+    example: Hello
+    selector:
+      text:
+    required: true
+  more_info:
+    description: (optional) More information to display on phone notifications.
+      Will not play over Alexa.
+    example: Click here to for more info
+    selector:
+      text:
+        multiline: true
+  url:
+    description: (optional) The url to open when the notification is clicked. Most
+      often will be a specific dashboard.
+    example: /lovelace/default_view
+    selector:
+      text:
+  image:
+    description: (optional) The public url of the image to be sent to the devices
+    example: /local/mail_and_packages/mail_today.gif
+    selector:
+      text:
+  image_type:
+    description: (required if image is specified) The filetype of the image. This
+      is required for iphone.
+    example: gif
+    selector:
+      text:
+  use_alexa:
+    description: Should this notification be made over the echos
+    example: 'False'
+    default: false
+    selector:
+      boolean:
+    required: true
+  notify_sarah:
+    description: Should this notification be sent to Sarah
+    example: 'False'
+    default: true
+    selector:
+      boolean:
+    required: true
+  notify_nathan:
+    description: Should this notification be sent to Nathan
+    example: 'False'
+    default: true
+    selector:
+      boolean:
+    required: true
+
+sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_nathan }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            clickAction: '{{ url }}'
+            image: '{{ image }}'
+        service: notify.mobile_app_pixel_4
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ use_alexa }}'
+      sequence:
+      - data_template:
+          data:
+            type: announce
+          message: '{{ message }}'
+        service: notify.alexa_media_everywhere
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_sarah }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            url: '{{ url }}'
+            attachment:
+              url: '{{ image }}'
+              content-type: '{{ image_type }}'
+              hide-thumbnail: false
+        service: notify.mobile_app_sarah_iphone
+    default: []

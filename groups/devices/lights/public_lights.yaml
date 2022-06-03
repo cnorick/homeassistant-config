@@ -3,7 +3,7 @@ public_lights:
   entities:
     - light.front_door
     - light.living_room
-    - light.dining_room_ceiling
+    - light.dining_room
     - light.kitchen_counter
     - light.kitchen_overhead
     - light.office
@@ -14,3 +14,6 @@ public_lights:
     - light.back_door
     - light.back_porch
     - light.laundry_room
+    - light.hallway
+    - light.basement_lights
+    - light.basement_stairs

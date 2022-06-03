@@ -56,36 +56,63 @@ notify_sarah_and_nathan:
       selector:
         boolean:
       required: true
+    notify_sarah:
+      description: Should this notification be sent to Sarah
+      example: 'False'
+      default: true
+      selector:
+        boolean:
+      required: true
+    notify_nathan:
+      description: Should this notification be sent to Nathan
+      example: 'False'
+      default: true
+      selector:
+        boolean:
+      required: true
   sequence:
-  - data_template:
-      title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
-      message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
-        endif -%}'
-      data:
-        url: '{{ url }}'
-        attachment:
-          url: '{{ image }}'
-          content-type: '{{ image_type }}'
-          hide-thumbnail: false
-    service: notify.mobile_app_iphone
-  - data_template:
-      title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
-      message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
-        endif -%}'
-      data:
-        clickAction: '{{ url }}'
-        image: '{{ image }}'
-    service: notify.mobile_app_pixel_4
-  - condition: state
-    entity_id: binary_sensor.occupied
-    state: 'on'
-  - condition: template
-    value_template: '{{ use_alexa }}'
-  - data_template:
-      data:
-        type: announce
-      message: '{{ message }}'
-    service: notify.alexa_media_everywhere
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_nathan }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            clickAction: '{{ url }}'
+            image: '{{ image }}'
+        service: notify.mobile_app_pixel_4
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ use_alexa }}'
+      sequence:
+      - data_template:
+          data:
+            type: announce
+          message: '{{ message }}'
+        service: notify.alexa_media_everywhere
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_sarah }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            url: '{{ url }}'
+            attachment:
+              url: '{{ image }}'
+              content-type: '{{ image_type }}'
+              hide-thumbnail: false
+        service: notify.mobile_app_sarah_iphone
+    default: []
   mode: single
 alarm:
   alias: Alarm
@@ -561,3 +588,65 @@ tier_toggle_devices:
           target: '{{entity_10}}'
   mode: single
   alias: Turn on Entities One at a Time
+start_tesla:
+  alias: Start Tesla
+  sequence:
+  - service: climate.turn_on
+    data: {}
+    target:
+      entity_id: climate.hvac_climate_system
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.temperature_sensor_outside
+      below: '45'
+    then:
+    - service: climate.set_preset_mode
+      data:
+        preset_mode: defrost
+      target:
+        entity_id: climate.hvac_climate_system
+  mode: single
+vacuum_rooms:
+  alias: Vacuum Room(s)
+  fields:
+    rooms:
+      name: Rooms
+      description: The Rooms to Vacuum in the order that they should be vacuumed.
+        Leave empty for vacuuming everywhere
+      selector:
+        select:
+          multiple: true
+          options:
+          - label: Bedroom
+            value: '1'
+          - label: Guest Bedroom
+            value: '5'
+          - label: Bathroom
+            value: '8'
+          - label: Hallway
+            value: '11'
+          - label: Kitchen
+            value: '15'
+          - label: Dining Room
+            value: '17'
+          - label: Office
+            value: '9'
+          - label: Mud Room
+            value: '16'
+          - label: Living Room
+            value: '18'
+  variables:
+    regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"\
+      type\": \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
+  sequence:
+  - service: vacuum.send_command
+    data:
+      command: start
+      params:
+        ordered: 1
+        pmap_id: mBsM5dLfTw2zkbQnVO1g3w
+        regions: '{{regions}}'
+        user_pmapv_id: 220603T152255
+    target:
+      entity_id: vacuum.rooben
+  mode: single

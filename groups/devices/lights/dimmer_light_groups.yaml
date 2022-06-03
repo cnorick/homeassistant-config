@@ -1,0 +1,35 @@
+office_dimmer_lights:
+  entities:
+    - light.office_ceiling
+    - light.office_lamp_top
+    - light.hue_color_downlight_1
+
+guest_bedroom_dimmer_lights:
+  entities:
+    - light.guest_bedroom_ceiling
+    - light.guest_bedroom_lamp
+
+guest_bathroom_dimmer_lights:
+  entities:
+    - light.guest_bathroom
+
+dining_room_dimmer_lights:
+  entities:
+    - light.dining_room_ceiling
+
+bedroom_dimmer_lights:
+  entities:
+    - light.bedroom_ceiling
+    - light.bedroom_rope_lights
+    - light.nathan_s_nightstand
+    - light.sarah_s_nightstand
+
+bathroom_dimmer_lights:
+  entities:
+    - light.bathroom
+
+living_room_dimmer_lights:
+  entities:
+    - light.living_room_ceiling
+    - light.living_room_lamp
+    - light.front_door
