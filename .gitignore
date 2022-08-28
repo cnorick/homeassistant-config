@@ -24,3 +24,4 @@ home-assistant_v2.db*
 wyze_config.ini
 www/doods/*
 home-assistant.log*
+zigbee.db-journal

@@ -259,15 +259,12 @@
 - id: '1589242846422'
   name: WFH
   entities:
-    light.office:
+    light.office_ceiling:
       min_mireds: 153
       max_mireds: 500
-      effect_list:
-      - colorloop
-      - random
       supported_color_modes:
       - color_temp
-      - hs
+      - xy
       color_mode: color_temp
       brightness: 255
       color_temp: 288
@@ -282,34 +279,85 @@
       - 0.456
       - 0.374
       is_hue_group: true
-      friendly_name: Office
-      supported_features: 63
+      hue_scenes:
+      - Tropical twilight
+      - Savanna sunset
+      hue_type: zone
+      lights:
+      - OC2
+      - OC1
+      dynamics: false
+      icon: mdi:lightbulb
+      friendly_name: Office Ceiling
+      supported_features: 40
       state: 'on'
+    scene.office_ceiling_tropical_twilight:
+      group_name: Office Ceiling
+      group_type: zone
+      name: Tropical twilight
+      speed: 0.6388888888888888
+      brightness: 43.7
+      is_dynamic: true
+      friendly_name: Office Ceiling Tropical twilight
+      state: '2022-04-09T02:50:31.057783+00:00'
+    scene.office_ceiling_savanna_sunset:
+      group_name: Office Ceiling
+      group_type: zone
+      name: Savanna sunset
+      speed: 0.6190476190476191
+      brightness: 80.71
+      is_dynamic: true
+      friendly_name: Office Ceiling Savanna sunset
+      state: '2022-04-09T02:50:32.218301+00:00'
     light.office_lamp_top:
+      effect_list:
+      - None
+      - candle
+      supported_color_modes:
+      - brightness
+      mode: normal
+      dynamics: none
+      friendly_name: Office Top Lamp
+      supported_features: 44
+      color_mode: brightness
+      brightness: 255
+      effect: None
+      state: 'on'
+    light.hue_color_downlight_1:
       min_mireds: 153
       max_mireds: 500
       supported_color_modes:
       - color_temp
+      - xy
       color_mode: color_temp
       brightness: 255
-      color_temp: 418.33684210526314
+      color_temp: 288
       hs_color:
-      - 29.18
-      - 76.659
+      - 27.201
+      - 45.386
       rgb_color:
       - 255
-      - 154
-      - 59
+      - 191
+      - 139
       xy_color:
-      - 0.559
-      - 0.389
-      attribution: Data provided by Wyze
+      - 0.456
+      - 0.374
+      mode: normal
+      dynamics: none
+      friendly_name: Desk Lamp
+      supported_features: 40
       state: 'on'
-      available: true
-      device model: WLPA19
-      mac: 2CAA8E3D63D7
-      friendly_name: Office Lamp Top
-      supported_features: 3
+  metadata:
+    light.hue_color_downlight_1:
+      entity_only: false
+    light.office_ceiling:
+      entity_only: false
+    scene.office_ceiling_tropical_twilight:
+      entity_only: false
+    scene.office_ceiling_savanna_sunset:
+      entity_only: false
+    light.office_lamp_top:
+      entity_only: false
 - id: '1589595243203'
   name: Video Games
   entities:

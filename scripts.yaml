@@ -59,14 +59,14 @@ notify_sarah_and_nathan:
     notify_sarah:
       description: Should this notification be sent to Sarah
       example: 'False'
-      default: true
+      default: false
       selector:
         boolean:
       required: true
     notify_nathan:
       description: Should this notification be sent to Nathan
       example: 'False'
-      default: true
+      default: false
       selector:
         boolean:
       required: true

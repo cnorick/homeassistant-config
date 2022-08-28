@@ -107,8 +107,8 @@
     data: {}
   - wait_for_trigger:
     - platform: template
-      value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n    and\
-        \ is_state('binary_sensor.public_space_motion', 'off')\n}}"
+      value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n    and
+        is_state('binary_sensor.public_space_motion', 'off')\n}}"
       id: in_office
     - platform: state
       entity_id: binary_sensor.living_room_motion
@@ -142,8 +142,8 @@
         data: {}
       - wait_for_trigger:
         - platform: template
-          value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n\
-            \    and is_state('binary_sensor.public_space_motion', 'off')\n}}"
+          value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n
+            \   and is_state('binary_sensor.public_space_motion', 'off')\n}}"
         timeout: 02:00:00
         continue_on_timeout: false
       - service: light.turn_off
@@ -192,8 +192,6 @@
         - sensor.nathan_s_pixel_battery_level
         - sensor.pixel_4_battery_state
         - sensor.rooben_battery_level
-        - sensor.living_room_motion_sensor_battery_level
-        - binary_sensor.living_room_motion_sensor_low_battery_level
       actions:
       - service: script.notify_sarah_and_nathan
         data:
@@ -261,7 +259,7 @@
   - service: notify.mobile_app_pixel_4
     data:
       title: Alexa Media Player Integration
-      message: 🔑 Authentication Required
+      message: "\U0001F511 Authentication Required"
 - id: '1620443082110'
   alias: Alarm -- Run Alarm when Triggered
   description: ''
@@ -437,9 +435,9 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{\n  states.binary_sensor.basement_door.last_changed | as_timestamp\
-          \ -\n  states.binary_sensor.laundry_room_motion.last_changed | as_timestamp\
-          \ > 0\n}}"
+        value_template: "{{\n  states.binary_sensor.basement_door.last_changed | as_timestamp
+          -\n  states.binary_sensor.laundry_room_motion.last_changed | as_timestamp
+          > 0\n}}"
       sequence: []
     default: []
   mode: parallel
@@ -556,54 +554,73 @@
       entity_id: input_boolean.night_mode
   mode: single
 - id: '1625057755379'
-  alias: Notify of Basement Water
+  alias: Leak Detection
   description: ''
   trigger:
   - platform: state
     entity_id: binary_sensor.basement_water_sensor_water_detected
     to: 'on'
+    id: water-heater
+  - platform: state
+    entity_id:
+    - binary_sensor.kitchen_sink_moisture
+    to: 'on'
+    id: kitchen
+  - platform: state
+    entity_id:
+    - binary_sensor.titan_water_valve_actuator_water_alarm_water_leak_detected
+    to: 'on'
+    id: valve
   action:
-  - service: script.notify_sarah_and_nathan
-    data:
-      message: Warning, Basement Flooding
-      more_info: Water has been detected in the basement. Check the water sensor attached
-        to the water heater. Turn off the water main if there is active flooding.
-      use_alexa: true
-      notify_nathan: true
-      notify_sarah: true
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 30
-      milliseconds: 0
-  - repeat:
-      while:
-      - condition: state
-        entity_id: binary_sensor.basement_water_sensor_water_detected
-        state: 'on'
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.titan_water_valve_actuator
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: water-heater
       sequence:
-      - service: notify.alexa_media_nathan_s_2nd_echo_dot
+      - service: script.notify_sarah_and_nathan
         data:
-          message: Inspect the water sensor attached to the water heater. If there
-            is active flooding from the water line, turn off the main water valve
-            located on the ceiling in the northwest corner of the basement, directly
-            under the guest bedroom, and diagonally opposite of the breaker box. Look
-            for a yellow handle on a blue pipe. To stop notifications, pull the water
-            sensor out of the water and dry it off. Otherwise, turn off the automation
-            named Notify of Basement Water in Home Assistant.
-          data:
-            type: announce
-      - service: notify.alexa_media_upstairs
+          message: Warning, Water Heater Flooding
+          more_info: Water has been detected in the basement near the water heater.
+            Check the water sensor attached to the water heater. The water main has
+            already been turned off. Click this notification to turn it back on, or
+            press the button on the device in the basement.
+          use_alexa: true
+          notify_nathan: true
+          notify_sarah: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    - conditions:
+      - condition: trigger
+        id: kitchen
+      sequence:
+      - service: script.notify_sarah_and_nathan
         data:
-          message: Warning! The basement is flooding. Inspect the water sensor near
-            the water heater.
-          data:
-            type: announce
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 45
-          milliseconds: 0
+          message: Warning, Kitchen Sink is Flooding
+          more_info: Check under the kitchen sink for water. The water main in the
+            basement has already been shut off. Click this notification to turn it
+            back on, or press the button on the device in the basement.
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    - conditions:
+      - condition: trigger
+        id: valve
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Warning, Basement is Flooding
+          more_info: Check the basement near the main water valve for water. The water
+            main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    default: []
   mode: single
 - id: '1626990104585'
   alias: Send Data to OCS
@@ -615,59 +632,54 @@
   action:
   - service: rest_command.ocs
     data:
-      payload: "[\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-office-temp\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.bme280_temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-office-humidity\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.bme280_humidity')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-office-pressure\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.bme280_pressure')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-livingroom-temperature\",\n    \"data\": {\n      \"\
-        timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_air_temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-livingroom-illuminance\",\n    \"data\": {\n      \"\
-        timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_illuminance')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-kitchen-temperature\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.kitchen_temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-kitchen-humidity\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.kitchen_humidity')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-basement-temperature\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.basement_water_sensor_temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-basement-humidity\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.basement_water_sensor_humidity')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-bathroom-humidity\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.bathroom_humidity')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-bathroom-temperature\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{states('sensor.bathroom_temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-outside-temperature\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{state_attr('weather.home', 'temperature')}}\"\
-        \n    }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\"\
-        ,\n    \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"\
-        streamId\": \"nathan-outside-humidity\",\n    \"data\": {\n      \"timestamp\"\
-        : \"{{now()}}\",\n      \"value\": \"{{state_attr('weather.home', 'humidity')}}\"\
-        \n    }\n  }\n]"
+      payload: "[\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-office-temp\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.bme280_temperature')}}\"\n    }\n  },\n
+        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
+        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-office-humidity\",\n
+        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.bme280_humidity')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-office-pressure\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.bme280_pressure')}}\"\n    }\n  },\n  {\n
+        \   \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
+        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-livingroom-temperature\",\n
+        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_air_temperature')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-livingroom-illuminance\",\n    \"data\": {\n      \"timestamp\":
+        \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_illuminance')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-kitchen-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.kitchen_temperature')}}\"\n    }\n  },\n
+        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
+        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-kitchen-humidity\",\n
+        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.kitchen_humidity')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-basement-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.basement_water_sensor_temperature')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-basement-humidity\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.basement_water_sensor_humidity')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-bathroom-humidity\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{states('sensor.bathroom_humidity')}}\"\n    }\n  },\n
+        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
+        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-bathroom-temperature\",\n
+        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.bathroom_temperature')}}\"\n
+        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
+        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
+        \"nathan-outside-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
+        \     \"value\": \"{{state_attr('weather.home', 'temperature')}}\"\n    }\n
+        \ },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
+        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-outside-humidity\",\n
+        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{state_attr('weather.home',
+        'humidity')}}\"\n    }\n  }\n]"
   mode: single
 - id: '1627506438431'
   alias: Turn on Lights When Doors are Opened
@@ -711,10 +723,11 @@
       - service: light.turn_on
         target:
           area_id: hallway
+        data: {}
     default: []
   - delay:
       hours: 0
-      minutes: 5
+      minutes: 1
       seconds: 0
       milliseconds: 0
   - service: light.turn_off
@@ -725,6 +738,7 @@
   - service: light.turn_off
     target:
       area_id: hallway
+    data: {}
   mode: parallel
   max: 2
 - id: '1628378848989'
@@ -883,10 +897,10 @@
       < now() | as_timestamp - 60* states(''input_number.camera_notification_refractory_period'')
       | float }}'
   - condition: template
-    value_template: "{{\n   states.sensor.number_of_people_at_home.last_changed |\
-      \ as_timestamp < now() | as_timestamp - 60 * states('input_number.camera_notification_refractory_period')\
-      \ | float or states('sensor.number_of_people_at_home') | int < states('sensor.last_number_of_people_at_home')\
-      \ | int\n}}"
+    value_template: "{{\n   states.sensor.number_of_people_at_home.last_changed |
+      as_timestamp < now() | as_timestamp - 60 * states('input_number.camera_notification_refractory_period')
+      | float or states('sensor.number_of_people_at_home') | int < states('sensor.last_number_of_people_at_home')
+      | int\n}}"
   action:
   - choose:
     - conditions:
@@ -1166,7 +1180,7 @@
           sequence:
           - service: script.notify_sarah_and_nathan
             data:
-              message: '{{ state_attr(''calendar.birthdays'', ''message'') }} 🎉'
+              message: "{{ state_attr('calendar.birthdays', 'message') }} \U0001F389"
               more_info: '{{ state_attr(''calendar.birthdays'', ''message'') }} is
                 coming up on {{ state_attr(''calendar.birthdays'', ''start_time'')
                 | as_timestamp | timestamp_custom("%A, %B %d", True)}}'
@@ -1180,8 +1194,8 @@
           - service: script.notify_sarah_and_nathan
             data:
               message: '{{ state_attr(''calendar.birthdays'', ''message'') }}'
-              more_info: Today is {{ state_attr('calendar.birthdays', 'message') }}
-                🎂
+              more_info: "Today is {{ state_attr('calendar.birthdays', 'message')
+                }} \U0001F382"
               notify_nathan: true
               notify_sarah: true
     - conditions:
@@ -1193,7 +1207,7 @@
           at: input_datetime.birthday_reminder_time
       - service: script.notify_sarah_and_nathan
         data:
-          message: '{{ state_attr(''calendar.birthdays'', ''message'') }} 🎉'
+          message: "{{ state_attr('calendar.birthdays', 'message') }} \U0001F389"
           more_info: '{{ state_attr(''calendar.birthdays'', ''message'') }} is coming
             up on {{ state_attr(''calendar.birthdays'', ''start_time'') | as_timestamp
             | timestamp_custom("%A, %B %d", True)}}'
@@ -1387,11 +1401,11 @@
     value_template: '{{ trigger.from_state.state != "unavailable" }}'
   action:
   - data_template:
-      entity_id: "{% if is_state('media_player.living_room_tv_2', 'playing') %}\n\
-        \  scene.tv_playing_at_night\n{% elif is_state('media_player.living_room_tv_2',\
-        \ 'standby')\n   or is_state('media_player.living_room_tv_2', 'paused')\n\
-        %}\n  scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n{% endif\
-        \ %}\n"
+      entity_id: "{% if is_state('media_player.living_room_tv_2', 'playing') %}\n
+        \ scene.tv_playing_at_night\n{% elif is_state('media_player.living_room_tv_2',
+        'standby')\n   or is_state('media_player.living_room_tv_2', 'paused')\n%}\n
+        \ scene.tv_paused_at_night\n{% else %}\n  scene.tv_off_at_night\n{% endif
+        %}\n"
       transition: 10
     service: scene.turn_on
 - id: '1587264300585'
@@ -1585,6 +1599,7 @@
   trigger:
   - platform: state
     entity_id: sensor.mail_packages_delivered
+    not_from: unavailable
   condition:
   - condition: numeric_state
     entity_id: sensor.mail_packages_delivered
@@ -1676,8 +1691,8 @@
     state: 'on'
   action:
   - entity_id: input_boolean.wfh
-    service: "{% if is_state('binary_sensor.is_workday', 'on') %}\n  input_boolean.turn_on\n\
-      {% else %}\n  input_boolean.turn_off\n{% endif %}"
+    service: "{% if is_state('binary_sensor.is_workday', 'on') %}\n  input_boolean.turn_on\n{%
+      else %}\n  input_boolean.turn_off\n{% endif %}"
 - id: wfh_fan
   alias: WFH -- Fan
   mode: single
@@ -2054,8 +2069,8 @@
   condition: []
   action:
   - entity_id: group.visitor_automations
-    service: "{% if is_state('input_boolean.visitors', 'on') %}\n  homeassistant.turn_off\n\
-      {% else %}\n  homeassistant.turn_on\n{% endif %}"
+    service: "{% if is_state('input_boolean.visitors', 'on') %}\n  homeassistant.turn_off\n{%
+      else %}\n  homeassistant.turn_on\n{% endif %}"
 - id: '1587273614675'
   alias: Calendar Toggles Visitors
   description: ''
@@ -2065,8 +2080,8 @@
   condition: []
   action:
   - entity_id: input_boolean.visitors
-    service: "{% if is_state('calendar.visitors', 'on') %}\n  input_boolean.turn_on\n\
-      {% else %}\n  input_boolean.turn_off\n{% endif %}"
+    service: "{% if is_state('calendar.visitors', 'on') %}\n  input_boolean.turn_on\n{%
+      else %}\n  input_boolean.turn_off\n{% endif %}"
 - id: known_visitor_presence_toggle
   alias: Known Visitor Presence Toggles Visitor Mode
   description: When a visitor that is on the list shows up, visitor mode turns on
@@ -2446,6 +2461,7 @@
       entity_id: climate.kitchen
     data:
       preset_mode: eco
+    enabled: false
 - id: '1587162726799'
   alias: First Person Home
   description: ''
@@ -2454,14 +2470,6 @@
     from: 'off'
     platform: state
     to: 'on'
-  variables:
-    lights:
-    - light.front_porch
-    - light.back_porch
-    - light.side_porch
-    - light.laundry_room
-    - light.back_door
-    - light.front_door
   condition: []
   action:
   - choose:
@@ -2487,6 +2495,7 @@
       entity_id: climate.kitchen
     data:
       preset_mode: none
+    enabled: false
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
@@ -2500,6 +2509,14 @@
   - service: light.turn_off
     target:
       entity_id: '{{ lights }}'
+  variables:
+    lights:
+    - light.front_porch
+    - light.back_porch
+    - light.side_porch
+    - light.laundry_room
+    - light.back_door
+    - light.front_door
 - id: '1587673304305'
   alias: Turn On Kitchen When Leaving Bedroom
   description: ''
@@ -2513,36 +2530,6 @@
     target:
       area_id: 1f75029558cd46f69ddb7d3a9f537726
     service: light.turn_on
-- id: '1650657538334'
-  alias: Notify of Kitchen Leak
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.kitchen_sink_moisture
-    to: 'on'
-  condition: []
-  action:
-  - repeat:
-      until:
-      - condition: state
-        entity_id: binary_sensor.kitchen_sink_moisture
-        state: 'off'
-      sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: The Kitchen Sink is Flooding!
-          more_info: Check under the kitchen sink for water. If it is a bad leak,
-            you may need to turn off the main water valve in the basement. Turn off
-            the automation named "Notify of Kitchen Leak" to silence the notification
-          use_alexa: true
-          notify_nathan: true
-          notify_sarah: true
-      - delay:
-          hours: 0
-          minutes: 3
-          seconds: 0
-          milliseconds: 0
-  mode: single
 - id: '1651167205604'
   alias: Tag Office is scanned
   description: ''
@@ -2666,4 +2653,505 @@
   action:
   - service: script.start_tesla
     data: {}
+  mode: single
+- id: '1654447518234'
+  alias: Laundry Notifcations
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.washer_power_switch_electric_consumption_w
+    below: '3'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+  condition: []
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Laundry Done
+      more_info: Washing machine finished running
+      use_alexa: true
+      notify_sarah: true
+      notify_nathan: true
+  mode: single
+- id: '1654459157218'
+  alias: Tesla Charging Notifications
+  description: ''
+  trigger:
+  - platform: time
+    at: '10:00:00'
+  condition:
+  - condition: time
+    before: 00:00:00
+    weekday:
+    - mon
+  action:
+  - parallel:
+    - if:
+      - condition: numeric_state
+        entity_id: sensor.last_week_s_charging_cost_at_rusty_and_donna_s
+        above: '0'
+      then:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: You Owe Mom ${{states('sensor.weekly_charging_cost_at_rusty_and_donna_s')
+            | round(2, "half")}} for Charging
+          more_info: Click to pay
+          notify_nathan: true
+          url: https://www.paypal.com/myaccount/transfer/homepage/contact-list
+  mode: single
+- id: '1654714270155'
+  alias: Keyboard Trigger
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: willy-wonka-gd1VAN7gY8jO_C9yQtmrhBMh
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "wanka"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          rgb_color:
+          - 225
+          - 0
+          - 255
+        target:
+          area_id: 87c768ba445d4b398f17ec723dc54377
+      - service: media_player.select_source
+        data:
+          source: Living Room Echo
+        target:
+          entity_id: media_player.spotify_nathan_orick
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 3
+          milliseconds: 0
+      - service: media_player.play_media
+        data:
+          media_content_id: https://open.spotify.com/track/4f4HLo6L9CJNhD4mEYxrCL?si=2939352bd4da45f4
+          media_content_type: music
+          enqueue: play
+        target:
+          entity_id: media_player.spotify_nathan_orick
+      - repeat:
+          count: '3'
+          sequence:
+          - service: light.turn_on
+            data:
+              transition: 7
+              rgb_color:
+              - 20
+              - 7
+              - 213
+            target:
+              area_id: 87c768ba445d4b398f17ec723dc54377
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 7
+              milliseconds: 0
+          - service: light.turn_on
+            data:
+              transition: 7
+              rgb_color:
+              - 5
+              - 230
+              - 20
+            target:
+              area_id: 87c768ba445d4b398f17ec723dc54377
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 7
+              milliseconds: 0
+          - service: light.turn_on
+            data:
+              transition: 7
+              rgb_color:
+              - 226
+              - 230
+              - 5
+            target:
+              area_id: 87c768ba445d4b398f17ec723dc54377
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 7
+              milliseconds: 0
+          - service: light.turn_on
+            data:
+              transition: 7
+              rgb_color:
+              - 230
+              - 170
+              - 5
+            target:
+              area_id: 87c768ba445d4b398f17ec723dc54377
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 7
+              milliseconds: 0
+          - service: light.turn_on
+            data:
+              transition: 7
+              rgb_color:
+              - 230
+              - 5
+              - 222
+            target:
+              area_id: 87c768ba445d4b398f17ec723dc54377
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 7
+              milliseconds: 0
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "c-chord"}}'
+      sequence:
+      - service: light.turn_off
+        data: {}
+        target:
+          entity_id: light.living_room_lamp
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "f-chord"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          color_temp: 373
+        target:
+          entity_id: light.living_room_lamp
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "nbc"}}'
+      sequence:
+      - service: media_player.turn_on
+        data: {}
+        target:
+          entity_id:
+          - media_player.living_room_tv
+      - service: media_player.select_source
+        data:
+          source: com.peacock.peacockfiretv
+        target:
+          entity_id:
+          - media_player.living_room_tv
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "g-chord"}}'
+      sequence:
+      - service: media_player.media_pause
+        data: {}
+        target:
+          entity_id: media_player.spotify_nathan_orick
+      - service: light.turn_off
+        data: {}
+        target:
+          area_id: 87c768ba445d4b398f17ec723dc54377
+      - service: media_player.turn_off
+        data: {}
+        target:
+          entity_id:
+          - media_player.living_room_tv
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "furElise"}}'
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Nice Job Showoff
+          use_alexa: true
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "am-chord"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          color_temp: 369
+        target:
+          entity_id: light.living_room_ceiling
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "cfirst-chord"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          color_temp: 414
+          flash: short
+        target:
+          area_id: 87c768ba445d4b398f17ec723dc54377
+      - service: light.turn_on
+        data:
+          color_temp: 369
+        target:
+          area_id: 87c768ba445d4b398f17ec723dc54377
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "seq-egc"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_ceiling_1
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id:
+          - light.living_room_ceiling_2
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_lamp
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "seq-cge"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_lamp
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id:
+          - light.living_room_ceiling_2
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_ceiling_1
+    - conditions:
+      - condition: template
+        value_template: '{{trigger.query.id == "seq-ecg"}}'
+      sequence:
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_ceiling_1
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id:
+          - light.living_room_lamp
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_on
+        data:
+          flash: short
+        target:
+          entity_id: light.living_room_ceiling_2
+  mode: restart
+- id: '1656682088465'
+  alias: AutoHotKeys
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: autohotkeys-ud-K0buAMNufeBDPqaOvFcyh
+  condition: []
+  action:
+  - if:
+    - condition: template
+      value_template: '{{trigger.query.id == "toggle_office_lights"}}'
+    then:
+    - service: light.toggle
+      data:
+        brightness_pct: 100
+      target:
+        area_id: a78dc9b8222b47eebe4561988e57b0b0
+  mode: restart
+- id: '1656689582285'
+  alias: Tesla Charging Cost Notifications
+  description: ''
+  trigger:
+  - platform: time
+    at: input_datetime.birthday_reminder_time
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    before: 00:00:00
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      message: Tesla Charging Summary
+      url: /lovelace/tesla
+      more_info: 'Cost at Home so far this Month: ${{states(''sensor.tesla_home_monthly_charging_cost'')}}
+
+        Cost at Rusty and Donna''s Last Week: ${{states(''sensor.last_week_s_charging_cost_at_rusty_and_donna_s'')}}
+
+        Click for more'
+      notify_sarah: true
+      notify_nathan: true
+      notify_alexa: false
+  mode: single
+- id: '1656699090791'
+  alias: Ikea Shortcut Button -- Guest Bedroom
+  description: ''
+  trigger:
+  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: single
+  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: dim_up
+    id: long-down
+  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
+    domain: zha
+    platform: device
+    type: remote_button_long_release
+    subtype: dim_up
+    id: long-up
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: single
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{% set area_lights = expand(area_entities(''Guest Bedroom''))
+            | selectattr(''domain'', ''eq'', ''light'') | list %}
+
+            {% set lights_on = area_lights | selectattr(''state'', ''eq'', ''on'')
+            | list | count > 0 %}
+
+
+            {{lights_on}}'
+        then:
+        - service: light.turn_off
+          data:
+            transition: 1
+          target:
+            area_id: 78d9e7596f014179b37ca4129fcb9a68
+        else:
+        - service: light.turn_on
+          data:
+            transition: 1
+            brightness_pct: 100
+          target:
+            entity_id: light.guest_bedroom_lamp
+    - conditions:
+      - condition: trigger
+        id: long-down
+      sequence:
+      - service: switch.toggle
+        data: {}
+        target:
+          entity_id: switch.guest_bedroom_fan
+    default: []
+  mode: single
+- id: '1658177531312'
+  alias: Ikea Shortcut Button -- Living Room
+  description: ''
+  trigger:
+  - device_id: 01632afbe7a0628355b82d4ddf1c27da
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: single
+  - device_id: 01632afbe7a0628355b82d4ddf1c27da
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: dim_up
+    id: long-down
+  - device_id: 01632afbe7a0628355b82d4ddf1c27da
+    domain: zha
+    platform: device
+    type: remote_button_long_release
+    subtype: dim_up
+    id: long-up
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: long-down
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{% set area_lights = expand(area_entities(''Living Room''))
+            | selectattr(''domain'', ''eq'', ''light'') | list %}
+
+            {% set lights_on = area_lights | selectattr(''state'', ''eq'', ''on'')
+            | list | count > 0 %}
+
+
+            {{lights_on}}'
+        then:
+        - service: light.turn_off
+          data:
+            transition: 1
+          target:
+            area_id: living_space
+        else:
+        - service: light.turn_on
+          data:
+            transition: 1
+            brightness_pct: 100
+          target:
+            device_id:
+            - c730d517cc9d462698579ca079ca5754
+            - d424c5c84ec447c58f8161044e5cf3a3
+            - bf03597d00814f079ad3d5b9a625a708
+    - conditions:
+      - condition: trigger
+        id: single
+      sequence:
+      - service: light.toggle
+        data:
+          brightness_pct: 100
+        target:
+          entity_id: light.living_room_lamp
+    default: []
   mode: single

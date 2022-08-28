@@ -88,3 +88,9 @@
     name: Work Holiday
     search: '#Holiday'
     track: true
+
+- cal_id: nathan.orick@capitalone.com
+  entities:
+  - device_id: nathan_orick_capitalone_com
+    ignore_availability: true
+    name: nathan.orick@capitalone.com

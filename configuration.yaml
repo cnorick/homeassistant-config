@@ -64,10 +64,78 @@ template:
         {{states("input_boolean.alexa_parking_pad_floodlight_motion")}}
       device_class: motion
   - sensor:
+    - name: Tesla Energy Added At Home
+      unit_of_measurement: kWh
+      state: >-
+        {% if trigger.id == "unplugged" %}
+          {% if is_state("device_tracker.location_tracker", "home") %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.energy_added_sensor') | float(0)}}
+          {% else %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0)}}
+          {% endif %}
+        {% elif trigger.id == "left" %}
+          {% if states.binary_sensor.charger_sensor.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.charger_sensor', 'off') %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.energy_added_sensor') | float(0)}}
+          {% else %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0)}}
+          {% endif %}
+        {% endif %}
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.charger_sensor
+        id: unplugged
+        from: "on"
+        to: "off"
+      - platform: state
+        entity_id: device_tracker.location_tracker
+        id: left
+        from: "home"
+  - sensor:
     - name: Tesla Home Monthly Charging Cost
       unit_of_measurement: $
       state: >-
-        {{(states("sensor.tesla_home_charging") | float / 1000 * states("sensor.brightridge_electricity_price") | float) | round(2, "half")}}
+        {{((states("sensor.tesla_home_charging") | float) * (states("sensor.brightridge_electricity_price") | float)) | round(2, "half")}}
+  - sensor:
+    - name: Energy Added at Rusty and Donna's
+      unit_of_measurement: kWh
+      state: >-
+        {% if trigger.id == "unplugged" %}
+          {% if is_state("device_tracker.location_tracker", "Donna and Rusty's") %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.energy_added_sensor') | float(0)}}
+          {% else %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0)}}
+          {% endif %}
+        {% elif trigger.id == "left" %}
+          {% if states.binary_sensor.charger_sensor.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.charger_sensor', 'off') %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.energy_added_sensor') | float(0)}}
+          {% else %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0)}}
+          {% endif %}
+        {% endif %}
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.charger_sensor
+        id: unplugged
+        from: "on"
+        to: "off"
+      - platform: state
+        entity_id: device_tracker.location_tracker
+        id: left
+        from: "Donna and Rusty's"
+  - sensor:
+    - name: Weekly Charging Cost at Rusty and Donna's
+      unit_of_measurement: $
+      state: >-
+        {{((states("sensor.tesla_rusty_and_donna_s_charging") | float) * (states("sensor.brightridge_electricity_price") | float)) | round(2, "half")}}
+  - sensor:
+    - name: Last Week's Charging Cost at Rusty and Donna's
+      unit_of_measurement: $
+      state: >-
+        {{states('sensor.weekly_charging_cost_at_rusty_and_donna_s')}}
+    trigger:
+      - platform: template
+        value_template: >-
+          {{(states('sensor.date_time_iso') | as_datetime).weekday() == 6  and (states('sensor.date_time_iso') | as_datetime).hour == 23}}
 
 light:
   - platform: flux_led
