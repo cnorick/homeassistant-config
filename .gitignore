@@ -25,3 +25,5 @@ wyze_config.ini
 www/doods/*
 home-assistant.log*
 zigbee.db-journal
+zigbee.db-shm
+zigbee.db-wal

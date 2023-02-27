@@ -1,0 +1,340 @@
+esphome:
+  name: bedroom-fireplace-thermostat-2
+  platform: ESP32
+  board: esp32dev
+  includes:
+    - dht20.h
+  on_boot:
+    then:
+      - script.execute: show_screen
+      - display.page.show: control_view
+
+      # TODO: Show gif on startup
+    
+substitutions:
+  $temp_refresh_rate: '30' #seconds
+  $screen_on_time: '10s'
+  $yellow_line_height: '17' #pt
+  $wifi_quality_update_interval: '10s'
+  $icon_wifi_0: '󰤯'
+  $icon_wifi_1: '󰤟'
+  $icon_wifi_2: '󰤢'
+  $icon_wifi_3: '󰤥'
+  $icon_wifi_4: '󰤨'
+  $icon_no_wifi: '󰤫'
+  $icon_fire: '󰈸'
+  $icon_fire_off: '󱜢'
+  $icon_fan: '󰈐'
+  $icon_blank: ''
+    
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret ota_password
+  
+web_server:
+  port: 80
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  id: wifi_id
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Bedroom-Fireplace-Thermostat-2"
+    password: !secret ap_password
+
+captive_portal:
+
+globals:
+   - id: screen_on
+     type: bool
+     restore_value: no
+     initial_value: 'true'
+
+script:
+  - id: show_screen
+    mode: restart
+    then:
+      - lambda: |-
+          id(screen_on) = true;
+      - delay: $screen_on_time
+      - lambda: |-
+          id(screen_on) = false;
+      - display.page.show: control_view
+
+font:
+  - id: top_line_text_font
+    size: $yellow_line_height
+    file: fonts/Roboto/Roboto-Regular.ttf
+  - id: target_temp_font
+    size: 40
+    file: fonts/Roboto/Roboto-Regular.ttf
+    glyphs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, °, F, ' ']
+  - id: top_line_icons_font
+    size: $yellow_line_height
+    file: fonts/mdi/mdi.ttf
+    glyphs: [
+      $icon_wifi_0,
+      $icon_wifi_1,
+      $icon_wifi_2,
+      $icon_wifi_3,
+      $icon_wifi_4,
+      $icon_no_wifi,
+      $icon_fan,
+      $icon_blank
+    ]
+  - id: target_temp_icons_font
+    size: 40
+    file: fonts/mdi/mdi.ttf
+    glyphs: [
+      $icon_fire,
+      $icon_fire_off
+    ]
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: i2c_bus
+
+display:
+  - platform: ssd1306_i2c
+    id: screen
+    model: "SSD1306 128x64"
+    address: 0x3C
+    pages:
+      - id: control_view
+        lambda: |-
+          if (id(screen_on)) {
+            float current_temp = id(thermo).current_temperature * (9.0/5.0) + 32;
+            float target_temp = id(thermo).target_temperature * (9.0/5.0) + 32;
+            float current_humidity = id(bedroom_humidity).state;
+    
+            it.printf(0, 0, id(top_line_text_font), TextAlign::TOP_LEFT, "%2.0f°F %2.0f%%", current_temp, current_humidity);
+            it.printf(it.get_width(), 0, id(top_line_icons_font), TextAlign::TOP_RIGHT, "%s%s", id(fan_icon).state.c_str(), id(wifi_icon).state.c_str());
+            
+            it.printf(0, it.get_height(), id(target_temp_font), TextAlign::BASELINE_LEFT, "%2.0f°F", target_temp);
+            it.printf(it.get_width(), it.get_height(), id(target_temp_icons_font), TextAlign::BASELINE_RIGHT, id(power_icon).state.c_str());
+          }
+      - id: graph_view 
+        lambda: |-
+          if (id(screen_on)) {
+            it.print(0, 0, id(top_line_text_font), TextAlign::TOP_LEFT, "Temp Over Time");
+            it.graph(0, $yellow_line_height, id(temp_graph));
+          }
+
+graph:
+  - id: temp_graph
+    duration: 1h
+    x_grid: 10min
+    y_grid: 2.0
+    width: 128
+    height: 47
+    sensor: bedroom_temperature
+
+sensor:
+- platform: custom
+  lambda: |-
+    auto dht = new DHT20($temp_refresh_rate * 1000);
+    App.register_component(dht);
+    return {dht->temperature_sensor, dht->humidity_sensor};
+  sensors:
+  - name: "Bedroom Temperature"
+    id: bedroom_temperature
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    device_class: temperature
+  - name: "Bedroom Humidity"
+    id: bedroom_humidity
+    unit_of_measurement: '%'
+    accuracy_decimals: 1
+    device_class: humidity
+- platform: wifi_signal
+  id: wifi_quality
+  update_interval: $wifi_quality_update_interval
+  internal: true
+  filters:
+    - calibrate_linear:
+      - -100.0 -> 0.0
+      - -50.0 -> 100.0
+
+text_sensor:
+  - platform: template
+    id: wifi_icon
+    internal: true
+    update_interval: $wifi_quality_update_interval
+    lambda: |-
+      if (!id(wifi_id).is_connected()) {
+        return {"$icon_no_wifi"};
+      }
+      if(id(wifi_quality).state <= 20) {
+        return {"$icon_wifi_0"};
+      }
+      if(id(wifi_quality).state <= 40) {
+        return {"$icon_wifi_1"};
+      }
+      if(id(wifi_quality).state <= 60) {
+        return {"$icon_wifi_2"};
+      }
+      if(id(wifi_quality).state <= 80) {
+        return {"$icon_wifi_3"};
+      }
+      else {
+        return {"$icon_wifi_4"};
+      }
+  - platform: template
+    id: power_icon
+    internal: true
+  - platform: template
+    id: fan_icon
+    internal: true
+
+switch:
+  - platform: gpio
+    name: "Bedroom Fireplace"
+    id: bedroom_fireplace
+    pin:
+      number: 23
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - text_sensor.template.publish:
+            id: fan_icon
+            state: "$icon_fan"
+    on_turn_off:
+      then:
+        - text_sensor.template.publish:
+            id: fan_icon
+            state: "$icon_blank"
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 27
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: up_button
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+      - climate.control:
+          id: thermo
+          target_temperature: !lambda |-
+            return id(thermo).target_temperature + (5.0/9.0);
+      - script.execute: show_screen
+      - display.page.show: control_view
+      - lambda: |-
+          id(screen).update();
+  - platform: gpio
+    pin:
+      number: 14
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: down_button
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+      - climate.control:
+          id: thermo
+          target_temperature: !lambda |-
+            return id(thermo).target_temperature - (5.0/9.0);
+      - script.execute: show_screen
+      - display.page.show: control_view
+      - lambda: |-
+          id(screen).update();
+  - platform: gpio
+    pin:
+      number: 19
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: power_button
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - if:
+            condition:
+              or:
+                - display.is_displaying_page: graph_view
+                - lambda: "return !id(screen_on);"
+            then:
+              - script.execute: show_screen
+              - display.page.show: control_view
+              - lambda: |-
+                  id(screen).update();
+            else:
+              - if:
+                  condition:
+                    lambda: "return id(thermo).mode == CLIMATE_MODE_OFF;"
+                  then:
+                    - climate.control:
+                        id: thermo
+                        mode: "HEAT"
+                  else:
+                    - climate.control:
+                        id: thermo
+                        mode: "OFF"
+              - script.execute: show_screen
+              - display.page.show: control_view
+              - lambda: |-
+                  id(screen).update();
+  - platform: gpio
+    pin:
+      number: 26
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: mode_button
+    filters:
+      - delayed_off: 10ms
+    on_click:
+      then:
+        - logger.log: "Mode Single Long Clicked"
+        - if:
+            condition:
+              display.is_displaying_page: control_view
+            then:
+              - display.page.show: graph_view
+              - script.execute: show_screen
+            else:
+              - display.page.show: control_view
+              - script.execute: show_screen
+
+climate:
+  - platform: thermostat
+    id: thermo
+    name: "Bedroom Thermostat"
+    sensor: bedroom_temperature
+    default_target_temperature_low: 65 °F
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_idle_time: 30s
+    heat_action:
+      - switch.turn_on: bedroom_fireplace
+    idle_action:
+      - switch.turn_off: bedroom_fireplace
+    startup_delay: true
+    on_state:
+      then:
+        - lambda: |-
+            if (id(thermo).mode == CLIMATE_MODE_OFF) {
+              id(power_icon).publish_state("$icon_fire_off");
+            }
+            else {
+              id(power_icon).publish_state("$icon_fire");
+            }

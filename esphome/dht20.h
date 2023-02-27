@@ -5,7 +5,7 @@
 
 // Based on DHT20 dataseet: https://cdn.sparkfun.com/assets/8/a/1/5/0/DHT20.pdf.
 class DHT20 : public PollingComponent {
- public:
+  public:
   Sensor *temperature_sensor = new Sensor();
   Sensor *humidity_sensor = new Sensor();
 

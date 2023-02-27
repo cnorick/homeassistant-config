@@ -190,21 +190,21 @@
       - xy
       is_hue_group: true
       hue_scenes:
+      - Tropical twilight
       - Nightlight
+      - Relax
+      - Dimmed
       - Energize
       - Read
-      - Relax
       - Spring blossom
       - Savanna sunset
-      - Concentrate
-      - Tropical twilight
       - Bright
       - Arctic aurora
-      - Dimmed
+      - Concentrate
       hue_type: zone
       lights:
-      - BRC2
       - BRC1
+      - BRC2
       - BRC3
       dynamics: false
       icon: mdi:lightbulb
@@ -250,12 +250,13 @@
       min_temp: 50
       max_temp: 86
       target_temp_step: 1
-      current_temperature: 72
-      temperature: 70
+      current_temperature: 74.3
+      temperature: 68
       hvac_action: idle
       friendly_name: Bedroom Thermostat
       supported_features: 1
       state: heat
+  metadata: {}
 - id: '1589242846422'
   name: WFH
   entities:
@@ -894,3 +895,28 @@
       friendly_name: Nathan's Nightstand
       supported_features: 63
       state: 'on'
+- id: '1665147205036'
+  name: Tesla Climate
+  entities:
+    climate.tesleigh_lynn_hvac_climate_system:
+      hvac_modes:
+      - heat_cool
+      - 'off'
+      min_temp: 59
+      max_temp: 82
+      preset_modes:
+      - Normal
+      - Defrost
+      - Keep On
+      - Dog Mode
+      - Camp Mode
+      current_temperature: 78
+      temperature: 72
+      preset_mode: Normal
+      attribution: Data provided by Tesla
+      friendly_name: Tesleigh Lynn Hvac (climate) system
+      supported_features: 17
+      state: heat_cool
+  metadata:
+    climate.tesleigh_lynn_hvac_climate_system:
+      entity_only: true

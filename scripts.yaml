@@ -16,104 +16,6 @@ alexa_announce:
       message: '{{ states.input_text.announcement_text.state }}'
       target: group.alexa_everywhere
     service: notify.alexa_media
-notify_sarah_and_nathan:
-  alias: Notify Sarah and Nathan
-  fields:
-    message:
-      description: (required) The message to send to all of the devices
-      example: Hello
-      selector:
-        text:
-      required: true
-    more_info:
-      description: (optional) More information to display on phone notifications.
-        Will not play over Alexa.
-      example: Click here to for more info
-      selector:
-        text:
-          multiline: true
-    url:
-      description: (optional) The url to open when the notification is clicked. Most
-        often will be a specific dashboard.
-      example: /lovelace/default_view
-      selector:
-        text:
-    image:
-      description: (optional) The public url of the image to be sent to the devices
-      example: /local/mail_and_packages/mail_today.gif
-      selector:
-        text:
-    image_type:
-      description: (required if image is specified) The filetype of the image. This
-        is required for iphone.
-      example: gif
-      selector:
-        text:
-    use_alexa:
-      description: Should this notification be made over the echos
-      example: 'False'
-      default: false
-      selector:
-        boolean:
-      required: true
-    notify_sarah:
-      description: Should this notification be sent to Sarah
-      example: 'False'
-      default: false
-      selector:
-        boolean:
-      required: true
-    notify_nathan:
-      description: Should this notification be sent to Nathan
-      example: 'False'
-      default: false
-      selector:
-        boolean:
-      required: true
-  sequence:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ notify_nathan }}'
-      sequence:
-      - data:
-          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
-          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
-            endif -%}'
-          data:
-            clickAction: '{{ url }}'
-            image: '{{ image }}'
-        service: notify.mobile_app_pixel_4
-    default: []
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ use_alexa }}'
-      sequence:
-      - data_template:
-          data:
-            type: announce
-          message: '{{ message }}'
-        service: notify.alexa_media_everywhere
-    default: []
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ notify_sarah }}'
-      sequence:
-      - data:
-          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
-          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
-            endif -%}'
-          data:
-            url: '{{ url }}'
-            attachment:
-              url: '{{ image }}'
-              content-type: '{{ image_type }}'
-              hide-thumbnail: false
-        service: notify.mobile_app_sarah_iphone
-    default: []
-  mode: single
 alarm:
   alias: Alarm
   sequence:
@@ -591,20 +493,20 @@ tier_toggle_devices:
 start_tesla:
   alias: Start Tesla
   sequence:
-  - service: climate.turn_on
+  - service: scene.turn_on
     data: {}
     target:
-      entity_id: climate.hvac_climate_system
+      entity_id: scene.tesla_climate
   - if:
     - condition: numeric_state
-      entity_id: sensor.temperature_sensor_outside
+      entity_id: sensor.tesleigh_lynn_temperature_outside
       below: '45'
     then:
     - service: climate.set_preset_mode
       data:
-        preset_mode: defrost
+        preset_mode: Defrost
       target:
-        entity_id: climate.hvac_climate_system
+        entity_id: climate.tesleigh_lynn_hvac_climate_system
   mode: single
 vacuum_rooms:
   alias: Vacuum Room(s)
@@ -636,8 +538,8 @@ vacuum_rooms:
           - label: Living Room
             value: '18'
   variables:
-    regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"\
-      type\": \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
+    regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"type\":
+      \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
   sequence:
   - service: vacuum.send_command
     data:
@@ -649,4 +551,116 @@ vacuum_rooms:
         user_pmapv_id: 220603T152255
     target:
       entity_id: vacuum.rooben
+  mode: single
+new_script:
+  alias: Heat Coffee Water
+  description: Turns on the water kettle and notifies when finished
+  sequence:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.coffee_kettle
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      below: 100
+    then:
+    - service: switch.turn_off
+      data: {}
+      target:
+        entity_id: switch.coffee_kettle
+    - service: script.notify_sarah_and_nathan
+      data:
+        message: Kettle Turned Off
+        use_alexa: false
+        notify_nathan: true
+        more_info: Check coffee kettle. There's probably no water in it, idiot. Or
+          maybe the lever isn't down
+    - stop: Kettle Stopped Heating
+      error: true
+  - wait_for_trigger:
+    - platform: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      below: 100
+    timeout:
+      hours: 0
+      minutes: 8
+      seconds: 0
+      milliseconds: 0
+    continue_on_timeout: true
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      above: 100
+    then:
+    - service: script.notify_sarah_and_nathan
+      data:
+        message: Turning Kettle Off
+        more_info: Kettle heated water for too long
+        notify_nathan: true
+    else:
+    - if:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'off'
+      then:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Coffee Ready
+          use_alexa: true
+          notify_nathan: true
+      else:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Coffee Ready
+          use_alexa: false
+          notify_nathan: true
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.coffee_kettle
+  mode: single
+start_tesla_and_turn_off_if_doesnt_leave_home:
+  alias: Start Tesla and Turn Off If Doesn't Leave Home
+  sequence:
+  - if:
+    - condition: state
+      state: home
+      entity_id: device_tracker.tesleigh_lynn_location_tracker
+    then:
+    - service: script.start_tesla
+      data: {}
+    - delay:
+        hours: 0
+        minutes: 12
+        seconds: 0
+        milliseconds: 0
+    - if:
+      - condition: state
+        state: home
+        entity_id: device_tracker.tesleigh_lynn_location_tracker
+      then:
+      - service: select.select_option
+        data:
+          option: 'Off'
+        target:
+          entity_id:
+          - select.tesleigh_lynn_heated_seat_left
+          - select.tesleigh_lynn_heated_seat_rear_center
+          - select.tesleigh_lynn_heated_seat_rear_right
+          - select.tesleigh_lynn_heated_seat_right
+          - select.tesleigh_lynn_heated_seat_rear_left
+      - service: switch.turn_off
+        data: {}
+        target:
+          entity_id: switch.tesleigh_lynn_heated_steering
+      - service: climate.turn_off
+        data: {}
+        target:
+          entity_id: climate.tesleigh_lynn_hvac_climate_system
   mode: single

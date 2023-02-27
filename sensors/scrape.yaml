@@ -1,6 +1,0 @@
-- platform: scrape
-  resource: https://www.brightridge.com/home-service/rates/
-  name: Brightridge Electricity Price
-  select: "table.brd > tbody > tr:nth-child(2) > td:nth-child(7)"
-  value_template: '{{ value | replace ("$", "") | float }}'
-  unit_of_measurement: "$/kWh"
