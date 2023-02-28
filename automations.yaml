@@ -32,10 +32,10 @@
         - condition: not
           conditions:
           - condition: state
-            entity_id: binary_sensor.pixel_4_is_charging
+            entity_id: binary_sensor.pixel_is_charging
             state: 'on'
         - condition: state
-          entity_id: binary_sensor.pixel_4_device_locked
+          entity_id: binary_sensor.pixel_device_locked
           state: 'on'
       sequence:
       - service: media_player.play_media
@@ -92,10 +92,10 @@
         - condition: not
           conditions:
           - condition: state
-            entity_id: binary_sensor.pixel_4_is_charging
+            entity_id: binary_sensor.pixel_is_charging
             state: 'on'
         - condition: state
-          entity_id: binary_sensor.pixel_4_device_locked
+          entity_id: binary_sensor.pixel_device_locked
           state: 'on'
       sequence:
       - service: media_player.play_media
@@ -195,10 +195,10 @@
     input:
       exclude:
         entity_id:
-        - sensor.iphone_battery_state
-        - sensor.iphone_battery_level
+        - sensor.iphone_2_battery_state
+        - sensor.iphone_2_battery_level
         - sensor.nathan_s_pixel_battery_level
-        - sensor.pixel_4_battery_state
+        - sensor.pixel_battery_state
         - sensor.rooben_battery_level
         - sensor.google_pixel_watch_battery_level
       actions:
@@ -269,7 +269,7 @@
     event_type: alexa_media_relogin_required
   condition: []
   action:
-  - service: notify.mobile_app_pixel_4
+  - service: notify.mobile_app_pixel
     data:
       title: Alexa Media Player Integration
       message: "\U0001F511 Authentication Required"
@@ -537,11 +537,11 @@
   description: ''
   trigger:
   - platform: state
-    entity_id: sensor.iphone_battery_state
+    entity_id: sensor.iphone_2_battery_state
     to: Charging
     from: Not Charging
   - platform: state
-    entity_id: binary_sensor.pixel_4_is_charging
+    entity_id: binary_sensor.pixel_is_charging
     to: 'on'
   - platform: state
     entity_id: binary_sensor.is_bedtime
@@ -551,10 +551,10 @@
     entity_id: input_boolean.night_mode
     state: 'off'
   - condition: state
-    entity_id: sensor.iphone_battery_state
+    entity_id: sensor.iphone_2_battery_state
     state: Charging
   - condition: state
-    entity_id: binary_sensor.pixel_4_is_charging
+    entity_id: binary_sensor.pixel_is_charging
     state: 'on'
   - condition: state
     entity_id: binary_sensor.occupied
@@ -1470,11 +1470,11 @@
   trigger:
   - platform: template
     id: ease_on_lights
-    value_template: '{{ now() > states(''sensor.pixel_4_next_alarm'') | as_datetime
+    value_template: '{{ now() > states(''sensor.pixel_next_alarm'') | as_datetime
       - timedelta(minutes = 15) }}'
   - platform: template
     id: play_alarm
-    value_template: '{{ now() > states(''sensor.pixel_4_next_alarm'') | as_datetime
+    value_template: '{{ now() > states(''sensor.pixel_next_alarm'') | as_datetime
       - timedelta(minutes = 1) }} '
   condition:
   - condition: state
@@ -1622,7 +1622,7 @@
       message: The bedroom door was {% if is_state('binary_sensor.wyze_door1', 'on')
         %}opened{% else %}closed{% endif %}!
       title: Someone is in your room
-    service: notify.mobile_app_pixel_4
+    service: notify.mobile_app_pixel
 - id: '1590193462462'
   alias: Notify Rooben's Bin is Full
   description: Send notification when the bin becomes full, then again each time the
@@ -1644,7 +1644,7 @@
     entity_id: binary_sensor.rooben_bin_full
     state: 'on'
   action:
-  - service: '{% if trigger.entity_id == ''person.nathan'' %} notify.mobile_app_pixel_4
+  - service: '{% if trigger.entity_id == ''person.nathan'' %} notify.mobile_app_pixel
       {% else %} notify.mobile_app_iphone {% endif %}'
     data:
       title: Rooben's Bin is Full

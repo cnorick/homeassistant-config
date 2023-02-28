@@ -76,7 +76,7 @@ notify_random:
   - data_template:
       title: '{{title}}'
       message: '{{message}}'
-    service: '{{ [''notify.mobile_app_pixel_4'', ''notify.mobile_app_iphone''] | random
+    service: '{{ [''notify.mobile_app_pixel_7'', ''notify.mobile_app_iphone''] | random
       }}'
 wake_tater_pc:
   alias: Wake Tater PC
@@ -197,7 +197,7 @@ notify_sarah_leaving_work_or_arriving_home:
       id: home
     continue_on_timeout: false
     timeout: '1:00:00'
-  - service: notify.mobile_app_pixel_4
+  - service: notify.mobile_app_pixel_7
     data:
       message: Sarah just moved
       data:

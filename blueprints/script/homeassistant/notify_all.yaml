@@ -90,7 +90,7 @@ sequence:
           data:
             clickAction: '{{ url }}'
             image: '{{ image }}'
-        service: notify.mobile_app_pixel_4
+        service: notify.mobile_app_pixel_7
     default: []
   - choose:
     - conditions:
