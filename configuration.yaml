@@ -156,7 +156,6 @@ template:
       - platform: template
         value_template: >-
           {% set dt = now() %}
-          {{ (dt.replace(month=dt.month % 12 + 1, day=1) - timedelta(days=1)).day }}
           {% set lastDayOfMonth = (dt.replace(month=dt.month % 12 + 1, day=1) - timedelta(days=1)).day %}
           {{(states('sensor.date_time_iso') | as_datetime).day == lastDayOfMonth and (states('sensor.date_time_iso') | as_datetime).hour == 23}}
   - sensor:
@@ -168,7 +167,6 @@ template:
       - platform: template
         value_template: >-
           {% set dt = now() %}
-          {{ (dt.replace(month=dt.month % 12 + 1, day=1) - timedelta(days=1)).day }}
           {% set lastDayOfMonth = (dt.replace(month=dt.month % 12 + 1, day=1) - timedelta(days=1)).day %}
           {{(states('sensor.date_time_iso') | as_datetime).day == lastDayOfMonth and (states('sensor.date_time_iso') | as_datetime).hour == 23}}
   - sensor:
