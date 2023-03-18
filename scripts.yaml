@@ -541,6 +541,9 @@ vacuum_rooms:
     regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"type\":
       \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
   sequence:
+  - condition: state
+    entity_id: input_boolean.enable_vacuum
+    state: 'on'
   - service: vacuum.send_command
     data:
       command: start

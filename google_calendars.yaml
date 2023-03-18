@@ -43,6 +43,11 @@
     name: Vacuum
     search: '#vacuum'
     track: true
+  - device_id: cleaners
+    ignore_availability: true
+    name: Cleaners
+    search: '#cleaners'
+    track: true
 
 - cal_id: cnathanorick@gmail.com
   entities:

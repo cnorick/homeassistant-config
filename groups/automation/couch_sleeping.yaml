@@ -1,9 +1,9 @@
 couch_sleeping_automations:
   name: Automations Unfriendly to Couch Sleepers
   entities:
-    - automation.run_roomba_every_morning
     - automation.toggle_bedtime_automations
     - automation.turn_off_public_lights_after_no_motion
     - automation.turn_off_public_lights_when_everyone_goes_to_bed
     - automation.turn_on_kitchen_when_leaving_bedroom
     - automation.morning_routine
+    - input_boolean.enable_vacuum

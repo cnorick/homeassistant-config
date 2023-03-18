@@ -1623,46 +1623,6 @@
         %}opened{% else %}closed{% endif %}!
       title: Someone is in your room
     service: notify.mobile_app_pixel
-- id: '1590193462462'
-  alias: Notify Rooben's Bin is Full
-  description: Send notification when the bin becomes full, then again each time the
-    person comes home
-  trigger:
-  - entity_id: vacuum.rooben
-    platform: state
-    to: docked
-  - entity_id: person.nathan
-    for: 00:03:00
-    platform: state
-    to: home
-  - entity_id: person.sarah
-    for: 00:03:00
-    platform: state
-    to: home
-  condition:
-  - condition: state
-    entity_id: binary_sensor.rooben_bin_full
-    state: 'on'
-  action:
-  - service: '{% if trigger.entity_id == ''person.nathan'' %} notify.mobile_app_pixel
-      {% else %} notify.mobile_app_iphone {% endif %}'
-    data:
-      title: Rooben's Bin is Full
-      message: Time to empty the bin.
-  - condition: template
-    value_template: '{{ trigger.entity_id == ''vacuum.rooben''}}'
-  - service: script.notify_sarah_and_nathan
-    data:
-      message: Rooben's Bin is Full
-      more_info: Time to empty the bin
-      use_alexa: false
-      notify_nathan: true
-      notify_sarah: true
-      text_nathan: false
-      text_sarah: false
-      text_ice_contacts: false
-      bypass_quiet_mode: false
-  mode: single
 - id: '1604755622228'
   alias: Notify When There Are Packages
   description: Sends a notification to everyone when there are packages to be checked.
@@ -2033,7 +1993,7 @@
           - wait_for_trigger:
             - platform: state
               entity_id:
-              - binary_sensor.kitchen_q_sensor_motion_detection
+              - binary_sensor.kitchen_q_sensor_sensor_state_motion
               to: 'on'
           - service: media_player.play_media
             data:
@@ -2395,7 +2355,8 @@
   alias: Turn On Kitchen if Motion
   description: ''
   trigger:
-  - entity_id: binary_sensor.kitchen_q_sensor_motion_detection
+  - entity_id:
+    - binary_sensor.kitchen_q_sensor_sensor_state_motion
     platform: state
     to: 'on'
   action:
@@ -2406,7 +2367,7 @@
   alias: Turn Off Kitchen After No Motion
   description: ''
   trigger:
-  - entity_id: binary_sensor.kitchen_q_sensor_motion_detection
+  - entity_id: binary_sensor.kitchen_q_sensor_sensor_state_motion
     for:
       seconds: '{{ states(''input_number.kitchen_motion_timeout'') | int * 60 }}'
     platform: state
@@ -2871,7 +2832,7 @@
       then:
       - service: script.notify_sarah_and_nathan
         data:
-          message: You Owe Mom ${{states('sensor.weekly_charging_cost_at_rusty_and_donna_s')
+          message: You Owe Mom ${{states('sensor.last_week_s_charging_cost_at_rusty_and_donna_s')
             | round(2, "half")}} for Charging
           more_info: Click to pay
           use_alexa: true
@@ -3382,14 +3343,29 @@
     - input_boolean.house_keeper_mode
     to: 'off'
     id: turned_off
+  - platform: state
+    entity_id:
+    - binary_sensor.inside_motion
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+    id: no_motion
+  - platform: state
+    entity_id:
+    - binary_sensor.front_door_motion
+    to: 'on'
+    id: front_door_motion
+  - platform: calendar
+    event: start
+    offset: '-12:0:0'
+    entity_id: calendar.cleaners
+    id: twelve_hours_before
   condition: []
   action:
   - choose:
     - conditions:
-      - condition: state
-        entity_id: input_boolean.house_keeper_mode
-        state: 'on'
-        enabled: false
       - condition: trigger
         id: turned_on
       sequence:
@@ -3404,7 +3380,6 @@
           - automation.laundry_notifcations
           - automation.morning_routine
           - automation.motion_mudroom_2
-          - automation.run_roomba_every_morning
           - automation.switch_turns_on_showering_mode
           - automation.turn_on_bathroom_when_motion_detected_2
           - automation.turn_on_guest_bathroom_when_motion_detected_3
@@ -3418,6 +3393,7 @@
         data: {}
         target:
           entity_id: group.all_lights
+        enabled: false
       - service: input_boolean.turn_on
         data: {}
         target:
@@ -3426,6 +3402,14 @@
         data: {}
         target:
           entity_id: alarm_control_panel.wyze_home_monitoring_system
+      - service: scene.turn_on
+        data: {}
+        target:
+          entity_id: scene.cleaning
+      - service: input_boolean.turn_off
+        data: {}
+        target:
+          entity_id: input_boolean.enable_vacuum
     - conditions:
       - condition: state
         entity_id: input_boolean.house_keeper_mode
@@ -3444,7 +3428,6 @@
           - automation.laundry_notifcations
           - automation.morning_routine
           - automation.motion_mudroom_2
-          - automation.run_roomba_every_morning
           - automation.switch_turns_on_showering_mode
           - automation.turn_on_bathroom_when_motion_detected_2
           - automation.turn_on_guest_bathroom_when_motion_detected_3
@@ -3462,7 +3445,62 @@
         data: {}
         target:
           entity_id: input_boolean.quiet_mode
-  mode: single
+      - service: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.enable_vacuum
+    - conditions:
+      - condition: trigger
+        id: no_motion
+      - condition: state
+        entity_id: input_boolean.house_keeper_mode
+        state: 'on'
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: No motion for 20 minutes
+          more_info: The cleaners are probably gone.
+          url: /lovelace/Cameras
+    - conditions:
+      - condition: trigger
+        id: front_door_motion
+      - condition: template
+        value_template: '{{ now() + timedelta(minutes=30) > state_attr(''calendar.cleaners'',
+          ''start_time'') | as_datetime | as_local}}'
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Cleaners are Here
+          more_info: Turning on Cleaning Mode
+          url: /lovelace/Cameras
+      - service: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.house_keeper_mode
+    - conditions:
+      - condition: trigger
+        id: twelve_hours_before
+      sequence:
+      - service: input_boolean.turn_off
+        data: {}
+        target:
+          entity_id: input_boolean.enable_vacuum
+  mode: queued
+  max: 3
 - id: '1665086286680'
   alias: Heat Coffee Water
   description: Turns on the water kettle and notifies when finished
