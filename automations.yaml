@@ -1373,6 +1373,9 @@
 
       {{ now() > turn_off_time }}'
     id: time_expired
+  - platform: time
+    at: '17:30:00'
+    id: at-end-of-day
   condition: []
   action:
   - choose:
@@ -1384,6 +1387,29 @@
         data: {}
         target:
           entity_id: switch.grow_light
+      - delay:
+          hours: 0
+          minutes: 1
+          seconds: 0
+          milliseconds: 0
+      - service: camera.snapshot
+        data:
+          filename: /config/www/grow_room/{{now() | as_timestamp | timestamp_custom('%Y-%m-%d')}}.jpg
+        target:
+          entity_id: camera.grow_room_camera
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Plants!
+          url: /lovelace/greenhouse
+          image_type: jpeg
+          image: /local/grow_room/{{now() | as_timestamp |     timestamp_custom('%Y-%m-%d')}}.jpg
     - conditions:
       - condition: trigger
         id: time_expired
@@ -1392,6 +1418,27 @@
         data: {}
         target:
           entity_id: switch.grow_light
+    - conditions:
+      - condition: trigger
+        id: at-end-of-day
+      - condition: template
+        value_template: '{{ (states.binary_sensor.wyze_motion4.last_changed | as_local).date()
+          != now().date() }}'
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: The Plants are Thirsty
+          more_info: You haven't watered the plants today
+          url: /lovelace/greenhouse
+          image: /local/grow_room/{{now() | as_timestamp |         timestamp_custom('%Y-%m-%d')}}.jpg
+          image_type: jpeg
     default: []
   mode: single
 - id: '1646491578504'
@@ -3456,6 +3503,11 @@
         entity_id: input_boolean.house_keeper_mode
         state: 'on'
       sequence:
+      - service: camera.snapshot
+        data:
+          filename: /config/www/snapshots/front-yard.jpg
+        target:
+          entity_id: camera.front_yard
       - service: script.notify_sarah_and_nathan
         data:
           use_alexa: false
@@ -3468,6 +3520,8 @@
           message: No motion for 20 minutes
           more_info: The cleaners are probably gone.
           url: /lovelace/Cameras
+          image: /local/snapshots/front-yard.jpg
+          image_type: jpeg
     - conditions:
       - condition: trigger
         id: front_door_motion
@@ -3475,6 +3529,11 @@
         value_template: '{{ now() + timedelta(minutes=30) > state_attr(''calendar.cleaners'',
           ''start_time'') | as_datetime | as_local}}'
       sequence:
+      - service: camera.snapshot
+        data:
+          filename: /config/www/snapshots/front-yard.jpg
+        target:
+          entity_id: camera.front_yard
       - service: script.notify_sarah_and_nathan
         data:
           use_alexa: false
@@ -3487,6 +3546,8 @@
           message: Cleaners are Here
           more_info: Turning on Cleaning Mode
           url: /lovelace/Cameras
+          image_type: jpeg
+          image: /local/snapshots/front-yard.jpg
       - service: input_boolean.turn_on
         data: {}
         target:
