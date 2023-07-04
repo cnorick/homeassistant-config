@@ -1,0 +1,223 @@
+blueprint:
+  name: Bathroom Humidity Exhaust Fan
+  description: "# Bathroom Humidity Exhaust Fan\n**Version: 1.4**\n\nThe most common
+    automation used for a bathroom humidity exhaust fan.\n\nLet us know what you think
+    of this blueprint and for community support including updates: [Click Here](https://community.home-assistant.io/t/bathroom-humidity-exhaust-fan/509992)\n\n**The
+    Automation Process:**\n - When the humidity rises above a set percentage value
+    over a time window the fan will turn ON. You can also turn ON lights.\n - When
+    the humidity falls below a set percentage value over a time window the automation
+    will then wait for the time delay and then turn the fan OFF.\n - You have the
+    option to use the \"Fan Speed - Off Switch Option\". Sometimes you need to select
+    a different entity to turn ON for the fan to turn OFF.\n - You have the option
+    to use a By-pass. This allows you to add a switch to manually By-pass the \"Humidity
+    Derivative Sensor\".\n - You have two safe guards. The first one is the maximum
+    run time for the fan. The second one is, if Home Assistant restarts.\n\nNote:
+    You must set up a \"Derivative Sensor Helper\" for this automation to work. See
+    our FAQ on how to set this up correctly.\n\n**Need help?** See our FAQ: [Click
+    Here](https://community.home-assistant.io/t/bathroom-humidity-exhaust-fan/509992/2?u=blacky)\n"
+  domain: automation
+  input:
+    trigger:
+      name: Humidity Derivative Sensor
+      description: Select your humidity derivative sensor.
+      selector:
+        entity:
+          domain:
+          - sensor
+          multiple: false
+    fan_switch:
+      name: Fan Switch
+      description: Select the fan you would like to turn ON. You can also add lights.
+      selector:
+        target:
+          entity:
+            domain:
+            - fan
+            - light
+            - switch
+            - script
+    fan_speed_off:
+      name: Fan Speed - Off Switch Option (Optional)
+      description: Sometimes you need to select a different entity to turn ON for
+        the fan to turn OFF. This is normally used when having a fan that has different
+        speeds. Please DO NOT select the same entities that are selected above in
+        "Fan Switch" here, as the automation will not work.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain:
+          - fan
+          - switch
+          - script
+    rising_humidity:
+      name: Rising Humidity
+      description: Set the percentage the humidity must rise within the derivative
+        sensor time window to turn the fan ON.
+      default: 1
+      selector:
+        number:
+          min: 0.0
+          max: 5.0
+          step: 0.1
+          unit_of_measurement: '%'
+          mode: slider
+    falling_humidity:
+      name: Falling Humidity
+      description: Set the percentage the humidity must fall within the derivative
+        sensor time window to turn the fan OFF.
+      default: -1
+      selector:
+        number:
+          min: -5.0
+          max: 0.0
+          step: 0.1
+          unit_of_measurement: '%'
+          mode: slider
+    time_out:
+      name: Safe Guard - Maximum Run Time
+      description: Set the safe guard time. If the fan gets turned ON by the automation
+        and the falling humidity fails to execute, then the safe guard will by-pass
+        the falling humidity after its set time and proceed to the time delay.
+      default: 20
+      selector:
+        number:
+          min: 5.0
+          max: 60.0
+          step: 0.5
+          unit_of_measurement: minutes
+          mode: slider
+    time_delay:
+      name: Time Delay
+      description: Set the delay time to wait before turning the fan OFF after the
+        falling humidity % has been achieved or the safe guards set time has passed.
+      default: 10
+      selector:
+        number:
+          min: 0.0
+          max: 20.0
+          step: 0.5
+          unit_of_measurement: minutes
+          mode: slider
+    include_bypass:
+      name: Use The Humidity Derivative Sensor By-pass Option (Optional)
+      description: Select enable or disable.
+      default: bypass_disabled
+      selector:
+        select:
+          options:
+          - label: Enable the By-pass option
+            value: bypass_enabled
+          - label: Disable the By-pass option
+            value: bypass_disabled
+          custom_value: false
+          multiple: false
+    by_pass:
+      name: Humidity Derivative Sensor By-pass
+      description: Select a switch that will By-pass the humidity derivative sensor
+        and make your fan function as normal. The entity cannot be included in, "Fan
+        Switch" and or "Fan Speed - Off Switch Option" selections.
+      default: []
+      selector:
+        entity: {}
+    include_ha_restart:
+      name: Safe Guard - Use The HA Restart Option (Optional)
+      description: If Home Assistant restarts, and the fan is ON, the fan will stay
+        ON until the trigger is triggered again and the automation runs. In this scenario
+        the fan could stay ON for a very long time. Enabling this option will allow
+        you to turn the fan OFF in a set time delay, providing a safe guard option.
+      default: restart_disabled
+      selector:
+        select:
+          options:
+          - label: Enable the HA restart safe guard option
+            value: restart_enabled
+          - label: Disable the HA restart safe guard option
+            value: restart_disabled
+          custom_value: false
+          multiple: false
+    ha_restart:
+      name: Safe Guard - HA Restart Time Delay
+      description: Set the delay time to wait before turning the fan OFF if the fan
+        is ON after Home Assistant restarts.
+      default: 20
+      selector:
+        number:
+          min: 5.0
+          max: 60.0
+          step: 0.5
+          unit_of_measurement: minutes
+          mode: slider
+  source_url: https://gist.github.com/Blackshome/8e09a8213b834f1be4ab49ba880abed8
+mode: restart
+max_exceeded: silent
+variables:
+  trigger: !input trigger
+  fan_switch: !input fan_switch
+  fan_speed_off: !input fan_speed_off
+  rising_humidity: !input rising_humidity
+  falling_humidity: !input falling_humidity
+  time_out: !input time_out
+  time_delay: !input time_delay
+  include_bypass: !input include_bypass
+  by_pass: !input by_pass
+  include_ha_restart: !input include_ha_restart
+  ha_restart: !input ha_restart
+trigger:
+- platform: numeric_state
+  id: t1
+  entity_id: !input trigger
+  above: !input rising_humidity
+  below: '100'
+- platform: homeassistant
+  id: t2
+  event: start
+condition:
+- condition: or
+  conditions:
+  - '{{ include_bypass == ''bypass_disabled'' }}'
+  - '{{ by_pass == [] }}'
+  - '{{ (include_bypass == ''bypass_enabled'') and (states[by_pass].state == ''off'')
+    }}'
+action:
+- choose:
+  - conditions:
+    - '{{ (include_ha_restart == ''restart_enabled'') and (expand(fan_switch.entity_id)
+      | selectattr(''state'', ''=='', ''on'') | list | count > 0) or (include_ha_restart
+      == ''restart_enabled'') and (expand(fan_switch.entity_id) | selectattr(''domain'',
+      ''=='', ''script'') | list | count > 0) }}'
+    - condition: trigger
+      id: t2
+    sequence:
+    - alias: Wait the number of minutes that has been set for ha restart time delay
+      delay:
+        minutes: !input ha_restart
+    - alias: Turn off the fan
+      service: homeassistant.turn_off
+      target: !input fan_switch
+    - alias: Fan speed off option
+      service: homeassistant.turn_on
+      entity_id: !input fan_speed_off
+  default:
+  - alias: Check trigger is t1
+    condition: trigger
+    id: t1
+  - alias: Turn on the fan
+    service: homeassistant.turn_on
+    target: !input fan_switch
+  - alias: Wait until Humidity Derivative Sensor drops
+    wait_for_trigger:
+      platform: numeric_state
+      entity_id: !input trigger
+      below: !input falling_humidity
+    timeout:
+      minutes: !input time_out
+  - alias: Wait the number of minutes that has been set for the time delay
+    delay:
+      minutes: !input time_delay
+  - alias: Turn off the fan
+    service: homeassistant.turn_off
+    target: !input fan_switch
+  - alias: Fan speed off option
+    service: homeassistant.turn_on
+    entity_id: !input fan_speed_off

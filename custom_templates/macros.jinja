@@ -1,0 +1,3 @@
+{% macro state_or_zero(entity_id) %}
+{{ states(entity_id) if has_value(entity_id) else 0 }}
+{% endmacro %}

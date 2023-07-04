@@ -184,12 +184,29 @@ template:
       unit_of_measurement: $
       state: >-
         {{((states("sensor.others_charging_at_home_total_monthly_energy") | float) * (states("sensor.brightridge_electricity_price") | float)) | round(2)}}
+  - trigger:
+      platform: state
+      entity_id:
+        - sensor.front_door_last_activity
+    binary_sensor:
+      - name: front_door_reported_motion
+        auto_off: 25
+        state: "true"
+  - trigger:
+      platform: state
+      entity_id:
+        - sensor.side_door_last_activity
+    binary_sensor:
+      - name: side_door_reported_motion
+        auto_off: 25
+        state: "true"
+  - sensor:
+    - name: Monthly Electric Cost
+      unit_of_measurement: $
+      state: >-
+        {{((states("sensor.monthly_energy_usage") | float) * (states("sensor.brightridge_electricity_price") | float)) | round(2)}}
 
 light:
-  - platform: flux_led
-    devices:
-      192.168.1.48:
-        name: Under Desk Lights
   - platform: switch
     name: String Lights
     entity_id: switch.string_lights

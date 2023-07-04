@@ -173,14 +173,14 @@
   use_blueprint:
     path: networkingcat/yet_another_motion_automation.yaml
     input:
-      time_scene_night: 0:00:00
-      motion_entity: binary_sensor.side_door_motion
+      time_scene_night: 00:00:00
+      motion_entity: binary_sensor.side_door_reported_motion
       light_target:
         entity_id:
         - light.side_porch
         - light.laundry_room
       elevation_check: 10
-      time_scene_evening: 0:00:00
+      time_scene_evening: 00:00:00
       time_scene_day: 0:00:00
       time_scene_morning: 0:00:00
       automation_blocker: input_boolean.people_outside
@@ -335,9 +335,9 @@
   use_blueprint:
     path: networkingcat/yet_another_motion_automation.yaml
     input:
-      time_scene_night: 0:00:00
-      motion_entity: binary_sensor.front_door_motion
-      time_scene_evening: 0:00:00
+      time_scene_night: 00:00:00
+      motion_entity: binary_sensor.front_door_reported_motion
+      time_scene_evening: 00:00:00
       time_scene_day: 0:00:00
       light_target:
         entity_id:
@@ -1082,7 +1082,7 @@
           entity_id: input_boolean.keep_ac_in_eco
       - service: climate.set_preset_mode
         data:
-          preset_mode: Eco
+          preset_mode: eco
         target:
           entity_id: climate.kitchen
     default: []
@@ -1557,12 +1557,12 @@
   - service: script.vacuum_rooms
     data:
       rooms:
-      - '15'
-      - '17'
-      - '18'
-      - '11'
-      - '9'
       - '5'
+      - '15'
+      - '6'
+      - '17'
+      - '7'
+      - '18'
 - id: '1586661602545'
   alias: Turn On Master Bedroom Before Bed
   description: ''
@@ -2040,7 +2040,7 @@
           - wait_for_trigger:
             - platform: state
               entity_id:
-              - binary_sensor.kitchen_q_sensor_sensor_state_motion
+              - binary_sensor.wyze_motion3
               to: 'on'
           - service: media_player.play_media
             data:
@@ -2354,6 +2354,8 @@
     entity_id: switch.nathans_fan
   - service: lock.lock
     entity_id: lock.back_door
+  - service: script.lock_front_door
+    data: {}
   - data: {}
     entity_id: media_player.living_room_tv
     service: media_player.turn_off
@@ -2403,18 +2405,30 @@
   description: ''
   trigger:
   - entity_id:
-    - binary_sensor.kitchen_q_sensor_sensor_state_motion
+    - binary_sensor.wyze_motion3
     platform: state
     to: 'on'
   action:
-  - data: {}
-    entity_id: group.kitchen_lights
-    service: homeassistant.turn_on
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'on'
+      sequence:
+      - service: light.turn_on
+        data: {}
+        target:
+          entity_id: light.kitchen_counter
+    default:
+    - service: homeassistant.turn_on
+      data: {}
+      target:
+        entity_id: group.kitchen_lights
 - id: '1587438080868'
   alias: Turn Off Kitchen After No Motion
   description: ''
   trigger:
-  - entity_id: binary_sensor.kitchen_q_sensor_sensor_state_motion
+  - entity_id: binary_sensor.wyze_motion3
     for:
       seconds: '{{ states(''input_number.kitchen_motion_timeout'') | int * 60 }}'
     platform: state
@@ -2599,14 +2613,18 @@
   - service: script.vacuum_rooms
     data:
       rooms:
-      - '1'
-      - '8'
-      - '15'
-      - '17'
-      - '18'
-      - '9'
+      - '19'
       - '5'
-      - '11'
+      - '6'
+      - '15'
+      - '18'
+      - '7'
+      - '17'
+    enabled: false
+  - service: script.turn_on
+    data: {}
+    target:
+      entity_id: script.vacuum_next_area
   - service: alarm_control_panel.alarm_arm_away
     entity_id: alarm_control_panel.alexa_guard_ee9c2
   - service: switch.turn_off
@@ -2672,12 +2690,15 @@
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.stop
+    enabled: false
   - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
     continue_on_timeout: true
     timeout: 00:00:10
+    enabled: false
   - data: {}
     entity_id: vacuum.rooben
     service: vacuum.return_to_base
+    enabled: true
   - delay: 00:10:00
   - service: light.turn_off
     target:
@@ -2838,26 +2859,60 @@
   alias: Laundry Notifcations
   description: ''
   trigger:
-  - platform: numeric_state
-    entity_id: sensor.washer_power_switch_electric_consumption_w
-    below: '3'
+  - platform: template
+    value_template: '{% from ''macros.jinja'' import state_or_zero %}
+
+      {{ state_or_zero(''sensor.washer_power_switch_electric_consumption_w'') | float
+      < 3 }}'
     for:
       hours: 0
       minutes: 0
       seconds: 30
+    id: washer-done
+  - platform: template
+    value_template: '{% from ''macros.jinja'' import state_or_zero %}
+
+      {{ state_or_zero(''sensor.dryer_watts'') | float < 10 }}
+
+      '
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    id: dryer-done
   condition: []
   action:
-  - service: script.notify_sarah_and_nathan
-    data:
-      message: Laundry Done
-      more_info: Washing machine finished running
-      use_alexa: true
-      notify_sarah: true
-      notify_nathan: true
-      text_nathan: false
-      text_sarah: false
-      text_ice_contacts: false
-      bypass_quiet_mode: false
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: washer-done
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Washing Machine Done
+          more_info: Washing machine finished running
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+    - conditions:
+      - condition: trigger
+        id: dryer-done
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Dryer Done
+          more_info: Dryer finished running
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
   mode: single
 - id: '1654459157218'
   alias: Tesla Charging Notifications
@@ -2880,9 +2935,9 @@
       - service: script.notify_sarah_and_nathan
         data:
           message: You Owe Mom ${{states('sensor.last_week_s_charging_cost_at_rusty_and_donna_s')
-            | round(2, "half")}} for Charging
+            | round(2)}} for Charging
           more_info: Click to pay
-          use_alexa: true
+          use_alexa: false
           notify_sarah: true
           notify_nathan: true
           text_nathan: false
@@ -2897,6 +2952,10 @@
   trigger:
   - platform: webhook
     webhook_id: willy-wonka-gd1VAN7gY8jO_C9yQtmrhBMh
+    allowed_methods:
+    - POST
+    - PUT
+    local_only: true
   condition: []
   action:
   - choose:
@@ -3401,9 +3460,9 @@
     id: no_motion
   - platform: state
     entity_id:
-    - binary_sensor.front_door_motion
-    to: 'on'
+    - binary_sensor.front_door_reported_motion
     id: front_door_motion
+    to: 'on'
   - platform: calendar
     event: start
     offset: '-12:0:0'
@@ -3416,6 +3475,10 @@
       - condition: trigger
         id: turned_on
       sequence:
+      - service: alarm_control_panel.alarm_disarm
+        data: {}
+        target:
+          entity_id: alarm_control_panel.wyze_home_monitoring_system
       - service: automation.turn_off
         data:
           stop_actions: true
@@ -3445,18 +3508,33 @@
         data: {}
         target:
           entity_id: input_boolean.quiet_mode
-      - service: alarm_control_panel.alarm_disarm
+      - service: input_boolean.turn_off
         data: {}
         target:
-          entity_id: alarm_control_panel.wyze_home_monitoring_system
+          entity_id: input_boolean.enable_vacuum
+      - service: input_boolean.turn_off
+        data: {}
+        target:
+          entity_id: input_boolean.wfh
       - service: scene.turn_on
+        continue_on_error: true
         data: {}
         target:
           entity_id: scene.cleaning
       - service: input_boolean.turn_off
         data: {}
         target:
-          entity_id: input_boolean.enable_vacuum
+          entity_id: input_boolean.keep_ac_in_eco
+      - service: climate.set_preset_mode
+        data:
+          preset_mode: none
+        target:
+          entity_id: climate.kitchen
+      - service: climate.set_temperature
+        data:
+          temperature: 69
+        target:
+          entity_id: climate.kitchen
     - conditions:
       - condition: state
         entity_id: input_boolean.house_keeper_mode
@@ -3502,6 +3580,10 @@
       - condition: state
         entity_id: input_boolean.house_keeper_mode
         state: 'on'
+        for:
+          hours: 0
+          minutes: 20
+          seconds: 0
       sequence:
       - service: camera.snapshot
         data:
@@ -3528,6 +3610,9 @@
       - condition: template
         value_template: '{{ now() + timedelta(minutes=30) > state_attr(''calendar.cleaners'',
           ''start_time'') | as_datetime | as_local}}'
+      - condition: state
+        entity_id: input_boolean.house_keeper_mode
+        state: 'off'
       sequence:
       - service: camera.snapshot
         data:
@@ -3629,8 +3714,8 @@
     id: guard-mode-off
   - platform: state
     entity_id:
-    - binary_sensor.front_door_motion
-    - binary_sensor.side_door_motion
+    - binary_sensor.front_door_reported_motion
+    - binary_sensor.side_door_reported_motion
     to: 'on'
     id: door-motion
   - platform: state
@@ -4674,3 +4759,127 @@
           bypass_quiet_mode: false
           message: Sensor Offline
           more_info: '{{sensors}}'
+          url: /lovelace/data
+      exclude:
+        entity_id:
+        - sensor.ikea_on_off_battery
+        - sensor.ikea3_battery
+- id: '1681131407908'
+  alias: Octoprint
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{now() >= states(''sensor.octoprint_estimated_finish_time'')
+      | as_datetime - timedelta(minutes=5)}}'
+    id: 5-min-warning
+  - platform: state
+    entity_id:
+    - binary_sensor.octoprint_printing
+    to: 'off'
+    from: 'on'
+    id: done-printing
+  - platform: state
+    entity_id:
+    - binary_sensor.octoprint_printing
+    to: 'on'
+    id: print-started
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: 5-min-warning
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Your 3D print is nearly finished
+          more_info: 5 minutes remaining. Click to view
+          url: http://plex.local/CR-6SE/
+    - conditions:
+      - condition: trigger
+        id: done-printing
+      sequence:
+      - service: camera.snapshot
+        data:
+          filename: /config/www/snapshots/octoprint.jpg
+        target:
+          entity_id: camera.octoprint_camera_2
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: true
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: 3D Printer Done
+          url: /config/devices/device/b07dd0689dc3ef8974346223a262fa00
+          image: /local/snapshots/octoprint.jpg
+          image_type: jpeg
+    - conditions:
+      - condition: trigger
+        id: print-started
+      sequence:
+      - service: camera.snapshot
+        data:
+          filename: /config/www/snapshots/octoprint.jpg
+        target:
+          entity_id: camera.octoprint_camera_2
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: 3D Print Started
+          more_info: 'Will be done at {{states(''sensor.octoprint_estimated_finish_time'')
+            | as_timestamp | timestamp_custom(''%I:%M %p'', local=True) }}
+
+            Click to view progress'
+          url: /config/devices/device/b07dd0689dc3ef8974346223a262fa00
+          image: /local/snapshots/octoprint.jpg
+          image_type: jpeg
+  mode: single
+- id: '1681160417129'
+  alias: Oven Notifications
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.stove_watts
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+    above: 5
+    id: on-for-hour
+  - platform: state
+    entity_id:
+    - binary_sensor.occupied
+    to: 'off'
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.stove_watts
+    above: 5
+  action:
+  - service: script.notify_sarah_and_nathan
+    data:
+      use_alexa: true
+      notify_sarah: true
+      notify_nathan: true
+      text_nathan: true
+      text_sarah: true
+      text_ice_contacts: false
+      bypass_quiet_mode: false
+      message: The Oven is On
+  mode: single

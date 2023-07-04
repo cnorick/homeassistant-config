@@ -4,12 +4,26 @@ esphome:
   board: esp32dev
   
 substitutions:
-# Change the disp_name to something you want  
-  disp_name1: Old Lights
-  disp_name2: Bedroom Rec
-  disp_name3: Living Room
-  disp_name: 6C
-# Interval of how often the power is updated
+  disp_name_a1: Old Lights
+  disp_name_a2: Bedroom Rec
+  disp_name_a3: Living Room
+  disp_name_a4: Main 1
+  disp_name_a5: Main 2
+  disp_name_a6: Heat 1
+  disp_name_b1: Stove
+  disp_name_b2: Kitchen Rec
+  disp_name_b3: Heat 2
+  disp_name_b4: Master Bed Rec
+  disp_name_b5: Kitchen Lights
+  disp_name_b6: Garbage Disposal and Dish Washer
+  disp_name_c1: Island Rec
+  disp_name_c2: Dryer
+  disp_name_c3: Washer
+  disp_name_c4: Bath
+  disp_name_c5: Master Bath
+  disp_name_c6: Basement Light/Rec
+
+  disp_name: Energy Monitor
   update_time: 10s
 # Current Transformers:
 #  20A/25mA SCT-006: 11143
@@ -19,7 +33,7 @@ substitutions:
 #  100A/50ma SCT-013-000: 27518
 #  120A/40mA: SCT-016: 41787
 #  200A/100mA SCT-024: 27518
-  current_cal: '29291'
+#  current_cal: '29291'
 # Jameco 9VAC Transformer: 
 #  For meter versions: 
 #  >= v1.3: 7305
@@ -56,151 +70,416 @@ spi:
 sensor:
   - platform: wifi_signal
     name: ${disp_name} WiFi
-    update_interval: 60s
-#IC1
+    update_interval: ${update_time}
+    
+# Main Board (A)
   - platform: atm90e32
     cs_pin: 5
-    phase_a:
+    phase_a: # CTA1
       voltage:
         name: ${disp_name} Volts A
         id: ic1Volts
         accuracy_decimals: 1
       current:
-        name: ${disp_name1} CT1 Amps
-        id: ct1Amps
-# The max value for current that the meter can output is 65.535. If you expect to measure current over 65A, 
-# divide the gain_ct by 2 (120A CT) or 4 (200A CT) and multiply the current and power values by 2 or 4 by uncommenting the filter below
-#        filters:
-#          - multiply: 2
+        name: ${disp_name_a1} Amps
+        id: ctA1Amps
       power:
-        name: ${disp_name1} CT1 Watts
-        id: ct1Watts
-#        filters:
-#          - multiply: 2
+        name: ${disp_name_a1} Watts
+        id: ctA1Watts
         filters:
-          - multiply: -1 # This one is coming in negative for some reason, even though the amps are positive.
+          - multiply: -1
       gain_voltage: ${voltage_cal}
       gain_ct: 29828
-    phase_b:
+    phase_b: # CTA2
       current:
-        name: ${disp_name2} CT2 Amps
-        id: ct2Amps
+        name: ${disp_name_a2} Amps
+        id: ctA2Amps
       power:
-        name: ${disp_name2} CT2 Watts
-        id: ct2Watts
+        name: ${disp_name_a2} Watts
+        id: ctA2Watts
       gain_voltage: ${voltage_cal}
       gain_ct: 30014
-    phase_c:
+    phase_c: # CTA3
       current:
-        name: ${disp_name3} CT3 Amps
-        id: ct3Amps
+        name: ${disp_name_a3} Amps
+        id: ctA3Amps
       power:
-        name: ${disp_name3} CT3 Watts
-        id: ct3Watts
+        name: ${disp_name_a3} Watts
+        id: ctA3Watts
+        filters:
+          - multiply: -1
       gain_voltage: ${voltage_cal}
       gain_ct: 29810
     frequency:
-      name: ${disp_name} Freq A
+      name: ${disp_name} Freq A1
     line_frequency: 60Hz
     gain_pga: 1X
     update_interval: ${update_time}
-#IC2
   - platform: atm90e32
     cs_pin: 4
-    phase_a:
-#this voltage is only needed if monitoring 2 voltages
-#      voltage:
-#        name: ${disp_name} Volts B
-#        id: ic2Volts
-#        accuracy_decimals: 1
+    phase_a: #CTA4
       current:
-        name: ${disp_name} CT4 Amps
-        id: ct4Amps
+        name: ${disp_name_a4} Amps
+        id: ctA4Amps
       power:
-        name: ${disp_name} CT4 Watts
-        id: ct4Watts
+        name: ${disp_name_a4} Watts
+        id: ctA4Watts
       gain_voltage: ${voltage_cal}
-      gain_ct: ${current_cal}
-    phase_b:
+      gain_ct: 44986
+    phase_b: # CTA5
       current:
-        name: ${disp_name} CT5 Amps
-        id: ct5Amps
+        name: ${disp_name_a5} Amps
+        id: ctA5Amps
       power:
-        name: ${disp_name} CT5 Watts
-        id: ct5Watts
+        name: ${disp_name_a5} Watts
+        id: ctA5Watts
       gain_voltage: ${voltage_cal}
-      gain_ct: ${current_cal}
-    phase_c:
+      gain_ct: 44986
+    phase_c: # CTA6
       current:
-        name: ${disp_name} CT6 Amps
-        id: ct6Amps
+        name: ${disp_name_a6} Amps
+        id: ctA6Amps
       power:
-        name: ${disp_name} CT6 Watts
-        id: ct6Watts
+        name: ${disp_name_a6} Watts
+        id: ctA6Watts
+        filters:
+          - multiply: -1
       gain_voltage: ${voltage_cal}
-      gain_ct: ${current_cal}
+      gain_ct: 29702
     frequency:
-      name: ${disp_name} Freq B
+      name: ${disp_name} Freq A2
     line_frequency: 60Hz
     gain_pga: 1X
     update_interval: ${update_time}
         
+# Extension Board (B)
+  - platform: atm90e32
+    cs_pin: 0
+    phase_a: # CTB1
+      current:
+        name: ${disp_name_b1} Amps
+        id: ctB1Amps
+      power:
+        name: ${disp_name_b1} Watts
+        id: ctB1Watts
+        filters:
+          - multiply: -1
+      gain_voltage: ${voltage_cal}
+      gain_ct: 29702
+    phase_b: # CTB2
+      current:
+        name: ${disp_name_b2} Amps
+        id: ctB2Amps
+      power:
+        name: ${disp_name_b2} Watts
+        id: ctB2Watts
+        filters:
+          - multiply: -1
+      gain_voltage: ${voltage_cal}
+      gain_ct: 29702
+    phase_c: # CTB3
+      current:
+        name: ${disp_name_b3} Amps
+        id: ctB3Amps
+        filters: # Only on one phase is measured
+          - multiply: 2
+      power:
+        name: ${disp_name_b3} Watts
+        id: ctB3Watts
+        filters:
+          - multiply: 2
+      gain_voltage: ${voltage_cal}
+      gain_ct: 29702
+    frequency:
+      name: ${disp_name} Freq B1
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_time}
+  - platform: atm90e32
+    cs_pin: 16
+    phase_a: #CTB4
+      current:
+        name: ${disp_name_b4} Amps
+        id: ctB4Amps
+      power:
+        name: ${disp_name_b4} Watts
+        id: ctB4Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 29702
+    phase_b: # CTB5
+      current:
+        name: ${disp_name_b5} Amps
+        id: ctB5Amps
+      power:
+        name: ${disp_name_b5} Watts
+        id: ctB5Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11765
+    phase_c: # CTB6
+      current:
+        name: ${disp_name_b6} Amps
+        id: ctB6Amps
+      power:
+        name: ${disp_name_b6} Watts
+        id: ctB6Watts
+        filters:
+          - multiply: -1
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11849
+    frequency:
+      name: ${disp_name} Freq B2
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_time}
+    
+# Extension Board (C)
+  - platform: atm90e32
+    cs_pin: 27
+    phase_a: # CTC1
+      current:
+        name: ${disp_name_c1} Amps
+        id: ctC1Amps
+      power:
+        name: ${disp_name_c1} Watts
+        id: ctC1Watts
+        filters:
+          - multiply: -1
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11769
+    phase_b: # CTC2
+      current:
+        name: ${disp_name_c2} Amps
+        id: ctC2Amps
+      power:
+        name: ${disp_name_c2} Watts
+        id: ctC2Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 29702
+    phase_c: # CTC3
+      current:
+        name: ${disp_name_c3} Amps
+        id: ctC3Amps
+      power:
+        name: ${disp_name_c3} Watts
+        id: ctC3Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11849
+    frequency:
+      name: ${disp_name} Freq C1
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_time}
+  - platform: atm90e32
+    cs_pin: 17
+    phase_a: #CTC4
+      current:
+        name: ${disp_name_c4} Amps
+        id: ctC4Amps
+      power:
+        name: ${disp_name_c4} Watts
+        id: ctC4Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11849
+    phase_b: # CTC5
+      current:
+        name: ${disp_name_c5} Amps
+        id: ctC5Amps
+      power:
+        name: ${disp_name_c5} Watts
+        id: ctC5Watts
+        filters:
+          - multiply: -1
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11849
+    phase_c: # CTC6
+      current:
+        name: ${disp_name_c6} Amps
+        id: ctC6Amps
+      power:
+        name: ${disp_name_c6} Watts
+        id: ctC6Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: 11849
+    frequency:
+      name: ${disp_name} Freq C2
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_time}
+
 #Total Amps   
   - platform: template
-    name: ${disp_name} Total Amps
-    id: totalAmps
-    lambda: return id(ct1Amps).state + id(ct2Amps).state + id(ct3Amps).state + id(ct4Amps).state + id(ct5Amps).state + id(ct6Amps).state ;
+    name: ${disp_name} Total Mains Amps
+    id: totalMainsAmps
+    lambda: return id(ctA4Amps).state + id(ctA5Amps).state;
     accuracy_decimals: 2
     unit_of_measurement: A
     device_class: current
-    update_interval: ${update_time}         
+    update_interval: ${update_time}   
+
 #Total Watts
   - platform: template
-    name: ${disp_name} Total Watts
-    id: totalWatts
-    lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
-    accuracy_decimals: 1
+    name: ${disp_name} Total Mains Watts
+    id: totalMainsWatts
+    lambda: return id(ctA4Watts).state + id(ctA5Watts).state;
     unit_of_measurement: W
     device_class: energy
     update_interval: ${update_time}
 #kWh
   - platform: total_daily_energy
-    name: ${disp_name} Total kWh
-    power_id: totalWatts
+    name: ${disp_name} Total Mains kWh
+    power_id: totalMainsWatts
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
     device_class: energy
     state_class: total_increasing
 
-  - platform: total_daily_energy
-    name: ${disp_name1} Total kWh
-    power_id: ct1Watts
-    filters:
-      - multiply: 0.001
-    unit_of_measurement: kWh
-    device_class: energy
-    state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a1} Total kWh
+  #   power_id: ctA1Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a2} Total kWh
+  #   power_id: ctA2Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a3} Total kWh
+  #   power_id: ctA3Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a4} Total kWh
+  #   power_id: ctA4Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a5} Total kWh
+  #   power_id: ctA5Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_a6} Total kWh
+  #   power_id: ctA6Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b1} Total kWh
+  #   power_id: ctB1Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b2} Total kWh
+  #   power_id: ctB2Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b3} Total kWh
+  #   power_id: ctB3Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b4} Total kWh
+  #   power_id: ctB4Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b5} Total kWh
+  #   power_id: ctB5Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_b6} Total kWh
+  #   power_id: ctB6Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c1} Total kWh
+  #   power_id: ctC1Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c2} Total kWh
+  #   power_id: ctC2Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c3} Total kWh
+  #   power_id: ctC3Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c4} Total kWh
+  #   power_id: ctC4Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c5} Total kWh
+  #   power_id: ctC5Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
+  # - platform: total_daily_energy
+  #   name: ${disp_name_c6} Total kWh
+  #   power_id: ctC6Watts
+  #   filters:
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   device_class: energy
+  #   state_class: total_increasing
 
-  - platform: total_daily_energy
-    name: ${disp_name2} Total kWh
-    power_id: ct2Watts
-    filters:
-      - multiply: 0.001
-    unit_of_measurement: kWh
-    device_class: energy
-    state_class: total_increasing
-
-  - platform: total_daily_energy
-    name: ${disp_name3} Total kWh
-    power_id: ct3Watts
-    filters:
-      - multiply: 0.001
-    unit_of_measurement: kWh
-    device_class: energy
-    state_class: total_increasing
-
-switch:
+button:
   - platform: restart
     name: ${disp_name} Restart  
 time:

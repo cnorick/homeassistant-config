@@ -187,7 +187,7 @@ notify_sarah_leaving_work_or_arriving_home:
   - wait_for_trigger:
     - platform: zone
       entity_id: person.sarah
-      zone: zone.project_access
+      zone: zone.etsu
       event: leave
       id: work
     - platform: zone
@@ -197,11 +197,16 @@ notify_sarah_leaving_work_or_arriving_home:
       id: home
     continue_on_timeout: false
     timeout: '1:00:00'
-  - service: notify.mobile_app_pixel_7
+  - service: script.notify_sarah_and_nathan
     data:
-      message: Sarah just moved
-      data:
-        clickAction: /lovelace/map
+      use_alexa: false
+      notify_sarah: false
+      notify_nathan: true
+      text_nathan: false
+      text_sarah: false
+      text_ice_contacts: false
+      bypass_quiet_mode: false
+      message: Sarah's on her way
   mode: single
 tier_toggle_devices:
   fields:
@@ -520,23 +525,21 @@ vacuum_rooms:
           multiple: true
           options:
           - label: Bedroom
-            value: '1'
+            value: '19'
           - label: Guest Bedroom
-            value: '5'
-          - label: Bathroom
-            value: '8'
+            value: '18'
           - label: Hallway
-            value: '11'
+            value: '7'
           - label: Kitchen
-            value: '15'
+            value: '5'
           - label: Dining Room
-            value: '17'
+            value: '15'
           - label: Office
-            value: '9'
+            value: '17'
           - label: Mud Room
             value: '16'
           - label: Living Room
-            value: '18'
+            value: '6'
   variables:
     regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"type\":
       \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
@@ -549,9 +552,9 @@ vacuum_rooms:
       command: start
       params:
         ordered: 1
-        pmap_id: mBsM5dLfTw2zkbQnVO1g3w
+        pmap_id: 5kCFtSzzTbOXqawCyUtGCw
         regions: '{{regions}}'
-        user_pmapv_id: 220603T152255
+        user_pmapv_id: 230507T222147
     target:
       entity_id: vacuum.rooben
   mode: single
@@ -666,4 +669,62 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
         data: {}
         target:
           entity_id: climate.tesleigh_lynn_hvac_climate_system
+  mode: single
+lock_front_door:
+  alias: Lock Front Door
+  sequence:
+  - service: google_assistant_sdk.send_text_command
+    data:
+      command: Lock front door
+  mode: single
+vacuum_next_area:
+  alias: Vacuum Next Area
+  variables:
+    room_list:
+    - '19'
+    - '18'
+    - '7'
+    - '5'
+    - '15'
+    - '17'
+    - '6'
+  sequence:
+  - if:
+    - condition: state
+      entity_id: vacuum.rooben
+      state: docked
+    then:
+    - service: script.vacuum_rooms
+      data:
+        rooms: '{{room_list[states(''counter.current_room_to_vacuum'')]}}'
+    - if:
+      - condition: template
+        value_template: '{{states(''counter.current_room_to_vacuum'') | int == state_attr(''counter.current_room_to_vacuum'',
+          ''maximum'') | int}}'
+      then:
+      - service: counter.reset
+        data: {}
+        target:
+          entity_id: counter.current_room_to_vacuum
+      else:
+      - service: counter.increment
+        data: {}
+        target:
+          entity_id: counter.current_room_to_vacuum
+    else:
+    - if:
+      - condition: state
+        entity_id: vacuum.rooben
+        state: error
+      then:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Rooben has an Error
   mode: single

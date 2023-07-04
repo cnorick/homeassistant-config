@@ -910,8 +910,8 @@
       - Keep On
       - Dog Mode
       - Camp Mode
-      current_temperature: 78
-      temperature: 72
+      current_temperature: 87
+      temperature: 68
       preset_mode: Normal
       attribution: Data provided by Tesla
       friendly_name: Tesleigh Lynn Hvac (climate) system
