@@ -25,7 +25,3 @@
 # - platform: local_file
 #   name: side_porch_processed
 #   file_path: /config/images/doods/side_porch.jpg
-
-- platform: generic
-  name: Grow Room Camera
-  stream_source: rtsp://tater:streamboi@192.168.1.208/live

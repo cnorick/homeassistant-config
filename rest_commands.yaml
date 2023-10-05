@@ -4,34 +4,3 @@ wall_panel:
   #payload: '{"speak": "hello"}'
   payload: '{"{{ command }}":{{ data }}}'
   content_type:  'application/json; charset=utf-8'
-
-ocs:
-  url: !secret ocs_url
-  method: POST
-  content_type:  'application/json; charset=utf-8'
-  payload: "{{payload}}"
-#    [
-#      {
-#        "tenantId": "82139b11-fc78-4d03-9b21-e6f5cb9178eb",
-#        "namespaceId": "2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a",
-#        "streamId": "nathan-office-temp",
-#        "data": {
-#          "timestamp" "{{now()}}",
-#          "value": "{{states('sensor.bme280_temperature')}}"
-#        }
-#      }
-#    ]
-    
-#  payload: >-
-#    {
-#      "office_temperature": "{{states('sensor.bme280_temperature')}}",
-#      "office_humidity": "{{states('sensor.bme280_humidity')}}",
-#      "living_room_temperature": "{{states('sensor.living_room_motion_sensor_air_temperature')}}",
-#      "kitchen_humidity": "{{states('sensor.kitchen_humidity')}}",
-#      "basement_humidity": "{{states('sensor.basement_water_sensor_humidity')}}",
-#      "office_pressure": "{{states('sensor.bme280_pressure')}}",
-#      "outside_temperature": "{{state_attr('weather.home', 'temperature')}}",
-#      "basement_temperature": "{{states('sensor.basement_water_sensor_temperature')}}",
-#      "outside_humidity": "{{state_attr('weather.home', 'humidity')}}",
-#      "living_room_illuminance": "{{states('sensor.living_room_motion_sensor_illuminance')}}"
-#    }

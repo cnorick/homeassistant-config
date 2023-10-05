@@ -322,7 +322,8 @@ sensor:
     id: totalMainsWatts
     lambda: return id(ctA4Watts).state + id(ctA5Watts).state;
     unit_of_measurement: W
-    device_class: energy
+    device_class: power
+    state_class: measurement
     update_interval: ${update_time}
 #kWh
   - platform: total_daily_energy

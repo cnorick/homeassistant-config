@@ -728,3 +728,34 @@ vacuum_next_area:
           bypass_quiet_mode: false
           message: Rooben has an Error
   mode: single
+vacuum_until_condition_or_until_all_rooms_are_done:
+  alias: Vacuum Until Condition or Until All Rooms Are Done
+  sequence:
+  - variables:
+      first_room: states('counter.current_room_to_vacuum')
+  - repeat:
+      while:
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: '{{not repeat.first and vacuum_until | int != states(''counter.current_room_to_vacuum'')
+            | int}}'
+          alias: If not the first loop && we haven't yet done all the rooms
+      sequence: []
+  fields:
+    vacuum_until:
+      name: Vacuum Until Condition
+      description: The Vacuum will continue vacuuming until this condition is met
+      required: false
+      selector:
+        condition:
+  mode: single
+'1692121920484':
+  alias: NWS Weather Alert Pop Up
+  sequence:
+  - service: "{% if states('sensor.nws_alerts') != '0' %}\n  persistent_notification.create\n{%
+      endif %}\n"
+    data_template:
+      notification_id: nwswxalert
+      message: '{{ message }}'
+      title: '{{ title }}'

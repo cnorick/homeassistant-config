@@ -1,0 +1,7 @@
+- platform: statistics
+  name: Oven Max Watts Over Last 15 Minutes
+  entity_id: sensor.stove_watts
+  state_characteristic: value_max
+  unique_id: oven_max_watts_last_fifteen_minutes
+  max_age:
+    minutes: 15

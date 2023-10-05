@@ -13,11 +13,23 @@
   action:
   - wait_for_trigger:
     - platform: state
-      entity_id: binary_sensor.wyze_motion2
+      entity_id:
+      - binary_sensor.bedroom_presence_presence_sensor_2
       to: 'on'
       from: 'off'
     timeout: 03:00:00
     continue_on_timeout: false
+  - wait_for_trigger:
+    - platform: state
+      entity_id:
+      - binary_sensor.bedroom_presence_presence_sensor_9
+      to: 'on'
+    continue_on_timeout: false
+    timeout:
+      hours: 0
+      minutes: 30
+      seconds: 0
+      milliseconds: 0
   - data:
       volume_level: 0.8
     service: media_player.volume_set
@@ -43,7 +55,13 @@
           entity_id: media_player.bathroom_echo
           media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
           media_content_type: skill
-    default: []
+        enabled: true
+    default:
+    - service: media_player.play_media
+      data:
+        entity_id: media_player.bathroom_echo
+        media_content_id: amzn1.ask.skill.8e0fbda3-b70c-481d-878f-a2e5e17158c9
+        media_content_type: skill
   - choose:
     - conditions:
       - condition: numeric_state
@@ -201,6 +219,8 @@
         - sensor.pixel_battery_state
         - sensor.rooben_battery_level
         - sensor.google_pixel_watch_battery_level
+        - sensor.freezer_temperature_sensor_battery
+        - sensor.deep_freeze_temperature_sensor_battery
       actions:
       - service: script.notify_sarah_and_nathan
         data:
@@ -399,11 +419,12 @@
         - condition: trigger
           id: door_open
       sequence:
-      - service: light.turn_on
+      - service: homeassistant.turn_on
+        data: {}
         target:
           entity_id:
-          - light.basement_stairs
           - light.laundry_room
+          - light.basement_stairs
       - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.basement_door
@@ -438,6 +459,7 @@
           entity_id:
           - light.basement_stairs
           - light.basement_lights
+        data: {}
     default: []
   mode: restart
 - id: '1622939127924'
@@ -472,10 +494,10 @@
         - 29856b1eb3bc143dc0aad2cc7f6013e6
         - b52c6034f5332b5f7f795cfaa4bf7eea
         entity_id: light.string_lights
-      no_motion_wait: 300
       elevation_check: 4
-      no_motion_blocker: automation.people_outside
-      no_motion_blocker_boolean: true
+      no_motion_blocker: input_boolean.people_outside
+      no_motion_blocker_boolean: false
+      no_motion_wait: 300
 - id: '1623941903977'
   alias: Outside Mode
   description: ''
@@ -588,6 +610,21 @@
     - binary_sensor.titan_water_valve_actuator_water_alarm_water_leak_detected
     to: 'on'
     id: valve
+  - platform: state
+    entity_id:
+    - binary_sensor.guest_bathroom_moisture_sensor_moisture
+    to: 'on'
+    id: guest-bathroom
+  - platform: state
+    entity_id:
+    - binary_sensor.bathroom_moisture_sensor_moisture
+    to: 'on'
+    id: bathroom
+  - platform: state
+    entity_id:
+    - binary_sensor.air_conditioner_moisture_moisture_2
+    to: 'on'
+    id: ac
   action:
   - service: switch.turn_on
     data: {}
@@ -601,10 +638,12 @@
       - service: script.notify_sarah_and_nathan
         data:
           message: Warning, Water Heater Flooding
-          more_info: Water has been detected in the basement near the water heater.
-            Check the water sensor attached to the water heater. The water main has
-            already been turned off. Click this notification to turn it back on, or
-            press the button on the device in the basement.
+          more_info: 'Water has been detected in the basement near the water heater.
+            Check the water sensor attached to the water heater.
+
+
+            The water main has already been turned off. Click this notification to
+            turn it back on, or press the button on the device in the basement.'
           use_alexa: true
           notify_nathan: true
           notify_sarah: true
@@ -620,9 +659,11 @@
       - service: script.notify_sarah_and_nathan
         data:
           message: Warning, Kitchen Sink is Flooding
-          more_info: Check under the kitchen sink for water. The water main in the
-            basement has already been shut off. Click this notification to turn it
-            back on, or press the button on the device in the basement.
+          more_info: 'Check under the kitchen sink for water.
+
+
+            The water main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.'
           use_alexa: true
           notify_sarah: true
           notify_nathan: true
@@ -638,9 +679,76 @@
       - service: script.notify_sarah_and_nathan
         data:
           message: Warning, Basement is Flooding
-          more_info: Check the basement near the main water valve for water. The water
-            main in the basement has already been shut off. Click this notification
-            to turn it back on, or press the button on the device in the basement.
+          more_info: 'Check the basement near the main water valve for water.
+
+
+            The water main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.'
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_ice_contacts: true
+          bypass_quiet_mode: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    - conditions:
+      - condition: trigger
+        id:
+        - guest-bathroom
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Warning, Guest Bathroom is Flooding
+          more_info: 'Check behind the guest bathroom toilet.
+
+
+            The water main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.'
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_ice_contacts: true
+          bypass_quiet_mode: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    - conditions:
+      - condition: trigger
+        id:
+        - bathroom
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Warning, Bathroom is Flooding
+          more_info: 'Check the master bathroom behind the toilet.
+
+
+            The water main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.'
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_ice_contacts: true
+          bypass_quiet_mode: true
+          url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
+    - conditions:
+      - condition: trigger
+        id:
+        - ac
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Warning, Basement is Flooding Near Air Conditioner
+          more_info: 'Check the basement near AC. It may just be that the AC sump
+            pump is backed up. If so, just turn the water back on, and disable the
+            automation.
+
+
+            The water main in the basement has already been shut off. Click this notification
+            to turn it back on, or press the button on the device in the basement.'
           use_alexa: true
           notify_sarah: true
           notify_nathan: true
@@ -650,66 +758,6 @@
           bypass_quiet_mode: true
           url: /config/devices/device/80111a0a6cdedbf4e578450bc83cd527
     default: []
-  mode: single
-- id: '1626990104585'
-  alias: Send Data to OCS
-  description: ''
-  trigger:
-  - platform: time_pattern
-    minutes: /10
-  condition: []
-  action:
-  - service: rest_command.ocs
-    data:
-      payload: "[\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-office-temp\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.bme280_temperature')}}\"\n    }\n  },\n
-        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
-        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-office-humidity\",\n
-        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.bme280_humidity')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-office-pressure\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.bme280_pressure')}}\"\n    }\n  },\n  {\n
-        \   \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
-        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-livingroom-temperature\",\n
-        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_air_temperature')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-livingroom-illuminance\",\n    \"data\": {\n      \"timestamp\":
-        \"{{now()}}\",\n      \"value\": \"{{states('sensor.living_room_motion_sensor_illuminance')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-kitchen-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.kitchen_temperature')}}\"\n    }\n  },\n
-        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
-        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-kitchen-humidity\",\n
-        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.kitchen_humidity')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-basement-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.basement_water_sensor_temperature')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-basement-humidity\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.basement_water_sensor_humidity')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-bathroom-humidity\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{states('sensor.bathroom_humidity')}}\"\n    }\n  },\n
-        \ {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
-        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-bathroom-temperature\",\n
-        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{states('sensor.bathroom_temperature')}}\"\n
-        \   }\n  },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n
-        \   \"namespaceId\": \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\":
-        \"nathan-outside-temperature\",\n    \"data\": {\n      \"timestamp\": \"{{now()}}\",\n
-        \     \"value\": \"{{state_attr('weather.home', 'temperature')}}\"\n    }\n
-        \ },\n  {\n    \"tenantId\": \"82139b11-fc78-4d03-9b21-e6f5cb9178eb\",\n    \"namespaceId\":
-        \"2bb60ae7-dedd-4ae1-83a1-4f379ea02e0a\",\n    \"streamId\": \"nathan-outside-humidity\",\n
-        \   \"data\": {\n      \"timestamp\": \"{{now()}}\",\n      \"value\": \"{{state_attr('weather.home',
-        'humidity')}}\"\n    }\n  }\n]"
-  mode: single
 - id: '1627506438431'
   alias: Turn on Lights When Doors are Opened
   description: ''
@@ -731,15 +779,22 @@
     entity_id: input_boolean.couch_sleepers
     state: 'off'
   - condition: numeric_state
-    entity_id: sensor.living_room_motion_sensor_illuminance
+    entity_id: sensor.living_room_presence_light_sensor_light_level
     below: '5'
   action:
-  - service: light.turn_on
-    target:
-      area_id: dining_room
-    data:
-      transition: 5
-      brightness_pct: 40
+  - variables:
+      dining_room_on: '{{is_state(''light.dining_room'', ''on'')}}'
+      hallway_on: '{{is_state(''light.hallway'', ''on'')}}'
+  - if:
+    - condition: template
+      value_template: '{{not dining_room_on}}'
+    then:
+    - service: light.turn_on
+      target:
+        area_id: dining_room
+      data:
+        transition: 5
+        brightness_pct: 40
   - choose:
     - conditions:
       - condition: or
@@ -748,6 +803,8 @@
           id: office_door
         - condition: trigger
           id: guest_bedroom_door
+      - condition: template
+        value_template: '{{not hallway_on}}'
       sequence:
       - service: light.turn_on
         target:
@@ -759,15 +816,23 @@
       minutes: 1
       seconds: 0
       milliseconds: 0
-  - service: light.turn_off
-    target:
-      area_id: dining_room
-    data:
-      transition: 9
-  - service: light.turn_off
-    target:
-      area_id: hallway
-    data: {}
+  - if:
+    - condition: template
+      value_template: '{{not dining_room_on}}'
+    then:
+    - service: light.turn_off
+      target:
+        area_id: dining_room
+      data:
+        transition: 9
+  - if:
+    - condition: template
+      value_template: '{{not hallway_on}}'
+    then:
+    - service: light.turn_off
+      target:
+        area_id: hallway
+      data: {}
   mode: parallel
   max: 2
 - id: '1628378848989'
@@ -1560,9 +1625,7 @@
       - '5'
       - '15'
       - '6'
-      - '17'
       - '7'
-      - '18'
 - id: '1586661602545'
   alias: Turn On Master Bedroom Before Bed
   description: ''
@@ -2040,7 +2103,7 @@
           - wait_for_trigger:
             - platform: state
               entity_id:
-              - binary_sensor.wyze_motion3
+              - binary_sensor.kitchen_presence_sensor_presence_sensor_8
               to: 'on'
           - service: media_player.play_media
             data:
@@ -2198,13 +2261,46 @@
   alias: Toggle Automations When There Are Visitors
   description: ''
   trigger:
-  - entity_id: input_boolean.visitors
+  - entity_id:
+    - input_boolean.visitors
     platform: state
+    to: 'off'
+    id: turned-off
+  - entity_id:
+    - input_boolean.visitors
+    platform: state
+    to: 'on'
+    id: turned-on
   condition: []
   action:
-  - entity_id: group.visitor_automations
-    service: "{% if is_state('input_boolean.visitors', 'on') %}\n  homeassistant.turn_off\n{%
-      else %}\n  homeassistant.turn_on\n{% endif %}"
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - turned-on
+      sequence:
+      - service: automation.turn_off
+        data:
+          stop_actions: true
+        target:
+          entity_id: automation.turn_off_everything_when_people_leave
+      - service: input_boolean.turn_off
+        data: {}
+        target:
+          entity_id: input_boolean.enable_vacuum
+    - conditions:
+      - condition: trigger
+        id:
+        - turned-off
+      sequence:
+      - service: automation.turn_on
+        data: {}
+        target:
+          entity_id: automation.turn_off_everything_when_people_leave
+      - service: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.enable_vacuum
 - id: '1587273614675'
   alias: Calendar Toggles Visitors
   description: ''
@@ -2300,6 +2396,10 @@
         service: homeassistant.turn_off
       - service: switch.turn_off
         entity_id: switch.office_plug
+      - service: fan.turn_off
+        data: {}
+        target:
+          entity_id: fan.ceiling_fan
     - conditions:
       - condition: state
         entity_id: input_boolean.couch_sleepers
@@ -2401,45 +2501,67 @@
     entity_id: group.public_lights
     service: homeassistant.turn_off
 - id: '1587438080867'
-  alias: Turn On Kitchen if Motion
+  alias: Kitchen Presence
   description: ''
   trigger:
   - entity_id:
-    - binary_sensor.wyze_motion3
+    - binary_sensor.kitchen_presence_sensor_presence_sensor_1
     platform: state
     to: 'on'
+    id: kitchen-presence-on
+  - platform: state
+    entity_id:
+    - binary_sensor.bedroom_door
+    to: 'on'
+    id: bedroom-door-open
+  - platform: state
+    entity_id:
+    - binary_sensor.kitchen_presence_sensor_presence_sensor_1
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    id: kitchen-presence-off
   action:
   - choose:
     - conditions:
       - condition: state
         entity_id: input_boolean.night_mode
         state: 'on'
+      - condition: trigger
+        id:
+        - kitchen-presence-on
+        - bedroom-door-open
+      alias: kitchen motion at night
       sequence:
       - service: light.turn_on
         data: {}
         target:
           entity_id: light.kitchen_counter
-    default:
-    - service: homeassistant.turn_on
-      data: {}
-      target:
-        entity_id: group.kitchen_lights
-- id: '1587438080868'
-  alias: Turn Off Kitchen After No Motion
-  description: ''
-  trigger:
-  - entity_id: binary_sensor.wyze_motion3
-    for:
-      seconds: '{{ states(''input_number.kitchen_motion_timeout'') | int * 60 }}'
-    platform: state
-    to: 'off'
-  condition: []
-  action:
-  - data: {}
-    entity_id: group.kitchen_lights
-    service: homeassistant.turn_off
-  - service: light.turn_off
-    entity_id: light.back_door
+    - conditions:
+      - condition: trigger
+        id:
+        - kitchen-presence-on
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'off'
+      alias: kitchen motion at day
+      sequence:
+      - service: homeassistant.turn_on
+        data: {}
+        target:
+          entity_id: group.kitchen_lights
+    - conditions:
+      - condition: trigger
+        id:
+        - kitchen-presence-off
+      sequence:
+      - service: light.turn_off
+        data: {}
+        target:
+          area_id: 1f75029558cd46f69ddb7d3a9f537726
+    default: []
 - id: bathroom_on_motion
   alias: Toggle Bathroom on Motion
   description: ''
@@ -2572,22 +2694,6 @@
       entity_3:
         entity_id: light.guest_bath_2
       delay: 1000
-- id: guest_air_freshener
-  alias: Turn On Air Freshener When Bathroom Is Occupied When There Are Scheduled
-    Visitors
-  description: ''
-  trigger:
-  - entity_id: light.guest_bathroom
-    platform: state
-  condition:
-  - condition: state
-    entity_id: input_boolean.visitors
-    state: 'on'
-  action:
-  - service: '{% if is_state(''light.guest_bathroom'', ''on'') %} switch.turn_on {%
-      else %} switch.turn_off {% endif %}'
-    data:
-      entity_id: switch.guest_air_freshener
 - id: '1586735161292'
   alias: Turn Off Everything When Everyone Leaves
   description: ''
@@ -2646,6 +2752,10 @@
       data:
         preset_mode: eco
       enabled: true
+  - service: fan.turn_off
+    data: {}
+    target:
+      entity_id: fan.ceiling_fan
 - id: '1587162726799'
   alias: First Person Home
   description: ''
@@ -2711,19 +2821,6 @@
     - light.laundry_room
     - light.back_door
     - light.front_door
-- id: '1587673304305'
-  alias: Turn On Kitchen When Leaving Bedroom
-  description: ''
-  trigger:
-  - entity_id: binary_sensor.bedroom_door
-    platform: state
-    to: 'on'
-  condition: []
-  action:
-  - data: {}
-    target:
-      area_id: 1f75029558cd46f69ddb7d3a9f537726
-    service: light.turn_on
 - id: '1651167205604'
   alias: Tag Office is scanned
   description: ''
@@ -3678,7 +3775,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 07:45:00
+    at: input_datetime.sarah_leaves_for_work
   condition:
   - condition: time
     weekday:
@@ -4764,6 +4861,7 @@
         entity_id:
         - sensor.ikea_on_off_battery
         - sensor.ikea3_battery
+        - sensor.guest_bedroom_shortcut_button_battery
 - id: '1681131407908'
   alias: Octoprint
   description: ''
@@ -4856,10 +4954,10 @@
   description: ''
   trigger:
   - platform: numeric_state
-    entity_id: sensor.stove_watts
+    entity_id: sensor.oven_max_watts_over_last_15_minutes
     for:
       hours: 1
-      minutes: 0
+      minutes: 30
       seconds: 0
     above: 5
     id: on-for-hour
@@ -4869,7 +4967,7 @@
     to: 'off'
   condition:
   - condition: numeric_state
-    entity_id: sensor.stove_watts
+    entity_id: sensor.oven_max_watts_over_last_15_minutes
     above: 5
   action:
   - service: script.notify_sarah_and_nathan
@@ -4883,3 +4981,550 @@
       bypass_quiet_mode: false
       message: The Oven is On
   mode: single
+- id: '1689196550956'
+  alias: Fridge Warnings
+  description: Sends notifications if the fridge temp goes up
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.refrigerator_temperature_sensor_temperature
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+    above: 50
+    id: fridge-warning
+  - platform: numeric_state
+    entity_id: sensor.refrigerator_temperature_sensor_temperature
+    for:
+      hours: 2
+      minutes: 0
+      seconds: 0
+    above: 50
+    id: fridge-bad
+  - platform: numeric_state
+    entity_id: sensor.freezer_temperature_sensor_temperature
+    for:
+      hours: 2
+      minutes: 0
+      seconds: 0
+    above: 40
+    id: freezer-bad
+  - platform: numeric_state
+    entity_id: sensor.freezer_temperature_sensor_temperature
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    above: 40
+    id: freezer-warning
+  - platform: numeric_state
+    entity_id: sensor.deep_freeze_temperature_sensor_temperature
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    above: 32
+    id: deep-freeze-warning
+  - platform: numeric_state
+    entity_id: sensor.deep_freeze_temperature_sensor_temperature
+    for:
+      hours: 2
+      minutes: 0
+      seconds: 0
+    above: 32
+    id: deep-freeze-bad
+  condition: []
+  action:
+  - choose:
+    - conditions: []
+      sequence: []
+  - variables:
+      message: The {{state_attr(trigger.entity_id, "friendly_name")}} has been above
+        {{trigger.above}} for {{trigger.for}}
+  - service: script.notify_sarah_and_nathan
+    data:
+      use_alexa: true
+      notify_sarah: true
+      notify_nathan: true
+      text_nathan: true
+      text_sarah: true
+      text_ice_contacts: false
+      bypass_quiet_mode: true
+      url: /dashboard-extras/fridges
+      more_info: '{{message}}'
+      message: Warning, Food Temperatures Rising
+  mode: single
+- id: '1691935676874'
+  alias: Turn up volume with dimmer
+  description: ''
+  trigger:
+  - device_id: af948d04922aa89ba76b972e0bfbcbfb
+    domain: hue
+    platform: device
+    type: start
+    subtype: clock_wise
+    unique_id: 40e36fb5-3278-4c33-96ac-fb721ac323cb
+    id: clockwise
+  - device_id: af948d04922aa89ba76b972e0bfbcbfb
+    domain: hue
+    platform: device
+    type: repeat
+    subtype: counter_clock_wise
+    unique_id: 40e36fb5-3278-4c33-96ac-fb721ac323cb
+    id: counter-clockwise
+  condition:
+  - condition: state
+    entity_id: media_player.bathroom_echo
+    state: playing
+    enabled: false
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - clockwise
+      sequence:
+      - service: media_player.volume_up
+        data: {}
+        target:
+          entity_id: media_player.bathroom_echo
+    - conditions:
+      - condition: trigger
+        id:
+        - counter-clockwise
+      sequence:
+      - service: media_player.volume_down
+        data: {}
+        target:
+          entity_id: media_player.bathroom_echo
+  mode: single
+- id: '1692121776382'
+  alias: NWS Check for Multi Alerts
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.nws_alerts
+  condition:
+  - '{{ states(''sensor.nws_alerts'') | int > 0 }}'
+  - '{{ trigger.to_state.state|int > trigger.from_state.state|int }}'
+  action:
+  - choose:
+    - conditions:
+      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) > 1 }}'
+      sequence:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.nws_multi_alert
+      - delay:
+          seconds: 30
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.nws_multi_alert
+    - conditions:
+      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 1 }}'
+      sequence:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.nws_multi_alert
+- id: '1692122004156'
+  alias: NWS Weather Alert Pop Up Control
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.nws_alerts
+  condition:
+  - '{{ states(''sensor.nws_alerts'') | int > 0 }}'
+  - '{{ trigger.to_state.state|int > trigger.from_state.state|int }}'
+  - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] not in states.sensor.nws_alerts_event_ids.attributes.values()|list)
+    and (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] != states(''sensor.nws_alerts_event_ids''))
+    }}'
+  action:
+  - delay:
+      seconds: 5
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.nws_multi_alert
+        state: 'on'
+      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 2 }}'
+      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] not in
+        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
+        ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
+        }}'
+      sequence:
+      - service: script.nws_popup_on_wx_alert
+        data:
+          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+            }}"
+
+            '
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+            }}"
+
+            '
+      - service: script.nws_popup_on_wx_alert
+        data:
+          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
+            }}"
+
+            '
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
+            }}"
+
+            '
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.nws_multi_alert
+        state: 'on'
+      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 3 }}'
+      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] not in
+        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
+        ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
+        }}'
+      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2] not in
+        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
+        ''event_id'').split(''-'')[2] != states(''sensor.nws_alerts_event_ids''))
+        }}'
+      sequence:
+      - service: script.nws_popup_on_wx_alert
+        data:
+          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+            }}"
+
+            '
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+            }}"
+
+            '
+      - service: script.nws_popup_on_wx_alert
+        data:
+          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
+            }}"
+
+            '
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
+            }}"
+
+            '
+      - service: script.nws_popup_on_wx_alert
+        data:
+          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[2]
+            }}"
+
+            '
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[2]
+            }}"
+
+            '
+    default:
+    - service: script.nws_popup_on_wx_alert
+      data:
+        title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+          }}"
+
+          '
+        message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+          }}"
+
+          '
+- id: '1692122338194'
+  alias: NWS Announce Weather Alert
+  trigger:
+  - platform: state
+    entity_id: sensor.nws_alerts
+  condition:
+  - condition: and
+    conditions:
+    - '{{states(''sensor.nws_alerts'') | int > 0}}'
+    - '{{ trigger.to_state.state|int > trigger.from_state.state|int }}'
+    - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] not in
+      states.sensor.nws_alerts_event_ids.attributes.values()|list) }}'
+    - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] != states(''sensor.nws_alerts_event_ids''))
+      }}'
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ ''Severe Thunderstorm Warning'' in state_attr(''sensor.nws_alerts'',
+          ''title'') }}'
+        alias: Thunderstorm
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: The National Weather Service Has issued a severe thunderstorm warning
+          more_info: Click for More Information
+          url: https://www.weather.gov/mrx/
+    - conditions:
+      - condition: template
+        value_template: '{{ ''Tornado Warning'' in state_attr(''sensor.nws_alerts'',
+          ''title'') }}'
+        alias: Tornado
+      sequence:
+      - service: media_player.volume_set
+        data:
+          entity_id:
+          - media_player.everywhere
+          volume_level: 0.9
+      - service: notify.alexa_media
+        data:
+          data:
+            type: tts
+          target:
+          - media_player.office_echo
+          - media_player.bedroom
+          - media_player.living_room_echo
+          - media_player.bathroom_echo
+          - media_player.kitchen
+          - media_player.guest_bathroom_echo
+          - media_player.nathan_s_echo_dot
+          message: <audio src="https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/sounds/nws_alert_tone.mp3"
+            />
+      - delay: 00:00:25
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_ice_contacts: false
+          bypass_quiet_mode: true
+          message: The National Weather Service Has Issued a Tornado Warning
+          url: https://www.weather.gov/mrx/
+          more_info: Click for More Information
+    default:
+    - service: script.notify_sarah_and_nathan
+      data:
+        use_alexa: false
+        notify_sarah: true
+        notify_nathan: true
+        text_nathan: false
+        text_sarah: false
+        text_ice_contacts: false
+        bypass_quiet_mode: false
+        more_info: '{{state_attr(''sensor.nws_alerts'', ''title'')}}'
+        url: https://www.weather.gov/mrx/
+        message: The National Weather Service has published a notification
+  initial_state: 'on'
+- id: '1692123608848'
+  alias: NWS Update Event ID Variable
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.nws_alerts
+  action:
+  - service: variable.set_variable
+    data:
+      variable: nws_alerts_event_ids
+      attributes:
+        history_1: '{{ states(''sensor.nws_alerts_event_ids'') }}'
+        history_2: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_1'')
+          }}'
+        history_3: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_2'')
+          }}'
+        history_4: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_3'')
+          }}'
+        history_5: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_4'')
+          }}'
+        history_6: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_5'')
+          }}'
+        history_7: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_6'')
+          }}'
+        history_8: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_7'')
+          }}'
+        history_9: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_8'')
+          }}'
+        history_10: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_9'')
+          }}'
+  - service: variable.set_variable
+    data:
+      variable: nws_alerts_event_ids
+      value: '{{ (trigger.to_state.attributes.event_id).split(''-'')[0] }}'
+- id: '1694468089195'
+  alias: Bedroom Presence
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.bedroom_presence_presence_sensor_4
+    to: 'on'
+    id: sarah-standing
+  - platform: state
+    entity_id:
+    - binary_sensor.bedroom_presence_presence_sensor_2
+    to: 'on'
+    id: nathan-standing
+  - platform: state
+    entity_id:
+    - binary_sensor.bedroom_presence_presence_sensor_1
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+    id: bedroom-clear-5-min
+  - platform: state
+    entity_id:
+    - binary_sensor.bedroom_presence_presence_sensor_9
+    to: 'on'
+    id: bathroom-door
+  - platform: state
+    entity_id:
+    - input_boolean.night_mode
+    to: 'off'
+    id: morning-start
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - sarah-standing
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.bedroom_presence_presence_sensor_3
+          state: 'on'
+        - condition: template
+          value_template: '{{(as_timestamp(now()))-(as_timestamp(states.binary_sensor.bedroom_presence_presence_sensor_3.last_changed))
+            < 3 }}'
+        enabled: false
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'on'
+      alias: Sarah Gets Up at Night
+      sequence:
+      - service: light.turn_on
+        data:
+          brightness: 7
+        target:
+          entity_id: light.sarah_s_nightstand
+      - wait_for_trigger:
+        - platform: state
+          entity_id:
+          - binary_sensor.bedroom_presence_presence_sensor_4
+          to: 'off'
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 30
+        timeout:
+          hours: 0
+          minutes: 0
+          seconds: 30
+          milliseconds: 0
+      - service: light.turn_off
+        data: {}
+        target:
+          entity_id: light.sarah_s_nightstand
+    - conditions:
+      - condition: trigger
+        id:
+        - nathan-standing
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'on'
+      alias: Nathan Gets Up at Night
+      sequence:
+      - service: light.turn_on
+        data:
+          brightness: 8
+        target:
+          entity_id: light.nathan_s_nightstand
+      - wait_for_trigger:
+        - platform: state
+          entity_id:
+          - binary_sensor.bedroom_presence_presence_sensor_2
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 30
+        timeout:
+          hours: 0
+          minutes: 30
+          seconds: 0
+          milliseconds: 0
+      - service: light.turn_off
+        data: {}
+        target:
+          entity_id: light.nathan_s_nightstand
+    - conditions:
+      - condition: trigger
+        id:
+        - bedroom-clear-5-min
+      - condition: state
+        entity_id: input_boolean.turn_off_bedroom_when_not_occupied
+        state: 'on'
+      - condition: time
+        before: '21:00:00'
+      alias: Turn Off Bedroom When no Presence
+      sequence:
+      - service: light.turn_off
+        data:
+          transition: 7
+        target:
+          area_id: b2672f722c53428e92427703040fb764
+    - conditions:
+      - condition: trigger
+        id:
+        - bathroom-door
+      - condition: state
+        entity_id: light.bathroom
+        state: 'off'
+      sequence:
+      - service: scene.turn_on
+        target:
+          entity_id: scene.bathroom_night
+        metadata: {}
+      - wait_for_trigger:
+        - platform: state
+          entity_id:
+          - binary_sensor.wyze_motion2
+          to: 'on'
+        - platform: state
+          entity_id:
+          - binary_sensor.bedroom_presence_presence_sensor_9
+          to: 'off'
+          id: walk-away
+          for:
+            hours: 0
+            minutes: 0
+            seconds: 5
+        timeout:
+          hours: 0
+          minutes: 0
+          seconds: 20
+          milliseconds: 0
+      - if:
+        - condition: state
+          entity_id: binary_sensor.wyze_motion2
+          state: 'on'
+        then:
+        - stop: Done. Bathroom Lights will stay on
+        else:
+        - service: light.turn_off
+          data: {}
+          target:
+            entity_id: light.bathroom
+    - conditions:
+      - condition: trigger
+        id:
+        - morning-start
+      sequence:
+      - wait_for_trigger:
+        - platform: state
+          entity_id:
+          - binary_sensor.bedroom_presence_presence_sensor_4
+          - binary_sensor.bedroom_presence_presence_sensor_2
+          to: 'on'
+        continue_on_timeout: false
+      - service: vacuum.return_to_base
+        data: {}
+        target:
+          entity_id: vacuum.rooben
+  mode: parallel
+  max: 10

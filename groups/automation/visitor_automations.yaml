@@ -1,5 +1,0 @@
-visitor_automations:
-  name: Visitor Un-friendly Automations
-  entities:
-    - automation.turn_off_everything_when_people_leave
-    - automation.turn_off_master_bedroom_when_we_leave

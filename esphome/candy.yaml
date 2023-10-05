@@ -1,0 +1,525 @@
+esphome:
+  name: candy
+  platform: ESP32
+  board: esp32dev
+  on_boot:
+    - script.execute: strip_boot
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+# api:
+
+ota:
+  password: "e9703875c803eb941d5b9e8f0120d3a8"
+
+wifi:
+  ssid: !secret candy_wifi_ssid
+  password: !secret candy_wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Candy Fallback Hotspot"
+    password: "FifAVGq33ulU"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+switch:
+  - platform: gpio
+    pin: 25
+    name: "Light"
+    id: dispenser_light
+
+light:
+  - platform: neopixelbus
+    id: light_strip_left
+    type: GRB
+    variant: WS2812
+    pin: 23
+    num_leds: 72
+    method:
+      type: esp32_i2s
+      bus: 0
+    default_transition_length: 1ms
+    name: "NeoPixel Left Light"
+    effects: &light_strip_effects
+      - addressable_rainbow:
+      - addressable_rainbow:
+          name: Fast Rainbow
+          speed: 50
+          width: 50
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_random_twinkle:
+          name: Dense Twinkle
+          twinkle_probability: 25%
+          progress_interval: 32ms
+      - addressable_fireworks:
+      - addressable_flicker:
+      - addressable_color_wipe:
+      - addressable_color_wipe:
+          name: Fast Color Wipe
+          add_led_interval: 2ms
+      - addressable_color_wipe:
+          name: Colors Falling
+          colors:
+            - random: true
+              num_leds: 10
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 10
+            - random: true
+              num_leds: 5
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 10
+            - random: true
+              num_leds: 7
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 10
+            - random: true
+              num_leds: 2
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 10
+          add_led_interval: 50ms
+          reverse: true
+      - addressable_color_wipe:
+          name: White Falling
+          colors:
+            - red: 100%
+              green: 100%
+              blue: 100%
+              num_leds: 15
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 20
+          add_led_interval: 1ms
+          reverse: true
+      - addressable_scan:
+          name: Fast Scan
+          move_interval: 1ms
+          scan_width: 10
+      - strobe:
+          name: Lightning
+          colors:
+            - state: true
+              brightness: 1
+              red: 1
+              green: 1
+              blue: 1
+              duration: 100ms
+            - state: false
+              duration: 500ms
+            - state: true
+              brightness: .5
+              red: 1
+              green: 1
+              blue: 1
+              duration: 300ms
+            - state: false
+              duration: 500ms
+            - state: true
+              brightness: .4
+              red: 1
+              green: 1
+              blue: 1
+              duration: 100ms
+      # - addressable_lambda:
+      #     name: "Lightning"
+      #     update_interval: 15ms
+      #     lambda: |-
+      #       ESPHSVColor hsv;
+      #       hsv.value = 255;
+      #       hsv.saturation = 240;
+      #       uint16_t hue = (millis() * 50) % 0xFFFF;
+      #       const uint16_t add = 0xFFFF / 50;
+      #       for (auto var : it) {
+      #         hsv.hue = hue >> 8;
+      #         var = hsv;
+      #         hue -= add;
+      #       }
+      - addressable_lambda:
+          name: "Reverse Fast Rainbow"
+          update_interval: 15ms
+          lambda: |-
+            ESPHSVColor hsv;
+            hsv.value = 255;
+            hsv.saturation = 240;
+            uint16_t hue = (millis() * 50) % 0xFFFF;
+            const uint16_t add = 0xFFFF / 50;
+            for (auto var : it) {
+              hsv.hue = hue >> 8;
+              var = hsv;
+              hue -= add;
+            }
+      - addressable_lambda:
+          name: "Fire"
+          update_interval: 15ms
+          lambda: |-
+            int Cooling = 55;
+            int Sparking = 110;
+            static byte heat[188];
+            int cooldown;
+        
+            // Step 1.  Cool down every cell a little
+            for( int i = 0; i < it.size(); i++) {
+              cooldown = random(0, ((Cooling * 10) / it.size()) + 2);
+        
+              if(cooldown>heat[i]) {
+                heat[i]=0;
+              } else {
+                heat[i]=heat[i]-cooldown;
+              }
+            }
+        
+            // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+            for( int k= it.size() - 1; k >= 2; k--) {
+              heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+            }
+        
+            // Step 3.  Randomly ignite new 'sparks' near the bottom
+            if( random(255) < Sparking ) {
+              int y = random(7);
+              heat[y] = heat[y] + random(160,255);
+            }
+        
+            // Step 4.  Convert heat to LED colors
+            for( int Pixel = 0; Pixel < it.size(); Pixel++) {
+              // Scale 'heat' down from 0-255 to 0-191
+              byte t192 = round((heat[Pixel]/255.0)*191);
+        
+              // calculate ramp up from
+              byte heatramp = t192 & 0x3F; // 0..63
+              heatramp <<= 2; // scale up to 0..252
+        
+              // figure out which third of the spectrum we're in:
+              //this is where you can reverse the effect by switching the commented out lines in all 3 places.
+              if( t192 > 0x80) {                     // hottest
+                //it[it.size() - Pixel - 1] = ESPColor(255, 255, heatramp);
+                it[Pixel] = ESPColor(255, 255, heatramp);
+              } else if( t192 > 0x40 ) {             // middle
+                //it[it.size() - Pixel - 1] = ESPColor(255, heatramp, 0);
+                it[Pixel] = ESPColor(255, heatramp, 0);
+              } else {                               // coolest
+                //it[it.size() - Pixel - 1] = ESPColor(heatramp, 0, 0);
+                it[Pixel] = ESPColor(heatramp, 0, 0);
+              }
+            }
+  - platform: neopixelbus
+    id: light_strip_right
+    type: GRB
+    variant: WS2812
+    pin: 22
+    num_leds: 72
+    method:
+      type: esp32_i2s
+      bus: 1
+    name: "NeoPixel Right Light"
+    default_transition_length: 1ms
+    effects: *light_strip_effects
+
+mqtt:
+  broker: 10.3.141.1
+  topic_prefix: candy-esp-1
+
+  on_message:
+    - topic: candy-controller/dispensing-status
+      payload: preparing
+      then:
+        - script.execute: strip_prepping_dispense
+        
+    - topic: candy-controller/dispensing-status
+      payload: dispensing
+      then:
+        - switch.turn_on: dispenser_light
+        # - script.execute: strip_dispensing
+        
+    - topic: candy-controller/dispensing-status
+      payload: idle
+      then:
+        - switch.turn_off: dispenser_light
+        - script.execute: strip_idle
+        
+    - topic: candy-controller/spinner-status
+      payload: spinning
+      then:
+        - switch.turn_off: dispenser_light
+        - script.execute: strip_spinning
+        
+    - topic: candy-controller/startup-status
+      payload: started
+      then:
+        - script.execute: flash_light_fast
+        - script.execute: strip_connected
+        - delay: 2s
+        - script.stop: flash_light_fast
+        - switch.turn_off: dispenser_light
+        
+    - topic: candy-controller/startup-status
+      payload: stopped
+      then:
+        - script.execute: flash_light
+        - script.execute: strip_disconnected
+        - delay: 2s
+        - script.stop: flash_light
+        - switch.turn_off: dispenser_light
+        
+    - topic: candy-controller/idle-sound-status
+      payload: beast
+      then:
+        - delay: 1s
+        - script.execute: strip_lightning
+        
+    - topic: candy-controller/idle-sound-status
+      payload: werewolf
+      then:
+        - script.execute: strip_lightning
+
+    - topic: candy-controller/idle-sound-status
+      payload: jumpscare
+      then:
+        - script.execute: turn_off_strip
+        - delay: 5s
+        - script.execute: strip_lightning
+        
+    - topic: candy-controller/idle-sound-status
+      payload: thunder
+      then:
+        - script.execute: turn_off_strip
+        - delay: 4.8s
+        - script.execute: strip_lightning        
+
+    - topic: candy-controller/idle-sound-status
+      payload: singingGhosts1
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: singingGhosts2
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: ghost4
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: laugh
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: scream
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: wind
+      then:
+        - script.execute: strip_fire
+
+    - topic: candy-controller/idle-sound-status
+      payload: heartbeat
+      then:
+        - script.execute: strip_heartbeat
+        
+    - topic: candy-controller/idle-sound-status
+      payload: idle
+      then:
+        - script.execute: strip_idle
+
+  on_json_message:
+    - topic: candy-controller/strip-brightness
+      then:
+        - script.execute: strip_boot
+        - light.turn_on:
+            id: light_strip_right
+            brightness: &brightnessLambda !lambda |-
+              double bright = 1.0;
+              if (x.containsKey("brightness"))
+                bright = x["brightness"];
+              return bright;
+        - light.turn_on:
+            id: light_strip_left
+            brightness: *brightnessLambda
+        
+script:
+  - id: flash_light
+    then:
+      - repeat:
+          count: 100
+          then:
+            - switch.turn_on: dispenser_light
+            - delay: 400ms
+            - switch.turn_off: dispenser_light
+            - delay: 400ms
+  - id: flash_light_fast
+    then:
+      - repeat:
+          count: 100
+          then:
+            - switch.turn_on: dispenser_light
+            - delay: 100ms
+            - switch.turn_off: dispenser_light
+            - delay: 100ms
+            
+            
+  - id: strip_connected
+    then:
+      - light.turn_off: light_strip_left
+      - light.turn_on:
+          id: light_strip_left
+          red: 0
+          green: 1
+          blue: 0
+      - light.turn_off: light_strip_right
+      - light.turn_on:
+          id: light_strip_right
+          red: 0
+          green: 1
+          blue: 0
+      - delay: 2s
+      - light.turn_on:
+          id: light_strip_right
+          effect: Dense Twinkle
+      - light.turn_on:
+          id: light_strip_left
+          effect: Dense Twinkle
+          
+  - id: strip_disconnected
+    then:
+      - light.turn_off: light_strip_left
+      - light.turn_on:
+          id: light_strip_left
+          red: 1
+          green: 0
+          blue: 0
+      - light.turn_off: light_strip_right
+      - light.turn_on:
+          id: light_strip_right
+          red: 1
+          green: 0
+          blue: 0
+      - delay: 2s
+      - light.turn_on:
+          id: light_strip_right
+          effect: Rainbow
+      - light.turn_on:
+          id: light_strip_left
+          effect: Rainbow
+          
+  - id: strip_prepping_dispense
+    then:
+      - light.turn_off:
+          id: light_strip_left
+      - light.turn_off:
+          id: light_strip_right
+      - delay: 50ms
+      - light.turn_on:
+          id: light_strip_left
+          effect: White Falling
+      - light.turn_on:
+          id: light_strip_right
+          effect: White Falling
+      - delay: 1200ms
+      - light.turn_off:
+          id: light_strip_left
+      - light.turn_off:
+          id: light_strip_right
+      - delay: 100ms
+      - script.execute: strip_dispensing
+      
+  - id: strip_dispensing
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: Colors Falling
+      - light.turn_on:
+          id: light_strip_right
+          effect: Colors Falling
+          
+  - id: strip_idle
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: Dense Twinkle
+      - light.turn_on:
+          id: light_strip_right
+          effect: Dense Twinkle
+          
+  - id: strip_spinning
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: Fast Rainbow
+      - light.turn_on:
+          id: light_strip_right
+          effect: Reverse Fast Rainbow
+    
+  - id: strip_boot
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: "Rainbow"
+      - light.turn_on:
+          id: light_strip_right
+          effect: "Rainbow"
+    
+  - id: strip_lightning
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: "Lightning"
+      - light.turn_on:
+          id: light_strip_right
+          effect: "Lightning"
+      - delay: 2s
+      - script.execute: strip_idle
+
+  - id: strip_fire
+    then:
+      - light.turn_on:
+          id: light_strip_left
+          effect: "Fire"
+      - light.turn_on:
+          id: light_strip_right
+          effect: "Fire"
+
+  - id: strip_heartbeat
+    then:
+      - repeat:
+          count: 10
+          then:
+            - light.turn_on:
+                id: light_strip_left
+                red: 1
+                green: 0
+                blue: 0
+                effect: None
+            - light.turn_off: light_strip_right
+            - delay: 240ms
+            - light.turn_off: light_strip_left
+            - light.turn_on:
+                id: light_strip_right
+                red: 1
+                green: 0
+                blue: 0
+                effect: None
+            - delay: 530ms
+          
+  - id: turn_off_strip
+    then:
+      - light.turn_off: light_strip_left
+      - light.turn_off: light_strip_right

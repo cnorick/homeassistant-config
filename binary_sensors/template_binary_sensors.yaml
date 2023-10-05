@@ -92,7 +92,7 @@ public_space_motion:
   value_template: >-
     {{ 
       is_state('binary_sensor.living_room_motion', 'on')
-      or is_state('binary_sensor.wyze_motion3', 'on')
+      or is_state('binary_sensor.kitchen_presence_sensor_presence_sensor_1', 'on')
       or is_state('binary_sensor.wyze_motion4', 'on')
       or is_state('binary_sensor.laundry_room_motion', 'on')
       or is_state('binary_sensor.basement_motion_sensor', 'on')
@@ -112,3 +112,14 @@ guest_air_freshener:
   friendly_name: "Guest Air Freshener"
   value_template: >-
     {{ is_state('switch.guest_air_freshener', 'on') }}
+
+nws_alerts_are_active:
+  friendly_name: NWS Alerts Are Active
+  value_template: >
+    {{ states('sensor.nws_alerts') | int(0) > 0 }}
+  icon_template: >-
+    {% if states('sensor.nws_alerts') | int(0) > 0 %}
+      mdi:weather-lightning
+    {% else %}
+      mdi:weather-sunny
+    {% endif %}
