@@ -6,8 +6,6 @@ hue_lights:
 wyze_lights:
   name: Wyze Lights
   entities:
-    - light.drc1
-    - light.drc2
     - light.bl1
     - light.bl2
     - light.basement_stairs
@@ -34,6 +32,7 @@ tplink_lights:
 other_lights:
   entities:
     - light.under_desk_lights
+    # - light.nursery_ceiling_fan # Since this is on a remote and the on/off button are the same command, it gets toggled at the wrong time.
 
 all_lights:
   name: All Lights

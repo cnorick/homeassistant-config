@@ -1,0 +1,105 @@
+blueprint:
+  name: ZHA - Lutron Aurora Dimmer - Fan and Light
+  description: Control lights with a Lutron Aurora Dimmer Pressing in the dimmer button
+    will toggle lights regardless of dimmer status.  Rotating the dimmer will increase
+    and decrease the light brightness. Adjust the sensitivity if updates from the
+    dimmer are being sent too quickly.   Based on the great work of bjpetit!
+  domain: automation
+  input:
+    remote:
+      name: Lutron Aurora Dimmer Switch
+      description: Lutron Aurora Z3-1BRL
+      selector:
+        device:
+          integration: zha
+          manufacturer: Lutron
+          model: Z3-1BRL
+          entity:
+          - domain:
+            - sensor
+            device_class:
+            - battery
+          multiple: false
+    light:
+      name: Light(s)
+      description: The light(s) to control
+      selector:
+        target:
+          entity:
+          - domain:
+            - light
+    fan:
+      name: Fan
+      description: The fan(s) to control
+      selector:
+        target:
+          entity:
+          - domain:
+            - fan
+    sensitivity:
+      name: Sensitivity
+      description: Reducing sensitivity will reduce rate of changes being sent to
+        fan
+      default: 3
+      selector:
+        number:
+          min: 1.0
+          max: 3.0
+          mode: slider
+          step: 1.0
+  source_url: https://gist.github.com/richlee91/01e13b35364e464b48a3dfa27024da70
+mode: restart
+max_exceeded: silent
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+action:
+- variables:
+    sensitivity_input: !input sensitivity
+    selected_light: !input light
+    selected_fan: !input fan
+    sensitivity: "{% if sensitivity_input == \"3\" %}\n  1\n{% elif sensitivity_input
+      == \"2\" %}\n  5\n{% else %}\n  15\n{% endif %}  \n"
+    prior_brightness: '{{ brightness | default }}'
+    command: '{{ trigger.event.data.command }}'
+    brightness: '{{ (((trigger.event.data.args[0]|int) / 255) * 100) / (sensitivity|int) * (sensitivity|int)
+      }}'
+    presstype: '{{ (trigger.event.data.args[1]|int) }}'
+- choose:
+  - conditions:
+    - '{{ command == ''move_to_level_with_on_off'' }}'
+    - '{{ brightness >= 255 }}'
+    - '{{ presstype == 2}}'
+    sequence:
+    - service: fan.turn_on
+      target: '{{ selected_fan }}'
+    - delay: 1
+    - service: fan.increase_speed
+      target: '{{ selected_fan }}'
+      data:
+        brightness: '{{ brightness }}'
+  - conditions:
+    - '{{ command == ''move_to_level_with_on_off'' }}'
+    - '{{ brightness <= 10 }}'
+    - '{{ presstype == 2}}'
+    sequence:
+    - service: fan.turn_off
+      target: '{{ selected_fan }}'
+  - conditions:
+    - '{{ command == ''move_to_level_with_on_off'' }}'
+    - '{{ brightness != prior_brightness }}'
+    - '{{ presstype == 2}}'
+    sequence:
+    - service: fan.set_percentage
+      target: '{{ selected_fan }}'
+      data:
+        percentage: '{{brightness}}'
+  - conditions:
+    - '{{ command == ''move_to_level_with_on_off'' }}'
+    - '{{ brightness != prior_brightness }}'
+    - '{{ presstype == 7}}'
+    sequence:
+    - service: light.toggle
+      target: '{{ selected_light }}'

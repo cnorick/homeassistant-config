@@ -66,7 +66,7 @@ everyone_in_bed:
         and (
           is_state('input_boolean.visitors', 'off')
           or (
-            is_state('input_boolean.visitors', 'on') and (is_state('binary_sensor.guest_bedroom_door', 'off') or True)
+            is_state('input_boolean.visitors', 'on') and (is_state('binary_sensor.office_door', 'off') or True)
           )
         )
         and is_state('binary_sensor.is_bedtime', 'on')
@@ -74,7 +74,7 @@ everyone_in_bed:
         and (
           is_state('input_boolean.visitors', 'off')
           or (
-            is_state('input_boolean.visitors', 'on') and is_state('group.guest_bedroom_lights', 'off')
+            is_state('input_boolean.visitors', 'on') and is_state('light.office', 'off')
           )
         )
     }}
@@ -91,7 +91,7 @@ public_space_motion:
   device_class: motion
   value_template: >-
     {{ 
-      is_state('binary_sensor.living_room_motion', 'on')
+      is_state('binary_sensor.living_room_presence_presence_sensor_1', 'on')
       or is_state('binary_sensor.kitchen_presence_sensor_presence_sensor_1', 'on')
       or is_state('binary_sensor.wyze_motion4', 'on')
       or is_state('binary_sensor.laundry_room_motion', 'on')

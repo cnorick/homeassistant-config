@@ -931,29 +931,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      is_hue_group: true
-      hue_scenes:
-      - Concentrate
-      - Dimmed
-      - Read
-      - Nightlight
-      - Savanna sunset
-      - Energize
-      - Arctic aurora
-      - Spring blossom
-      - Tropical twilight
-      - Relax
-      - Bright
-      hue_type: room
-      lights:
-      - OC2
-      - Desk Lamp
-      - OC1
-      - Office Top Lamp
-      dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Office
-      supported_features: 40
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
@@ -968,93 +945,73 @@
       xy_color:
       - 0.524
       - 0.387
-      state: 'on'
-    light.bathroom:
-      supported_color_modes:
-      - brightness
       is_hue_group: true
       hue_scenes:
+      - Tropical twilight
+      - Savanna sunset
+      - Arctic aurora
+      - Concentrate
+      - Energize
+      - Read
       - Dimmed
+      - Relax
+      - Spring blossom
       - Nightlight
       - Bright
       hue_type: room
       lights:
-      - Bath 3
-      - Bath 5
-      - Bath 4
-      - Bath 6
+      - OC2
+      - Office Top Lamp
+      - Desk Lamp
+      - OC1
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Office
+      supported_features: 40
+      state: 'on'
+    light.bathroom:
+      supported_color_modes:
+      - brightness
+      color_mode: brightness
+      brightness: 255
+      is_hue_group: true
+      hue_scenes:
+      - Dimmed
+      - Bright
+      - Nightlight
+      hue_type: room
+      lights:
       - Bath 1
-      - Bath Ceiling
+      - Bath 6
+      - Bath 3
+      - Bath 4
       - Bath 2
+      - Bath Ceiling
+      - Bath 5
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Bathroom
       supported_features: 40
-      color_mode: brightness
-      brightness: 255
       state: 'on'
     light.guest_bathroom:
       supported_color_modes:
       - brightness
       is_hue_group: true
       hue_scenes:
-      - Dimmed
       - Nightlight
       - Bright
+      - Dimmed
       hue_type: room
       lights:
+      - Guest Bath 1
       - Guest Bath 2
       - Guest Bath 3
-      - Guest Bath 1
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Guest Bathroom
       supported_features: 40
       color_mode: brightness
       brightness: 255
-      state: 'on'
-    light.guest_bedroom:
-      min_color_temp_kelvin: 2202
-      max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 454
-      supported_color_modes:
-      - color_temp
-      is_hue_group: true
-      hue_scenes:
-      - Concentrate
-      - Dimmed
-      - Read
-      - Bright
-      - Nightlight
-      - Spring blossom
-      - Savanna sunset
-      - Arctic aurora
-      - Energize
-      - Tropical twilight
-      - Relax
-      hue_type: room
-      lights:
-      - Guest Bedroom Lamp
-      - Guest Bedroom Ceiling
-      dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Guest Bedroom
-      supported_features: 40
-      color_mode: color_temp
-      brightness: 255
-      color_temp_kelvin: 2732
-      color_temp: 366
-      hs_color:
-      - 28.327
-      - 64.71
-      rgb_color:
-      - 255
-      - 167
-      - 89
-      xy_color:
-      - 0.524
-      - 0.387
       state: 'on'
     light.hallway:
       supported_color_modes:
@@ -1075,8 +1032,8 @@
       hue_scenes: []
       hue_type: room
       lights:
-      - FDC2
       - FDC1
+      - FDC2
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Front Door
@@ -1106,22 +1063,22 @@
       - xy
       is_hue_group: true
       hue_scenes:
-      - Concentrate
-      - Dimmed
-      - Read
-      - Relax
       - Tropical twilight
-      - Energize
       - Savanna sunset
-      - Spring blossom
       - Lamp Only
-      - Nightlight
       - Arctic aurora
+      - Concentrate
+      - Energize
+      - Read
+      - Nightlight
+      - Relax
+      - Spring blossom
+      - Dimmed
       - Bright
       hue_type: room
       lights:
-      - LRC2
       - LRC1
+      - LRC2
       - Living Room Lamp
       dynamics: false
       icon: mdi:lightbulb-group
@@ -1195,30 +1152,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      is_hue_group: true
-      hue_scenes:
-      - Concentrate
-      - Dimmed
-      - Read
-      - Bright
-      - Tropical twilight
-      - Nightlight
-      - Energize
-      - Arctic aurora
-      - Spring blossom
-      - Savanna sunset
-      - Relax
-      hue_type: room
-      lights:
-      - Nathan's Nightstand
-      - BRC1
-      - BRC3
-      - Sarah's Nightstand
-      - BRC2
-      dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Bedroom
-      supported_features: 40
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
@@ -1233,6 +1166,30 @@
       xy_color:
       - 0.524
       - 0.387
+      is_hue_group: true
+      hue_scenes:
+      - Tropical twilight
+      - Savanna sunset
+      - Arctic aurora
+      - Concentrate
+      - Energize
+      - Nightlight
+      - Dimmed
+      - Relax
+      - Spring blossom
+      - Read
+      - Bright
+      hue_type: room
+      lights:
+      - BRC2
+      - BRC3
+      - Sarah's Nightstand
+      - BRC1
+      - Nathan's Nightstand
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Bedroom
+      supported_features: 40
       state: 'on'
     light.bedroom_rope_lights:
       supported_color_modes:
@@ -1254,8 +1211,6 @@
     light.bathroom:
       entity_only: true
     light.guest_bathroom:
-      entity_only: true
-    light.guest_bedroom:
       entity_only: true
     light.hallway:
       entity_only: true

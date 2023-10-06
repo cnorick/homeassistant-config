@@ -137,7 +137,7 @@
         is_state('binary_sensor.public_space_motion', 'off')\n}}"
       id: in_office
     - platform: state
-      entity_id: binary_sensor.living_room_motion
+      entity_id: binary_sensor.living_room_presence_presence_sensor_2
       from: 'off'
       to: 'on'
       id: in_livingroom
@@ -2129,7 +2129,7 @@
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.living_room_motion
+          - binary_sensor.living_room_presence_presence_sensor_3
           to: 'on'
         timeout:
           minutes: 30
@@ -5528,3 +5528,15 @@
           entity_id: vacuum.rooben
   mode: parallel
   max: 10
+- id: '1696514675908'
+  alias: Nursery Dimmer
+  description: ''
+  use_blueprint:
+    path: custom/zha_lutron_aurora_blueprint - light and fan.yaml
+    input:
+      remote: 224e0e9a1113cc16236212cc415e37e2
+      light:
+        area_id: nursery
+      fan:
+        entity_id: fan.nursery_ceiling_fan
+      sensitivity: 3
