@@ -8,8 +8,6 @@ wyze_lights:
   entities:
     - light.bl1
     - light.bl2
-    - light.basement_stairs
-    - light.bomb_shelter
 
 shelly_lights:
   name: Shelly Lights
@@ -24,6 +22,8 @@ shelly_lights:
     - light.side_porch
     - light.laundry_room
     - light.hallway
+    - light.basement_stairs
+    - light.bomb_shelter
     
 tplink_lights:
   entities:
