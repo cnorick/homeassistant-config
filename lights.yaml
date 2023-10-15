@@ -18,11 +18,6 @@
   entities:
     - light.g1
     - light.g2
-- platform: group
-  name: Basement Lights
-  entities:
-    - light.bl1
-    - light.bl2
 # Alexa routines don't support light toggle as a trigger. yet?
 #  - platform: template
 #    lights:
