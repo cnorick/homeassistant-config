@@ -419,7 +419,7 @@
         - condition: trigger
           id: door_open
       sequence:
-      - service: homeassistant.turn_on
+      - service: light.turn_on
         data: {}
         target:
           entity_id:
@@ -1211,6 +1211,7 @@
           entity_id:
           - switch.sarah_s_fan_socket_1
           - switch.blue_door_on_off
+          - switch.guest_bedroom_fan
     - conditions:
       - condition: or
         conditions:
@@ -1243,6 +1244,7 @@
           entity_id:
           - switch.sarah_s_fan_socket_1
           - switch.blue_door_on_off
+          - switch.guest_bedroom_fan
     - conditions:
       - condition: trigger
         id: wake
@@ -1254,6 +1256,7 @@
         target:
           entity_id: light.garland
         data: {}
+        enabled: false
     default: []
   mode: queued
   max: 10
@@ -1622,10 +1625,10 @@
   - service: script.vacuum_rooms
     data:
       rooms:
-      - '5'
-      - '15'
       - '6'
-      - '7'
+      - '20'
+      - '13'
+      - '21'
 - id: '1586661602545'
   alias: Turn On Master Bedroom Before Bed
   description: ''
@@ -2139,9 +2142,10 @@
         data: {}
       - service: media_player.turn_on
         target:
-          entity_id: media_player.living_room_tv
+          entity_id: media_player.living_room_chromecast_2
         data: {}
       - service: media_player.select_source
+        enabled: false
         target:
           entity_id: media_player.living_room_tv
         data:
@@ -2457,7 +2461,7 @@
   - service: script.lock_front_door
     data: {}
   - data: {}
-    entity_id: media_player.living_room_tv
+    entity_id: media_player.living_room_chromecast_2
     service: media_player.turn_off
   - service: switch.turn_off
     entity_id: switch.truck
@@ -2523,6 +2527,14 @@
       minutes: 0
       seconds: 30
     id: kitchen-presence-off
+  - platform: state
+    entity_id:
+    - binary_sensor.kitchen_presence_sensor_presence_sensor_5
+    to: 'on'
+    id: sink-presence-on
+  - platform: time
+    at: 03:00:00
+    id: new-day
   action:
   - choose:
     - conditions:
@@ -2561,6 +2573,48 @@
         data: {}
         target:
           area_id: 1f75029558cd46f69ddb7d3a9f537726
+    - conditions:
+      - condition: trigger
+        id:
+        - sink-presence-on
+      - condition: time
+        after: '21:00:00'
+        before: '23:59:00'
+      - condition: template
+        value_template: '{{ state_attr(''weather.home'', ''forecast'') | map(attribute=''templow'')
+          | first < 32 or (state_attr(''weather.home'', ''forecast'') | map(attribute=''templow'')
+          | list)[1] < 32}}'
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.water_drip_notification_done
+        state: 'off'
+      sequence:
+      - service: notify.alexa_media
+        data:
+          data:
+            type: tts
+          message: Don't forget to let the water drip. The low for tonight is {{ state_attr('weather.home',
+            'forecast') | map(attribute='templow') | first}}
+          target: media_player.kitchen_echo_show
+      - service: variable.update_binary_sensor
+        data:
+          replace_attributes: false
+          value: 'true'
+        target:
+          entity_id: binary_sensor.water_drip_notification_done
+    - conditions:
+      - condition: trigger
+        id:
+        - new-day
+      sequence:
+      - service: variable.update_binary_sensor
+        data:
+          replace_attributes: false
+          value: 'false'
+        target:
+          entity_id: binary_sensor.water_drip_notification_done
     default: []
 - id: bathroom_on_motion
   alias: Toggle Bathroom on Motion
@@ -2708,7 +2762,7 @@
     entity_id: group.all_lights
     service: homeassistant.turn_off
   - data: {}
-    entity_id: media_player.living_room_tv
+    entity_id: media_player.living_room_chromecast_2
     service: media_player.turn_off
   - entity_id: group.fans
     service: homeassistant.turn_off
@@ -3184,7 +3238,9 @@
         target:
           entity_id:
           - media_player.living_room_tv
+        enabled: false
       - service: media_player.select_source
+        enabled: false
         data:
           source: com.peacock.peacockfiretv
         target:
@@ -3204,6 +3260,7 @@
           area_id: 87c768ba445d4b398f17ec723dc54377
       - service: media_player.turn_off
         data: {}
+        enabled: false
         target:
           entity_id:
           - media_player.living_room_tv
@@ -5463,6 +5520,21 @@
         before: '21:00:00'
       alias: Turn Off Bedroom When no Presence
       sequence:
+      - if:
+        - condition: state
+          entity_id: binary_sensor.bathroom_door
+          state: 'off'
+        then:
+        - wait_for_trigger:
+          - platform: state
+            entity_id:
+            - binary_sensor.bathroom_door
+            to: 'on'
+          timeout:
+            hours: 0
+            minutes: 10
+            seconds: 0
+            milliseconds: 0
       - service: light.turn_off
         data:
           transition: 7
@@ -5528,18 +5600,6 @@
           entity_id: vacuum.rooben
   mode: parallel
   max: 10
-- id: '1696514675908'
-  alias: Nursery Dimmer
-  description: ''
-  use_blueprint:
-    path: custom/zha_lutron_aurora_blueprint - light and fan.yaml
-    input:
-      remote: 224e0e9a1113cc16236212cc415e37e2
-      light:
-        area_id: nursery
-      fan:
-        entity_id: fan.nursery_ceiling_fan
-      sensitivity: 3
 - id: '1696595424459'
   alias: Living Room Presence
   description: ''

@@ -47,7 +47,6 @@ climate:
   - platform: thermostat
     name: "Bedroom Thermostat"
     sensor: bedroom_temperature
-    default_target_temperature_low: 65 °F
     min_heating_off_time: 30s
     min_heating_run_time: 30s
     min_idle_time: 30s
@@ -56,3 +55,7 @@ climate:
     idle_action:
       - switch.turn_off: bedroom_fireplace
     startup_delay: true
+    default_preset: Home
+    preset:
+      - name: Home
+        default_target_temperature_low: 65 °F

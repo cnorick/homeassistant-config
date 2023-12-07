@@ -2,11 +2,9 @@ esphome:
   name: grow-room
   platform: ESP32
   board: esp32dev
-  includes:
-    - dht20.h
     
 substitutions:
-  refresh_rate: '30' # seconds
+  refresh_rate: 30s
   vin: '3.3' # Used to calculate lux. 3.3 Since that's the vcc pin it's pulling from.
   r: '10000' # Resistance of reistor used with photoresistor.
 
@@ -34,31 +32,28 @@ i2c:
   sda: 21
   scl: 22
   scan: true
-  id: dht20
-  
-sensor:
-- platform: custom
-  lambda: |-
-    auto dht = new DHT20($refresh_rate * 1000);
-    App.register_component(dht);
-    return {dht->temperature_sensor, dht->humidity_sensor};
-  sensors:
-  - name: "Growroom Temperature"
-    unit_of_measurement: °C
-    accuracy_decimals: 1
-    device_class: temperature
-  - name: "Growroom Humidity"
-    unit_of_measurement: '%'
-    accuracy_decimals: 1
-    device_class: humidity
 
-- platform: adc
-  pin: 32
-  name: "Grow Room Brightness"
-  update_interval: 30s
-  attenuation: auto
-  device_class: illuminance
-  unit_of_measurement: lm
-  accuracy_decimals: 1
-  filters:
-    - lambda: return 500 / (($r * ($vin - x) / x) / 1000);
+sensor:
+  - platform: aht10
+    temperature:
+        name: "Growroom Temperature"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+        device_class: temperature
+    humidity:
+      name: "Growroom Humidity"
+      unit_of_measurement: '%'
+      accuracy_decimals: 1
+      device_class: humidity
+    update_interval: $refresh_rate
+
+  - platform: adc
+    pin: 32
+    name: "Grow Room Brightness"
+    update_interval: 30s
+    attenuation: auto
+    device_class: illuminance
+    unit_of_measurement: lm
+    accuracy_decimals: 1
+    filters:
+      - lambda: return 500 / (($r * ($vin - x) / x) / 1000);

@@ -2,11 +2,9 @@ esphome:
   name: bathroom
   platform: ESP32
   board: esp32dev
-  includes:
-    - dht20.h
 
 substitutions:
-  refresh_rate: '30' #seconds
+  refresh_rate: 30s
 
 # Enable logging
 logger:
@@ -32,20 +30,17 @@ i2c:
   sda: 21
   scl: 22
   scan: true
-  id: dht20
-  
+
 sensor:
-- platform: custom
-  lambda: |-
-    auto dht = new DHT20($refresh_rate * 1000);
-    App.register_component(dht);
-    return {dht->temperature_sensor, dht->humidity_sensor};
-  sensors:
-  - name: "Bathroom Temperature"
-    unit_of_measurement: °C
-    accuracy_decimals: 1
-    device_class: temperature
-  - name: "Bathroom Humidity"
-    unit_of_measurement: '%'
-    accuracy_decimals: 1
-    device_class: humidity
+  - platform: aht10
+    temperature:
+        name: "Bathroom Temperature"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+        device_class: temperature
+    humidity:
+      name: "Bathroom Humidity"
+      unit_of_measurement: '%'
+      accuracy_decimals: 1
+      device_class: humidity
+    update_interval: $refresh_rate

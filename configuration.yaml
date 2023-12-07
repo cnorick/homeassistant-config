@@ -29,8 +29,6 @@ spotcast:
   sp_key: !secret sp_key
   country: US #optional, added in 3.6.24
 
-device_tracker: !include ./devices_to_track.yaml
-
 binary_sensor:
   - platform: template
     sensors: !include binary_sensors/template_binary_sensors.yaml

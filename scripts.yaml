@@ -525,19 +525,19 @@ vacuum_rooms:
           multiple: true
           options:
           - label: Bedroom
-            value: '19'
-          - label: Guest Bedroom
-            value: '18'
+            value: '1'
+          - label: Nursery
+            value: '4'
           - label: Hallway
-            value: '7'
+            value: '20'
           - label: Kitchen
-            value: '5'
+            value: '13'
           - label: Dining Room
-            value: '15'
+            value: '21'
           - label: Office
-            value: '17'
-          - label: Mud Room
             value: '16'
+          - label: Mud Room
+            value: '22'
           - label: Living Room
             value: '6'
   variables:
@@ -552,9 +552,9 @@ vacuum_rooms:
       command: start
       params:
         ordered: 1
-        pmap_id: 5kCFtSzzTbOXqawCyUtGCw
+        pmap_id: 7WVY_fOWSBiyx-jFdoKcoQ
         regions: '{{regions}}'
-        user_pmapv_id: 230507T222147
+        user_pmapv_id: 231204T184944
     target:
       entity_id: vacuum.rooben
   mode: single
@@ -681,12 +681,12 @@ vacuum_next_area:
   alias: Vacuum Next Area
   variables:
     room_list:
-    - '19'
-    - '18'
-    - '7'
-    - '5'
-    - '15'
-    - '17'
+    - '4'
+    - '13'
+    - '16'
+    - '20'
+    - '21'
+    - '1'
     - '6'
   sequence:
   - if:
