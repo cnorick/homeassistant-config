@@ -3989,6 +3989,13 @@
                             - button.horn
                             - button.flash_lights
               alias: Flash Porch Lights and Honk Horn
+            - service: siren.toggle
+              metadata: {}
+              data: {}
+              target:
+                entity_id:
+                  - siren.front_door_siren
+                  - siren.side_door_siren
         - conditions:
             - condition: trigger
               id: schedule-changed
@@ -6116,4 +6123,47 @@
                     entity_id: media_player.rpi_streamer_dc_a6_32_5f_4c_40
                     state: playing
                     alias: check that media_player is playing
+  mode: single
+- id: "1707849168549"
+  alias: Doorbells
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.front_door_visitor
+      id: front-door-visitor
+    - platform: state
+      entity_id:
+        - binary_sensor.side_door_visitor
+      id: side-door-visitor
+    - platform: state
+      entity_id:
+        - binary_sensor.front_door_person
+      id: front-door-person
+    - platform: state
+      entity_id:
+        - binary_sensor.side_door_person
+      id: side-door-person
+    - platform: state
+      entity_id:
+        - binary_sensor.front_door_motion
+      id: front-door-motion
+    - platform: state
+      entity_id:
+        - binary_sensor.side_door_motion
+      id: side-door-motion
+  condition: []
+  action:
+    - service: script.notify_sarah_and_nathan
+      metadata: {}
+      data:
+        use_alexa: false
+        use_persistent_notification: false
+        notify_sarah: false
+        notify_nathan: false
+        text_nathan: false
+        text_sarah: false
+        text_ice_contacts: false
+        bypass_quiet_mode: false
+        message: Person at Door
   mode: single
