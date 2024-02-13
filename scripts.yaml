@@ -541,8 +541,9 @@ vacuum_rooms:
           - label: Living Room
             value: '6'
   variables:
-    regions: "[\n  {%- for room in rooms %}\n    {\"region_id\":\"{{ room }}\", \"type\":
-      \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {% endfor %}\n]"
+    regions: "[\n  {%- for room in rooms -%}\n    {\"region_id\":\"{{ room | string
+      }}\", \"type\": \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {%- endfor
+      -%}\n]"
   sequence:
   - condition: state
     entity_id: input_boolean.enable_vacuum

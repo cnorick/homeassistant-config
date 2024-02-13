@@ -14,7 +14,7 @@
   - wait_for_trigger:
     - platform: state
       entity_id:
-      - binary_sensor.bedroom_presence_presence_sensor_2
+      - binary_sensor.bedroom_presence_presence_sensor_11
       to: 'on'
       from: 'off'
     timeout: 03:00:00
@@ -22,7 +22,7 @@
   - wait_for_trigger:
     - platform: state
       entity_id:
-      - binary_sensor.bedroom_presence_presence_sensor_9
+      - binary_sensor.bedroom_presence_presence_sensor_4
       to: 'on'
     continue_on_timeout: false
     timeout:
@@ -127,6 +127,7 @@
         data: {}
         target:
           entity_id: script.heat_coffee_water
+        enabled: false
   - service: media_player.media_stop
     target:
       entity_id: media_player.bathroom_echo
@@ -137,7 +138,7 @@
         is_state('binary_sensor.public_space_motion', 'off')\n}}"
       id: in_office
     - platform: state
-      entity_id: binary_sensor.living_room_presence_presence_sensor_2
+      entity_id: binary_sensor.living_room_presence_presence_sensor_9
       from: 'off'
       to: 'on'
       id: in_livingroom
@@ -498,62 +499,6 @@
       no_motion_blocker: input_boolean.people_outside
       no_motion_blocker_boolean: false
       no_motion_wait: 300
-- id: '1623941903977'
-  alias: Outside Mode
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: input_boolean.people_outside
-    to: 'on'
-  - platform: state
-    entity_id: input_boolean.people_outside
-    to: 'off'
-  - platform: sun
-    event: sunset
-    offset: -00:10:00
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.people_outside
-        state: 'on'
-      sequence:
-      - service: switch.turn_off
-        target:
-          entity_id: switch.back_yard
-      - service: climate.set_preset_mode
-        target:
-          entity_id: climate.kitchen
-        data:
-          preset_mode: eco
-      - condition: sun
-        after: sunset
-        after_offset: -00:10:00
-      - service: light.turn_on
-        target:
-          entity_id: light.string_lights
-      - device_id: 853415c2bf390dc15ae0e2bf6f7569b4
-        domain: vacuum
-        entity_id: vacuum.rooben
-        type: clean
-    default:
-    - service: switch.turn_on
-      target:
-        entity_id: switch.back_yard
-    - service: light.turn_off
-      target:
-        entity_id: light.string_lights
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.kitchen
-      data:
-        preset_mode: none
-    - device_id: 853415c2bf390dc15ae0e2bf6f7569b4
-      domain: vacuum
-      entity_id: vacuum.rooben
-      type: dock
-  mode: single
 - id: '1625057398961'
   alias: Charging Phones Turns on Night Mode
   description: ''
@@ -622,9 +567,9 @@
     id: bathroom
   - platform: state
     entity_id:
-    - binary_sensor.air_conditioner_moisture_moisture_2
+    - binary_sensor.washing_machine_moisture_moisture_2
     to: 'on'
-    id: ac
+    id: washing-machine
   action:
   - service: switch.turn_on
     data: {}
@@ -737,14 +682,12 @@
     - conditions:
       - condition: trigger
         id:
-        - ac
+        - washing-machine
       sequence:
       - service: script.notify_sarah_and_nathan
         data:
-          message: Warning, Basement is Flooding Near Air Conditioner
-          more_info: 'Check the basement near AC. It may just be that the AC sump
-            pump is backed up. If so, just turn the water back on, and disable the
-            automation.
+          message: Warning, Flooding in Laundry Room
+          more_info: 'Check the laundry room on the left side of the washing machine.
 
 
             The water main in the basement has already been shut off. Click this notification
@@ -1633,7 +1576,7 @@
   alias: Turn On Master Bedroom Before Bed
   description: ''
   trigger:
-  - at: '21:00:00'
+  - at: '20:00:00'
     platform: time
   condition:
   - condition: state
@@ -2106,7 +2049,7 @@
           - wait_for_trigger:
             - platform: state
               entity_id:
-              - binary_sensor.kitchen_presence_sensor_presence_sensor_8
+              - binary_sensor.kitchen_presence_sensor_presence_sensor_2
               to: 'on'
           - service: media_player.play_media
             data:
@@ -2132,7 +2075,7 @@
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.living_room_presence_presence_sensor_3
+          - binary_sensor.living_room_presence_presence_sensor_8
           to: 'on'
         timeout:
           minutes: 30
@@ -2619,11 +2562,11 @@
 - id: bathroom_on_motion
   alias: Toggle Bathroom on Motion
   description: ''
-  mode: restart
   trigger:
   - entity_id: binary_sensor.wyze_motion2
     platform: state
     to: 'on'
+  condition: []
   action:
   - choose:
     - conditions:
@@ -2653,6 +2596,9 @@
       - condition: state
         entity_id: input_boolean.night_mode
         state: 'on'
+      - condition: state
+        entity_id: light.bathroom
+        state: 'off'
       sequence:
       - service: scene.turn_on
         entity_id: scene.bathroom_night
@@ -2660,6 +2606,7 @@
     data_template:
       entity_id: '{% if is_state("input_boolean.night_mode", "on") %} scene.bathroom_night
         {% else %} scene.bathroom_day {% endif %}'
+    enabled: false
   - wait_for_trigger:
     - platform: state
       entity_id: binary_sensor.wyze_motion2
@@ -2692,10 +2639,10 @@
       entity_7:
         entity_id: light.bath_ceiling
       delay: 1000
+  mode: restart
 - id: guest_bathroom_on_motion
   alias: Toggle Guest Bathroom on Motion
   description: ''
-  mode: restart
   trigger:
   - entity_id: binary_sensor.wyze_motion1
     platform: state
@@ -2721,6 +2668,9 @@
       - condition: state
         entity_id: input_boolean.night_mode
         state: 'on'
+      - condition: state
+        entity_id: light.guest_bathroom
+        state: 'off'
       sequence:
       - service: scene.turn_on
         entity_id: scene.guest_bathroom_night
@@ -2748,6 +2698,7 @@
       entity_3:
         entity_id: light.guest_bath_2
       delay: 1000
+  mode: restart
 - id: '1586735161292'
   alias: Turn Off Everything When Everyone Leaves
   description: ''
@@ -2859,10 +2810,15 @@
     continue_on_timeout: true
     timeout: 00:00:10
     enabled: false
-  - data: {}
-    entity_id: vacuum.rooben
-    service: vacuum.return_to_base
-    enabled: true
+  - if:
+    - condition: state
+      state: 'off'
+      entity_id: input_boolean.visitors
+    then:
+    - data: {}
+      entity_id: vacuum.rooben
+      service: vacuum.return_to_base
+      enabled: true
   - delay: 00:10:00
   - service: light.turn_off
     target:
@@ -3089,12 +3045,14 @@
             | round(2)}} for Charging
           more_info: Click to pay
           use_alexa: false
-          notify_sarah: true
+          notify_sarah: false
           notify_nathan: true
           text_nathan: false
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
+          use_persistent_notification: true
+          persistent_notification_id: mom_charging
           url: https://www.paypal.com/myaccount/transfer/homepage/contact-list
   mode: single
 - id: '1654714270155'
@@ -3460,9 +3418,11 @@
         text_sarah: false
         text_ice_contacts: false
         bypass_quiet_mode: false
+        use_persistent_notification: true
+        persistent_notification_id: charging-stats
   mode: single
 - id: '1656699090791'
-  alias: Ikea Shortcut Button -- Guest Bedroom
+  alias: Ikea Shortcut Button -- Nursery
   description: ''
   trigger:
   - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
@@ -3488,11 +3448,12 @@
   - choose:
     - conditions:
       - condition: trigger
-        id: single
+        id:
+        - long-down
       sequence:
       - if:
         - condition: template
-          value_template: '{% set area_lights = expand(area_entities(''Guest Bedroom''))
+          value_template: '{% set area_lights = expand(area_entities(''Nursery''))
             | selectattr(''domain'', ''eq'', ''light'') | list %}
 
             {% set lights_on = area_lights | selectattr(''state'', ''eq'', ''on'')
@@ -3505,7 +3466,7 @@
           data:
             transition: 1
           target:
-            area_id: 78d9e7596f014179b37ca4129fcb9a68
+            area_id: nursery
         else:
         - service: light.turn_on
           data:
@@ -3515,12 +3476,13 @@
             entity_id: light.guest_bedroom_lamp
     - conditions:
       - condition: trigger
-        id: long-down
+        id:
+        - single
       sequence:
-      - service: switch.toggle
-        data: {}
+      - service: light.toggle
         target:
-          entity_id: switch.guest_bedroom_fan
+          entity_id: light.guest_bedroom_lamp
+        data: {}
     default: []
   mode: single
 - id: '1658177531312'
@@ -5187,11 +5149,15 @@
   - platform: state
     entity_id: sensor.nws_alerts
   condition:
-  - '{{ states(''sensor.nws_alerts'') | int > 0 }}'
-  - '{{ trigger.to_state.state|int > trigger.from_state.state|int }}'
-  - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] not in states.sensor.nws_alerts_event_ids.attributes.values()|list)
-    and (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0] != states(''sensor.nws_alerts_event_ids''))
-    }}'
+  - condition: template
+    value_template: '{{ states(''sensor.nws_alerts'') | int > 0 }}'
+  - condition: template
+    value_template: '{{ trigger.to_state.state|int > trigger.from_state.state|int
+      }}'
+  - condition: template
+    value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0]
+      not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
+      ''event_id'').split(''-'')[0] != states(''sensor.nws_alerts_event_ids'')) }}'
   action:
   - delay:
       seconds: 5
@@ -5200,87 +5166,106 @@
       - condition: state
         entity_id: input_boolean.nws_multi_alert
         state: 'on'
-      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 2 }}'
-      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] not in
-        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
-        ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
-        }}'
+      - condition: template
+        value_template: '{{ (trigger.to_state.state | int - trigger.from_state.state|int)
+          == 2 }}'
+      - condition: template
+        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1]
+          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
+          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
+          }}'
       sequence:
-      - service: script.nws_popup_on_wx_alert
+      - service: script.notify_sarah_and_nathan
         data:
-          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
             }}"
 
             '
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
             }}"
 
             '
-      - service: script.nws_popup_on_wx_alert
+          use_persisten_notification: true
+          persistent_notification_id: nwswxalert
+      - service: script.notify_sarah_and_nathan
         data:
-          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
             }}"
 
             '
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
+          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
             }}"
 
             '
+          use_persisten_notification: true
+          persistent_notification_id: nwswxalert
     - conditions:
       - condition: state
         entity_id: input_boolean.nws_multi_alert
         state: 'on'
-      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 3 }}'
-      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] not in
-        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
-        ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
-        }}'
-      - '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2] not in
-        states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
-        ''event_id'').split(''-'')[2] != states(''sensor.nws_alerts_event_ids''))
-        }}'
+      - condition: template
+        value_template: '{{ (trigger.to_state.state | int - trigger.from_state.state|int)
+          == 3 }}'
+      - condition: template
+        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1]
+          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
+          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
+          }}'
+      - condition: template
+        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2]
+          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
+          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2] != states(''sensor.nws_alerts_event_ids''))
+          }}'
       sequence:
-      - service: script.nws_popup_on_wx_alert
+      - service: script.notify_sarah_and_nathan
         data:
-          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
             }}"
 
             '
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
             }}"
 
             '
-      - service: script.nws_popup_on_wx_alert
+          use_persisten_notification: true
+          persistent_notification_id: nwswxalert
+      - service: script.notify_sarah_and_nathan
         data:
-          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
             }}"
 
             '
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
+          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
             }}"
 
             '
-      - service: script.nws_popup_on_wx_alert
+          use_persisten_notification: true
+          persistent_notification_id: nwswxalert
+      - service: script.notify_sarah_and_nathan
         data:
-          title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[2]
+          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[2]
             }}"
 
             '
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[2]
+          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[2]
             }}"
 
             '
+          use_persisten_notification: true
+          persistent_notification_id: nwswxalert
     default:
-    - service: script.nws_popup_on_wx_alert
+    - service: script.notify_sarah_and_nathan
       data:
-        title: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
+        message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
           }}"
 
           '
-        message: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
+        more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
           }}"
 
           '
+        use_persisten_notification: true
+        persistent_notification_id: nwswxalert
 - id: '1692122338194'
   alias: NWS Announce Weather Alert
   trigger:
@@ -5407,12 +5392,13 @@
   trigger:
   - platform: state
     entity_id:
-    - binary_sensor.bedroom_presence_presence_sensor_4
+    - binary_sensor.bedroom_presence_presence_sensor_9
     to: 'on'
     id: sarah-standing
+    enabled: false
   - platform: state
     entity_id:
-    - binary_sensor.bedroom_presence_presence_sensor_2
+    - binary_sensor.bedroom_presence_presence_sensor_11
     to: 'on'
     id: nathan-standing
   - platform: state
@@ -5426,7 +5412,7 @@
     id: bedroom-clear-5-min
   - platform: state
     entity_id:
-    - binary_sensor.bedroom_presence_presence_sensor_9
+    - binary_sensor.bedroom_presence_presence_sensor_4
     to: 'on'
     id: bathroom-door
   - platform: state
@@ -5444,15 +5430,18 @@
       - condition: or
         conditions:
         - condition: state
-          entity_id: binary_sensor.bedroom_presence_presence_sensor_3
+          entity_id: binary_sensor.bedroom_presence_presence_sensor_9
           state: 'on'
         - condition: template
-          value_template: '{{(as_timestamp(now()))-(as_timestamp(states.binary_sensor.bedroom_presence_presence_sensor_3.last_changed))
+          value_template: '{{(as_timestamp(now()))-(as_timestamp(states.binary_sensor.bedroom_presence_presence_sensor_9.last_changed))
             < 3 }}'
         enabled: false
       - condition: state
         entity_id: input_boolean.night_mode
         state: 'on'
+      - condition: state
+        entity_id: light.sarah_s_nightstand
+        state: 'off'
       alias: Sarah Gets Up at Night
       sequence:
       - service: light.turn_on
@@ -5463,7 +5452,7 @@
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.bedroom_presence_presence_sensor_4
+          - binary_sensor.bedroom_presence_presence_sensor_9
           to: 'off'
           for:
             hours: 0
@@ -5471,9 +5460,13 @@
             seconds: 30
         timeout:
           hours: 0
-          minutes: 0
-          seconds: 30
+          minutes: 10
+          seconds: 0
           milliseconds: 0
+      - condition: numeric_state
+        entity_id: light.sarah_s_nightstand
+        attribute: brightness
+        below: 26
       - service: light.turn_off
         data: {}
         target:
@@ -5485,6 +5478,9 @@
       - condition: state
         entity_id: input_boolean.night_mode
         state: 'on'
+      - condition: state
+        entity_id: light.nathan_s_nightstand
+        state: 'off'
       alias: Nathan Gets Up at Night
       sequence:
       - service: light.turn_on
@@ -5495,16 +5491,20 @@
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.bedroom_presence_presence_sensor_2
+          - binary_sensor.bedroom_presence_presence_sensor_11
           for:
             hours: 0
             minutes: 0
             seconds: 30
         timeout:
           hours: 0
-          minutes: 30
+          minutes: 10
           seconds: 0
           milliseconds: 0
+      - condition: numeric_state
+        entity_id: light.nathan_s_nightstand
+        attribute: brightness
+        below: 26
       - service: light.turn_off
         data: {}
         target:
@@ -5559,7 +5559,7 @@
           to: 'on'
         - platform: state
           entity_id:
-          - binary_sensor.bedroom_presence_presence_sensor_9
+          - binary_sensor.bedroom_presence_presence_sensor_4
           to: 'off'
           id: walk-away
           for:
@@ -5586,12 +5586,15 @@
       - condition: trigger
         id:
         - morning-start
+      - condition: state
+        entity_id: input_boolean.visitors
+        state: 'off'
       sequence:
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.bedroom_presence_presence_sensor_4
-          - binary_sensor.bedroom_presence_presence_sensor_2
+          - binary_sensor.bedroom_presence_presence_sensor_9
+          - binary_sensor.bedroom_presence_presence_sensor_11
           to: 'on'
         continue_on_timeout: false
       - service: vacuum.return_to_base
@@ -5606,7 +5609,7 @@
   trigger:
   - platform: state
     entity_id:
-    - binary_sensor.living_room_presence_presence_sensor_9
+    - binary_sensor.living_room_presence_presence_sensor_2
     to: 'on'
     id: couch-standing
   condition: []
@@ -5619,11 +5622,11 @@
       - condition: or
         conditions:
         - condition: template
-          value_template: '{{(as_timestamp(now()))-(as_timestamp(states.binary_sensor.living_room_presence_presence_sensor_3.last_changed))
+          value_template: '{{(as_timestamp(now()))-(as_timestamp(states.binary_sensor.living_room_presence_presence_sensor_8.last_changed))
             < 3 }}'
           alias: Just got up from couch
         - condition: state
-          entity_id: binary_sensor.living_room_presence_presence_sensor_3
+          entity_id: binary_sensor.living_room_presence_presence_sensor_8
           state: 'on'
         alias: Stood up from couch
       - condition: state
@@ -5644,8 +5647,8 @@
           minutes: 0
           seconds: 10
           milliseconds: 0
-      - wait_template: '{{is_state(''binary_sensor.living_room_presence_presence_sensor_3'',
-          ''on'') and (as_timestamp(now()))-(as_timestamp(states.binary_sensor.living_room_presence_presence_sensor_9.last_changed))
+      - wait_template: '{{is_state(''binary_sensor.living_room_presence_presence_sensor_8'',
+          ''on'') and (as_timestamp(now()))-(as_timestamp(states.binary_sensor.living_room_presence_presence_sensor_2.last_changed))
           < 5 }}'
         continue_on_timeout: true
         timeout: '300'
@@ -5653,4 +5656,354 @@
         data: {}
         target:
           entity_id: light.living_room_lamp
+    enabled: false
+  mode: single
+- id: '1704234942086'
+  alias: Baby Helpers
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_button.baby_crying
+    id: baby-crying-bedroom
+  - platform: state
+    entity_id:
+    - input_button.baby_crying_nursery
+    id: baby-crying-nursery
+  - platform: state
+    entity_id:
+    - input_button.make_night_bottle
+    id: night-bottle
+  - platform: state
+    entity_id:
+    - input_button.make_day_bottle
+    id: day-bottle
+  - platform: state
+    entity_id:
+    - sensor.my_baby_brezza
+    attribute: funnel_cleaning_needed
+    from: false
+    to: true
+    id: clean-brezza
+  - platform: state
+    entity_id:
+    - binary_sensor.owlet_baby_care_sock_awake
+    to: 'on'
+    id: baby-awake
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  - platform: state
+    entity_id:
+    - binary_sensor.owlet_baby_care_sock_awake
+    from: unknown
+    to: 'on'
+    id: sock-put-on
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - baby-crying-bedroom
+      sequence:
+      - if:
+        - condition: state
+          entity_id: binary_sensor.sarah_baby_shift
+          state: 'on'
+        then:
+        - service: light.turn_on
+          data:
+            rgb_color:
+            - 0
+            - 255
+            - 0
+            brightness: 50
+          target:
+            entity_id: light.bedroom_ceiling_3
+        - delay:
+            hours: 0
+            minutes: 1
+            seconds: 0
+            milliseconds: 0
+        - service: light.turn_on
+          target:
+            entity_id: light.bedroom_ceiling_3
+          data:
+            color_temp: 347
+            brightness: 22
+      - if:
+        - condition: state
+          state: 'on'
+          entity_id: binary_sensor.tater_baby_shift
+        then:
+        - service: light.turn_on
+          data:
+            rgb_color:
+            - 255
+            - 0
+            - 0
+            brightness: 64
+          target:
+            entity_id: light.bedroom_ceiling_1
+        - delay:
+            hours: 0
+            minutes: 1
+            seconds: 0
+            milliseconds: 0
+        - service: light.turn_on
+          target:
+            entity_id: light.bedroom_ceiling_1
+          data:
+            color_temp: 349
+            brightness: 20
+      - if:
+        - condition: state
+          entity_id: binary_sensor.bedroom_presence_presence_sensor_1
+          state: 'off'
+        then:
+        - service: script.notify_sarah_and_nathan
+          data:
+            use_alexa: false
+            notify_sarah: true
+            notify_nathan: true
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            message: Baby Crying
+        - if:
+          - condition: state
+            entity_id: input_boolean.quiet_mode
+            state: 'off'
+          then:
+          - service: notify.alexa_media_living_room_echo
+            data:
+              message: 'Baby Crying '
+      - if:
+        - condition: state
+          entity_id: input_boolean.notify_baby_awake
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.bedroom_presence_presence_sensor_1
+          state: 'on'
+        then:
+        - service: script.notify_sarah_and_nathan
+          metadata: {}
+          data:
+            use_alexa: false
+            notify_sarah: false
+            notify_nathan: true
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            message: Baby Crying and Awake
+    - conditions:
+      - condition: trigger
+        id:
+        - baby-crying-nursery
+      sequence:
+      - if:
+        - condition: state
+          entity_id: binary_sensor.sarah_baby_shift
+          state: 'on'
+        then:
+        - service: light.turn_on
+          data:
+            rgb_color:
+            - 0
+            - 255
+            - 0
+            brightness: 50
+          target:
+            entity_id: light.bedroom_ceiling_3
+        - delay:
+            hours: 0
+            minutes: 1
+            seconds: 0
+            milliseconds: 0
+        - service: light.turn_on
+          target:
+            entity_id: light.bedroom_ceiling_3
+          data:
+            color_temp: 347
+            brightness: 22
+        enabled: false
+      - if:
+        - condition: state
+          state: 'on'
+          entity_id: binary_sensor.tater_baby_shift
+        then:
+        - service: light.turn_on
+          data:
+            rgb_color:
+            - 255
+            - 0
+            - 0
+            brightness: 64
+          target:
+            entity_id: light.bedroom_ceiling_1
+        - delay:
+            hours: 0
+            minutes: 1
+            seconds: 0
+            milliseconds: 0
+        - service: light.turn_on
+          target:
+            entity_id: light.bedroom_ceiling_1
+          data:
+            color_temp: 349
+            brightness: 20
+        enabled: false
+      - if:
+        - condition: state
+          state: 'off'
+          entity_id: binary_sensor.living_room_motion
+        then:
+        - service: script.notify_sarah_and_nathan
+          data:
+            use_alexa: false
+            notify_sarah: true
+            notify_nathan: true
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            message: Baby Crying
+        - if:
+          - condition: state
+            entity_id: input_boolean.quiet_mode
+            state: 'off'
+          then:
+          - service: notify.alexa_media_living_room_echo
+            data:
+              message: 'Baby Crying '
+    - conditions:
+      - condition: trigger
+        id:
+        - day-bottle
+      sequence:
+      - service: fpa.turn_on
+        metadata: {}
+        data:
+          bottle_id: '118458'
+        target:
+          entity_id: sensor.my_baby_brezza
+    - conditions:
+      - condition: trigger
+        id:
+        - night-bottle
+      sequence:
+      - service: fpa.turn_on
+        metadata: {}
+        data:
+          bottle_id: '118472'
+        target:
+          entity_id: sensor.my_baby_brezza
+    - conditions:
+      - condition: trigger
+        id:
+        - clean-brezza
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Clean Baby Brezza
+    - conditions:
+      - condition: trigger
+        id:
+        - baby-awake
+      - condition: state
+        entity_id: input_boolean.notify_baby_awake
+        state: 'on'
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Baby Awake
+          url: /lovelace/baby
+    - conditions:
+      - condition: trigger
+        id:
+        - sock-put-on
+      sequence:
+      - wait_for_trigger:
+        - platform: state
+          entity_id:
+          - binary_sensor.owlet_baby_care_sock_awake
+          to: 'off'
+        continue_on_timeout: false
+        timeout:
+          hours: 0
+          minutes: 20
+          seconds: 0
+          milliseconds: 0
+      - service: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Baby asleep
+          url: /lovelace/baby
+  mode: parallel
+  max: 10
+- id: '1705793102114'
+  alias: Streamer Test
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /2
+    id: every-two-minutes
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - every-two-minutes
+      sequence:
+      - repeat:
+          sequence:
+          - service: media_player.play_media
+            metadata: {}
+            data:
+              media_content_id: view.mp4
+              media_content_type: video
+            target:
+              entity_id:
+              - media_player.rpi_streamer_dc_a6_32_5f_4c_40
+              - media_player.rpi_streamer_e4_5f_01_a3_26_0e
+            continue_on_error: true
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          until:
+          - condition: state
+            entity_id: media_player.rpi_streamer_dc_a6_32_5f_4c_40
+            state: playing
+            alias: check that media_player is playing
   mode: single

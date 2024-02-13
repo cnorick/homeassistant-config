@@ -109,17 +109,6 @@ aws:
       aws_access_key_id: !secret aws_access_key_id
       aws_secret_access_key: !secret aws_secret_access_key
 
-proximity:
-  home:
-    ignored_zones:
-      - zone.project_access
-      - zone.osi
-    devices:
-      - person.nathan
-      - person.sarah
-    tolerance: 100
-    unit_of_measurement: mi
-
 scrape:
   - resource: https://www.brightridge.com/home-service/rates/
     sensor:
