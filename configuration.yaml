@@ -108,11 +108,3 @@ aws:
       region_name: us-east-1
       aws_access_key_id: !secret aws_access_key_id
       aws_secret_access_key: !secret aws_secret_access_key
-
-scrape:
-  - resource: https://www.brightridge.com/home-service/rates/
-    sensor:
-      - name: Brightridge Electricity Price
-        select: "table.brd > tbody > tr:nth-child(2) > td:nth-child(7)"
-        value_template: '{{ value | replace ("$", "") | float }}'
-        unit_of_measurement: "$/kWh"

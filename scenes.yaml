@@ -948,21 +948,21 @@
       is_hue_group: true
       hue_scenes:
       - Tropical twilight
-      - Savanna sunset
       - Arctic aurora
-      - Concentrate
-      - Energize
       - Read
+      - Spring blossom
+      - Savanna sunset
+      - Nightlight
+      - Energize
+      - Bright
+      - Concentrate
       - Dimmed
       - Relax
-      - Spring blossom
-      - Nightlight
-      - Bright
       hue_type: room
       lights:
+      - Desk Lamp
       - OC2
       - Office Top Lamp
-      - Desk Lamp
       - OC1
       dynamics: false
       icon: mdi:lightbulb-group
@@ -981,13 +981,13 @@
       - Nightlight
       hue_type: room
       lights:
-      - Bath 1
+      - Bath 4
       - Bath 6
       - Bath 3
-      - Bath 4
       - Bath 2
-      - Bath Ceiling
+      - Bath 1
       - Bath 5
+      - Bath Ceiling
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Bathroom
@@ -996,11 +996,13 @@
     light.guest_bathroom:
       supported_color_modes:
       - brightness
+      color_mode: brightness
+      brightness: 255
       is_hue_group: true
       hue_scenes:
-      - Nightlight
-      - Bright
       - Dimmed
+      - Bright
+      - Nightlight
       hue_type: room
       lights:
       - Guest Bath 1
@@ -1010,15 +1012,13 @@
       icon: mdi:lightbulb
       friendly_name: Guest Bathroom
       supported_features: 40
-      color_mode: brightness
-      brightness: 255
       state: 'on'
     light.hallway:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Hallway
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.front_door:
       min_color_temp_kelvin: 2000
@@ -1028,16 +1028,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      is_hue_group: true
-      hue_scenes: []
-      hue_type: room
-      lights:
-      - FDC1
-      - FDC2
-      dynamics: false
-      icon: mdi:lightbulb
-      friendly_name: Front Door
-      supported_features: 40
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
@@ -1052,6 +1042,16 @@
       xy_color:
       - 0.524
       - 0.387
+      is_hue_group: true
+      hue_scenes: []
+      hue_type: room
+      lights:
+      - FDC2
+      - FDC1
+      dynamics: false
+      icon: mdi:lightbulb
+      friendly_name: Front Door
+      supported_features: 40
       state: 'on'
     light.living_room:
       min_color_temp_kelvin: 2000
@@ -1061,29 +1061,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      is_hue_group: true
-      hue_scenes:
-      - Tropical twilight
-      - Savanna sunset
-      - Lamp Only
-      - Arctic aurora
-      - Concentrate
-      - Energize
-      - Read
-      - Nightlight
-      - Relax
-      - Spring blossom
-      - Dimmed
-      - Bright
-      hue_type: room
-      lights:
-      - LRC1
-      - LRC2
-      - Living Room Lamp
-      dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Living Room
-      supported_features: 40
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
@@ -1098,51 +1075,74 @@
       xy_color:
       - 0.524
       - 0.387
+      is_hue_group: true
+      hue_scenes:
+      - Read
+      - Tropical twilight
+      - Arctic aurora
+      - Spring blossom
+      - Nightlight
+      - Savanna sunset
+      - Bright
+      - Energize
+      - Concentrate
+      - Dimmed
+      - Lamp Only
+      - Relax
+      hue_type: room
+      lights:
+      - Living Room Lamp
+      - LRC1
+      - LRC2
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Living Room
+      supported_features: 40
       state: 'on'
     light.dining_room:
       supported_color_modes:
       - brightness
+      color_mode: brightness
+      brightness: 255
       is_hue_group: true
       hue_scenes:
       - Bright
       hue_type: room
       lights:
-      - DRC 2
       - DRC 1
+      - DRC 2
       dynamics: false
       icon: mdi:lightbulb-group
       friendly_name: Dining Room
       supported_features: 40
-      color_mode: brightness
-      brightness: 255
       state: 'on'
     light.kitchen_counter:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Kitchen Counter
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.kitchen_overhead:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Kitchen Overhead
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.back_door:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Back Door
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.laundry_room:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Laundry Room
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.bedroom:
       min_color_temp_kelvin: 2000
@@ -1168,24 +1168,24 @@
       - 0.387
       is_hue_group: true
       hue_scenes:
-      - Tropical twilight
-      - Savanna sunset
+      - Read
       - Arctic aurora
-      - Concentrate
-      - Energize
+      - Tropical twilight
+      - Spring blossom
+      - Savanna sunset
       - Nightlight
+      - Bright
+      - Energize
+      - Concentrate
       - Dimmed
       - Relax
-      - Spring blossom
-      - Read
-      - Bright
       hue_type: room
       lights:
-      - BRC2
       - BRC3
-      - Sarah's Nightstand
       - BRC1
+      - Sarah's Nightstand
       - Nathan's Nightstand
+      - BRC2
       dynamics: false
       icon: mdi:lightbulb-group
       friendly_name: Bedroom
@@ -1194,16 +1194,52 @@
     light.bedroom_rope_lights:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Bedroom Rope Lights
       supported_features: 0
-      color_mode: onoff
       state: 'on'
     light.island:
       supported_color_modes:
       - onoff
+      color_mode: onoff
       friendly_name: Island
       supported_features: 0
-      color_mode: onoff
+      state: 'on'
+    light.nursery:
+      min_color_temp_kelvin: 2202
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 454
+      supported_color_modes:
+      - color_temp
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2732
+      color_temp: 366
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      is_hue_group: true
+      hue_scenes:
+      - Quiet
+      - Bright
+      hue_type: room
+      lights:
+      - NC3
+      - NC1
+      - NC2
+      - Nursery Lamp
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Nursery
+      supported_features: 40
       state: 'on'
   metadata:
     light.office:
@@ -1233,4 +1269,148 @@
     light.bedroom_rope_lights:
       entity_only: true
     light.island:
+      entity_only: true
+    light.nursery:
+      entity_only: true
+- id: '1708568504163'
+  name: Baby Bedtime
+  entities:
+    light.guest_bedroom_lamp:
+      min_color_temp_kelvin: 2202
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 454
+      supported_color_modes:
+      - color_temp
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2732
+      color_temp: 366
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      mode: normal
+      dynamics: none
+      friendly_name: Nursery Lamp
+      supported_features: 40
+      state: 'on'
+    light.nursery_ceiling:
+      supported_color_modes:
+      - brightness
+      color_mode:
+      brightness:
+      is_hue_group: true
+      hue_scenes: []
+      hue_type: zone
+      lights:
+      - NC2
+      - NC3
+      - NC1
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Nursery Ceiling
+      supported_features: 40
+      state: 'off'
+  metadata:
+    light.nursery:
+      entity_only: true
+- id: '1708639614139'
+  name: Baby Bathtime
+  entities:
+    automation.turn_on_guest_bathroom_when_motion_detected_3:
+      id: guest_bathroom_on_motion
+      last_triggered: '2024-02-23T00:34:26.021853+00:00'
+      mode: restart
+      current: 0
+      friendly_name: Toggle Guest Bathroom on Motion
+      state: 'off'
+    light.hallway:
+      supported_color_modes:
+      - onoff
+      color_mode: onoff
+      friendly_name: Hallway
+      supported_features: 0
+      state: 'on'
+    light.bedroom:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2732
+      color_temp: 366
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      is_hue_group: true
+      hue_scenes:
+      - Relax
+      - Spring blossom
+      - Energize
+      - Dimmed
+      - Arctic aurora
+      - Concentrate
+      - Savanna sunset
+      - Tropical twilight
+      - Nightlight
+      - Read
+      - Bright
+      hue_type: room
+      lights:
+      - BRC1
+      - Nathan's Nightstand
+      - BRC3
+      - BRC2
+      - Sarah's Nightstand
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Bedroom
+      supported_features: 40
+      state: 'on'
+    light.guest_bathroom:
+      supported_color_modes:
+      - brightness
+      color_mode: brightness
+      brightness: 255
+      is_hue_group: true
+      hue_scenes:
+      - Nightlight
+      - Dimmed
+      - Bright
+      hue_type: room
+      lights:
+      - Guest Bath 2
+      - Guest Bath 3
+      - Guest Bath 1
+      dynamics: false
+      icon: mdi:lightbulb
+      friendly_name: Guest Bathroom
+      supported_features: 40
+      state: 'on'
+  metadata:
+    automation.turn_on_guest_bathroom_when_motion_detected_3:
+      entity_only: true
+    light.hallway:
+      entity_only: true
+    light.bedroom:
+      entity_only: true
+    light.guest_bathroom:
       entity_only: true

@@ -10,6 +10,7 @@ logger:
 api:
 
 ota:
+  platform: esphome
   password: !secret ota_password
 
 wifi:
@@ -30,7 +31,7 @@ i2c:
   id: bus_a
   
 sensor:
-  - platform: bme280
+  - platform: bme280_i2c
     temperature:
       name: "BME280 Temperature"
       oversampling: 16x
@@ -39,7 +40,7 @@ sensor:
     humidity:
       name: "BME280 Humidity"
     address: 0x77
-    update_interval: 3min
+    update_interval: 15s
 
 #remote_receiver:
 #  pin:

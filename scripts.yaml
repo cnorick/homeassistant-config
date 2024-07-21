@@ -760,3 +760,275 @@ vacuum_until_condition_or_until_all_rooms_are_done:
       notification_id: nwswxalert
       message: '{{ message }}'
       title: '{{ title }}'
+notify_mobile_devices:
+  alias: Notify Mobile Devices
+  use_blueprint:
+    path: Grumblezz/notify_devices.yaml
+    input:
+      notify_message_actions_text: Select 1 of the following actions on your phone
+'1708021248590':
+  alias: ufoft
+  sequence:
+  - service: media_player.play_media
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    alias: Black.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Door2.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - service: script.1695667825634
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: vdieo
+    metadata: {}
+    alias: Nikola_intro.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_intro.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 39
+      milliseconds: 0
+  - service: script.1695668418139
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: soil.mp4
+      media_content_type: video
+    metadata: {}
+    alias: soil.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Water.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 15
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Scratching.wav
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: view.mp4
+      media_content_type: video
+    metadata: {}
+    alias: view.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: Ivan_sun.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Ivan_sun.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: script.1695668494663
+    data: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 46
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: ride.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Toggle switch
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Lightsswitch.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 19
+      milliseconds: 0
+  - service: script.1695668575447
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_strah.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.audio_2
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_strah.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+  - type: turn_off
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Toggle switch
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 40
+      milliseconds: 0
+  - alias: Toggle Switch
+    type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - type: turn_off
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Turn off Light
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Turn on Light
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: bed.wav
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: bush.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: script.1695668418139
+    data: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 17
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: zoom.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 14
+      milliseconds: 0
+  - service: script.1695732965297
+    data: {}
+    enabled: false
+  - event: neighbours-custom
+    event_data:
+      id: step-1-done
+  mode: single
