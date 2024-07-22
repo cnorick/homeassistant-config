@@ -1,68 +1,67 @@
 ass:
   alias: Ass
   sequence:
-    - data:
-        data:
-          type: tts
-        message: ass
-        target: group.alexa_everywhere
-      service: notify.alexa_media
+  - data:
+      data:
+        type: tts
+      message: ass
+      target: group.alexa_everywhere
+    service: notify.alexa_media
 alexa_announce:
   alias: Alexa Announce
   sequence:
-    - data_template:
-        data:
-          type: tts
-        message: "{{ states.input_text.announcement_text.state }}"
-        target: group.alexa_everywhere
-      service: notify.alexa_media
+  - data_template:
+      data:
+        type: tts
+      message: '{{ states.input_text.announcement_text.state }}'
+      target: group.alexa_everywhere
+    service: notify.alexa_media
 alarm:
   alias: Alarm
   sequence:
-    - data:
-        brightness_pct: 100
-        profile: relax
-      entity_id: light.bedroom
-      service: light.turn_on
-    - data: {}
-      entity_id: group.fans
-      service: homeassistant.turn_off
-    - service: input_boolean.turn_off
-      data: {}
-      entity_id: input_boolean.night_mode
-    - data:
-        volume_level: 0.8
-      entity_id: media_player.bathroom_echo, media_player.bedroom_echo
-      service: media_player.volume_set
-    - data:
-        source: Bedroom Echo
-      service: media_player.select_source
-      target:
-        entity_id: media_player.spotify_nathan_orick
-    - delay: 00:00:02
-    - data:
-        source: Bedroom Echo
-      service: media_player.select_source
-      target:
-        entity_id: media_player.spotify_nathan_orick
-    - continue_on_timeout: true
-      timeout: 00:00:10
-      wait_template:
-        "{{ is_state_attr('media_player.spotify_nathan_orick', 'source',
-        'Bedroom Echo') }}"
-    - data: {}
+  - data:
+      brightness_pct: 100
+      profile: relax
+    entity_id: light.bedroom
+    service: light.turn_on
+  - data: {}
+    entity_id: group.fans
+    service: homeassistant.turn_off
+  - service: input_boolean.turn_off
+    data: {}
+    entity_id: input_boolean.night_mode
+  - data:
+      volume_level: 0.8
+    entity_id: media_player.bathroom_echo, media_player.bedroom_echo
+    service: media_player.volume_set
+  - data:
+      source: Bedroom Echo
+    service: media_player.select_source
+    target:
       entity_id: media_player.spotify_nathan_orick
-      service: media_player.media_play_pause
+  - delay: 00:00:02
+  - data:
+      source: Bedroom Echo
+    service: media_player.select_source
+    target:
+      entity_id: media_player.spotify_nathan_orick
+  - continue_on_timeout: true
+    timeout: 00:00:10
+    wait_template: '{{ is_state_attr(''media_player.spotify_nathan_orick'', ''source'',
+      ''Bedroom Echo'') }}'
+  - data: {}
+    entity_id: media_player.spotify_nathan_orick
+    service: media_player.media_play_pause
   mode: single
 slow_alarm:
   alias: Ease Lights on for Morning
   sequence:
-    - data:
-        brightness_pct: 100
-        profile: relax
-        transition: 900
-      entity_id: light.sarah_s_nightstand, light.bedroom_ceiling, light.nathan_s_nightstand
-      service: light.turn_on
+  - data:
+      brightness_pct: 100
+      profile: relax
+      transition: 900
+    entity_id: light.sarah_s_nightstand, light.bedroom_ceiling, light.nathan_s_nightstand
+    service: light.turn_on
   mode: single
 notify_random:
   alias: Notify Random Person
@@ -74,141 +73,140 @@ notify_random:
       description: The message content
       example: The light is on!
   sequence:
-    - data_template:
-        title: "{{title}}"
-        message: "{{message}}"
-      service:
-        "{{ ['notify.mobile_app_pixel_7', 'notify.mobile_app_iphone'] | random
-        }}"
+  - data_template:
+      title: '{{title}}'
+      message: '{{message}}'
+    service: '{{ [''notify.mobile_app_pixel_7'', ''notify.mobile_app_iphone''] | random
+      }}'
 wake_tater_pc:
   alias: Wake Tater PC
   sequence:
-    - service: switch.turn_on
-      entity_id: switch.tater_pc
+  - service: switch.turn_on
+    entity_id: switch.tater_pc
   mode: single
 show_morning_dashboard:
   alias: Show Morning Dashboard
   sequence:
-    - service: media_player.turn_on
-      target:
-        entity_id: media_player.living_room_tv_2
-    - service: media_player.turn_on
-      target:
-        entity_id: media_player.chromecast
-    - wait_for_trigger:
-        - platform: state
-          entity_id: media_player.chromecast
-          for: 00:00:05
-          to: idle
-      timeout: 00:00:20
-    - service: cast.show_lovelace_view
-      data:
-        entity_id: media_player.chromecast
-        dashboard_path: lovelace2
-        view_path: morning-dashboard
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 5
-        milliseconds: 0
-    - service: cast.show_lovelace_view
-      data:
-        entity_id: media_player.chromecast
-        dashboard_path: lovelace
-        view_path: morning-dashboard
+  - service: media_player.turn_on
+    target:
+      entity_id: media_player.living_room_tv_2
+  - service: media_player.turn_on
+    target:
+      entity_id: media_player.chromecast
+  - wait_for_trigger:
+    - platform: state
+      entity_id: media_player.chromecast
+      for: 00:00:05
+      to: idle
+    timeout: 00:00:20
+  - service: cast.show_lovelace_view
+    data:
+      entity_id: media_player.chromecast
+      dashboard_path: lovelace2
+      view_path: morning-dashboard
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - service: cast.show_lovelace_view
+    data:
+      entity_id: media_player.chromecast
+      dashboard_path: lovelace
+      view_path: morning-dashboard
   mode: single
 alarm_beep_while_triggered:
   alias: Alarm -- Beep While Triggered
   sequence:
-    - repeat:
-        while:
-          - condition: state
-            entity_id: alarm_control_panel.home_alarm
-            state: triggered
-        sequence:
-          - service: media_player.play_media
-            data:
-              media_content_type: sound
-              media_content_id: buzzers_pistols_01
-            target:
-              entity_id:
-                - media_player.guest_bathroom_echo
-                - media_player.bedroom_echo
-                - media_player.bedroom_tv_2
-                - media_player.bathroom_echo
-                - media_player.kitchen_echo_show
-                - media_player.office_echo
-                - media_player.living_room_echo
-                - media_player.guest_bedroom_echo
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 2
-              milliseconds: 0
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state: triggered
+      sequence:
+      - service: media_player.play_media
+        data:
+          media_content_type: sound
+          media_content_id: buzzers_pistols_01
+        target:
+          entity_id:
+          - media_player.guest_bathroom_echo
+          - media_player.bedroom_echo
+          - media_player.bedroom_tv_2
+          - media_player.bathroom_echo
+          - media_player.kitchen_echo_show
+          - media_player.office_echo
+          - media_player.living_room_echo
+          - media_player.guest_bedroom_echo
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 2
+          milliseconds: 0
   mode: single
 alarm_flash_while_triggered:
   alias: Alarm -- Flash Lights While Triggered
   sequence:
-    - repeat:
-        while:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state: triggered
+      sequence:
+      - choose:
+        - conditions:
           - condition: state
-            entity_id: alarm_control_panel.home_alarm
-            state: triggered
-        sequence:
-          - choose:
-              - conditions:
-                  - condition: state
-                    entity_id: group.all_lights
-                    state: "on"
-                sequence:
-                  - service: light.turn_off
-                    target:
-                      entity_id: group.all_lights
-                    data: {}
-            default:
-              - service: light.turn_on
-                data:
-                  effect: random
-                  brightness: 255
-                target:
-                  entity_id: group.all_lights
-              - service: light.turn_on
-                target:
-                  entity_id: group.all_lights
-                data:
-                  flash: long
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 7
-              milliseconds: 0
+            entity_id: group.all_lights
+            state: 'on'
+          sequence:
+          - service: light.turn_off
+            target:
+              entity_id: group.all_lights
+            data: {}
+        default:
+        - service: light.turn_on
+          data:
+            effect: random
+            brightness: 255
+          target:
+            entity_id: group.all_lights
+        - service: light.turn_on
+          target:
+            entity_id: group.all_lights
+          data:
+            flash: long
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 7
+          milliseconds: 0
   mode: single
 notify_sarah_leaving_work_or_arriving_home:
   alias: Notify Sarah Leaving Work or Arriving Home
   sequence:
-    - wait_for_trigger:
-        - platform: zone
-          entity_id: person.sarah
-          zone: zone.etsu
-          event: leave
-          id: work
-        - platform: zone
-          entity_id: person.sarah
-          zone: zone.home
-          event: enter
-          id: home
-      continue_on_timeout: false
-      timeout: "1:00:00"
-    - service: script.notify_sarah_and_nathan
-      data:
-        use_alexa: false
-        notify_sarah: false
-        notify_nathan: true
-        text_nathan: false
-        text_sarah: false
-        text_ice_contacts: false
-        bypass_quiet_mode: false
-        message: Sarah's on her way
+  - wait_for_trigger:
+    - platform: zone
+      entity_id: person.sarah
+      zone: zone.etsu
+      event: leave
+      id: work
+    - platform: zone
+      entity_id: person.sarah
+      zone: zone.home
+      event: enter
+      id: home
+    continue_on_timeout: false
+    timeout: '1:00:00'
+  - service: script.notify_sarah_and_nathan
+    data:
+      use_alexa: false
+      notify_sarah: false
+      notify_nathan: true
+      text_nathan: false
+      text_sarah: false
+      text_ice_contacts: false
+      bypass_quiet_mode: false
+      message: Sarah's on her way
   mode: single
 tier_toggle_devices:
   fields:
@@ -280,476 +278,471 @@ tier_toggle_devices:
       selector:
         target:
   sequence:
-    - choose:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_1 is defined and entity_1 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_1 is defined and entity_1 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_1}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_1}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_1}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_1}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_2 is defined and entity_2 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_2 is defined and entity_2 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_2}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_2}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_2}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_2}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_3 is defined and entity_3 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_3 is defined and entity_3 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_3}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_3}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_3}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_3}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_4 is defined and entity_4 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_4 is defined and entity_4 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_4}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_4}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_4}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_4}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_5 is defined and entity_5 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_5 is defined and entity_5 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_5}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_5}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_5}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_5}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_6 is defined and entity_6 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_6 is defined and entity_6 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_6}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_6}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_6}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_6}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_7 is defined and entity_7 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_7 is defined and entity_7 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_7}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_7}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_7}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_7}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_8 is defined and entity_8 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_8 is defined and entity_8 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_8}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_8}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_8}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_8}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_9 is defined and entity_9 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_9 is defined and entity_9 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_9}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_9}}"
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 0
-        milliseconds: "{{delay}}"
-    - choose:
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_9}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_9}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: '{{delay}}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ entity_10 is defined and entity_10 != none }}'
+      sequence:
+      - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ entity_10 is defined and entity_10 != none }}"
+          - condition: template
+            value_template: '{{action}}'
           sequence:
-            - choose:
-                - conditions:
-                    - condition: template
-                      value_template: "{{action}}"
-                  sequence:
-                    - service: light.turn_on
-                      data:
-                        brightness: 255
-                      target: "{{entity_10}}"
-              default:
-                - service: light.turn_off
-                  target: "{{entity_10}}"
+          - service: light.turn_on
+            data:
+              brightness: 255
+            target: '{{entity_10}}'
+        default:
+        - service: light.turn_off
+          target: '{{entity_10}}'
   mode: single
   alias: Turn on Entities One at a Time
 start_tesla:
   alias: Start Tesla
   sequence:
-    - service: scene.turn_on
-      data: {}
+  - service: scene.turn_on
+    data: {}
+    target:
+      entity_id: scene.tesla_climate
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.tesleigh_lynn_temperature_outside
+      below: '45'
+    then:
+    - service: climate.set_preset_mode
+      data:
+        preset_mode: Defrost
       target:
-        entity_id: scene.tesla_climate
-    - if:
-        - condition: numeric_state
-          entity_id: sensor.tesleigh_lynn_temperature_outside
-          below: "45"
-      then:
-        - service: climate.set_preset_mode
-          data:
-            preset_mode: Defrost
-          target:
-            entity_id: climate.tesleigh_lynn_hvac_climate_system
+        entity_id: climate.tesleigh_lynn_hvac_climate_system
   mode: single
 vacuum_rooms:
   alias: Vacuum Room(s)
   fields:
     rooms:
       name: Rooms
-      description:
-        The Rooms to Vacuum in the order that they should be vacuumed.
+      description: The Rooms to Vacuum in the order that they should be vacuumed.
         Leave empty for vacuuming everywhere
       selector:
         select:
           multiple: true
           options:
-            - label: Bedroom
-              value: "1"
-            - label: Nursery
-              value: "4"
-            - label: Hallway
-              value: "20"
-            - label: Kitchen
-              value: "13"
-            - label: Dining Room
-              value: "21"
-            - label: Office
-              value: "16"
-            - label: Mud Room
-              value: "22"
-            - label: Living Room
-              value: "6"
+          - label: Bedroom
+            value: '1'
+          - label: Nursery
+            value: '4'
+          - label: Hallway
+            value: '20'
+          - label: Kitchen
+            value: '13'
+          - label: Dining Room
+            value: '21'
+          - label: Office
+            value: '16'
+          - label: Mud Room
+            value: '22'
+          - label: Living Room
+            value: '6'
   variables:
-    regions:
-      "[\n  {%- for room in rooms -%}\n    {\"region_id\":\"{{ room | string
+    regions: "[\n  {%- for room in rooms -%}\n    {\"region_id\":\"{{ room | string
       }}\", \"type\": \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {%- endfor
       -%}\n]"
   sequence:
-    - condition: state
-      entity_id: input_boolean.enable_vacuum
-      state: "on"
-    - service: vacuum.send_command
-      data:
-        command: start
-        params:
-          ordered: 1
-          pmap_id: 7WVY_fOWSBiyx-jFdoKcoQ
-          regions: "{{regions}}"
-          user_pmapv_id: 231204T184944
-      target:
-        entity_id: vacuum.rooben
+  - condition: state
+    entity_id: input_boolean.enable_vacuum
+    state: 'on'
+  - service: vacuum.send_command
+    data:
+      command: start
+      params:
+        ordered: 1
+        pmap_id: 7WVY_fOWSBiyx-jFdoKcoQ
+        regions: '{{regions}}'
+        user_pmapv_id: 231204T184944
+    target:
+      entity_id: vacuum.rooben
   mode: single
 new_script:
   alias: Heat Coffee Water
   description: Turns on the water kettle and notifies when finished
   sequence:
-    - service: switch.turn_on
-      data: {}
-      target:
-        entity_id: switch.coffee_kettle
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 30
-        milliseconds: 0
-    - if:
-        - condition: numeric_state
-          entity_id: sensor.coffee_kettle_current_consumption
-          below: 100
-      then:
-        - service: switch.turn_off
-          data: {}
-          target:
-            entity_id: switch.coffee_kettle
-        - service: script.notify_sarah_and_nathan
-          data:
-            message: Kettle Turned Off
-            use_alexa: false
-            notify_nathan: true
-            more_info:
-              Check coffee kettle. There's probably no water in it, idiot. Or
-              maybe the lever isn't down
-        - stop: Kettle Stopped Heating
-          error: true
-    - wait_for_trigger:
-        - platform: numeric_state
-          entity_id: sensor.coffee_kettle_current_consumption
-          below: 100
-      timeout:
-        hours: 0
-        minutes: 8
-        seconds: 0
-        milliseconds: 0
-      continue_on_timeout: true
-    - if:
-        - condition: numeric_state
-          entity_id: sensor.coffee_kettle_current_consumption
-          above: 100
-      then:
-        - service: script.notify_sarah_and_nathan
-          data:
-            message: Turning Kettle Off
-            more_info: Kettle heated water for too long
-            notify_nathan: true
-      else:
-        - if:
-            - condition: state
-              entity_id: input_boolean.night_mode
-              state: "off"
-          then:
-            - service: script.notify_sarah_and_nathan
-              data:
-                message: Coffee Ready
-                use_alexa: true
-                notify_nathan: true
-          else:
-            - service: script.notify_sarah_and_nathan
-              data:
-                message: Coffee Ready
-                use_alexa: false
-                notify_nathan: true
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.coffee_kettle
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      below: 100
+    then:
     - service: switch.turn_off
       data: {}
       target:
         entity_id: switch.coffee_kettle
+    - service: script.notify_sarah_and_nathan
+      data:
+        message: Kettle Turned Off
+        use_alexa: false
+        notify_nathan: true
+        more_info: Check coffee kettle. There's probably no water in it, idiot. Or
+          maybe the lever isn't down
+    - stop: Kettle Stopped Heating
+      error: true
+  - wait_for_trigger:
+    - platform: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      below: 100
+    timeout:
+      hours: 0
+      minutes: 8
+      seconds: 0
+      milliseconds: 0
+    continue_on_timeout: true
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.coffee_kettle_current_consumption
+      above: 100
+    then:
+    - service: script.notify_sarah_and_nathan
+      data:
+        message: Turning Kettle Off
+        more_info: Kettle heated water for too long
+        notify_nathan: true
+    else:
+    - if:
+      - condition: state
+        entity_id: input_boolean.night_mode
+        state: 'off'
+      then:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Coffee Ready
+          use_alexa: true
+          notify_nathan: true
+      else:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: Coffee Ready
+          use_alexa: false
+          notify_nathan: true
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.coffee_kettle
   mode: single
 start_tesla_and_turn_off_if_doesnt_leave_home:
   alias: Start Tesla and Turn Off If Doesn't Leave Home
   sequence:
+  - if:
+    - condition: state
+      state: home
+      entity_id: device_tracker.tesleigh_lynn_location_tracker
+    then:
+    - service: script.start_tesla
+      data: {}
+    - delay:
+        hours: 0
+        minutes: 12
+        seconds: 0
+        milliseconds: 0
     - if:
-        - condition: state
-          state: home
-          entity_id: device_tracker.tesleigh_lynn_location_tracker
+      - condition: state
+        state: home
+        entity_id: device_tracker.tesleigh_lynn_location_tracker
       then:
-        - service: script.start_tesla
-          data: {}
-        - delay:
-            hours: 0
-            minutes: 12
-            seconds: 0
-            milliseconds: 0
-        - if:
-            - condition: state
-              state: home
-              entity_id: device_tracker.tesleigh_lynn_location_tracker
-          then:
-            - service: select.select_option
-              data:
-                option: "Off"
-              target:
-                entity_id:
-                  - select.tesleigh_lynn_heated_seat_left
-                  - select.tesleigh_lynn_heated_seat_rear_center
-                  - select.tesleigh_lynn_heated_seat_rear_right
-                  - select.tesleigh_lynn_heated_seat_right
-                  - select.tesleigh_lynn_heated_seat_rear_left
-            - service: switch.turn_off
-              data: {}
-              target:
-                entity_id: switch.tesleigh_lynn_heated_steering
-            - service: climate.turn_off
-              data: {}
-              target:
-                entity_id: climate.tesleigh_lynn_hvac_climate_system
+      - service: select.select_option
+        data:
+          option: 'Off'
+        target:
+          entity_id:
+          - select.tesleigh_lynn_heated_seat_left
+          - select.tesleigh_lynn_heated_seat_rear_center
+          - select.tesleigh_lynn_heated_seat_rear_right
+          - select.tesleigh_lynn_heated_seat_right
+          - select.tesleigh_lynn_heated_seat_rear_left
+      - service: switch.turn_off
+        data: {}
+        target:
+          entity_id: switch.tesleigh_lynn_heated_steering
+      - service: climate.turn_off
+        data: {}
+        target:
+          entity_id: climate.tesleigh_lynn_hvac_climate_system
   mode: single
 lock_front_door:
   alias: Lock Front Door
   sequence:
-    - service: google_assistant_sdk.send_text_command
-      data:
-        command: Lock front door
+  - service: google_assistant_sdk.send_text_command
+    data:
+      command: Lock front door
   mode: single
 vacuum_next_area:
   alias: Vacuum Next Area
   variables:
     room_list:
-      - "4"
-      - "13"
-      - "16"
-      - "20"
-      - "21"
-      - "1"
-      - "6"
+    - '4'
+    - '13'
+    - '16'
+    - '20'
+    - '21'
+    - '1'
+    - '6'
   sequence:
+  - if:
+    - condition: state
+      entity_id: vacuum.rooben
+      state: docked
+    then:
+    - service: script.vacuum_rooms
+      data:
+        rooms: '{{room_list[states(''counter.current_room_to_vacuum'')]}}'
     - if:
-        - condition: state
-          entity_id: vacuum.rooben
-          state: docked
+      - condition: template
+        value_template: '{{states(''counter.current_room_to_vacuum'') | int == state_attr(''counter.current_room_to_vacuum'',
+          ''maximum'') | int}}'
       then:
-        - service: script.vacuum_rooms
-          data:
-            rooms: "{{room_list[states('counter.current_room_to_vacuum')]}}"
-        - if:
-            - condition: template
-              value_template:
-                "{{states('counter.current_room_to_vacuum') | int == state_attr('counter.current_room_to_vacuum',
-                'maximum') | int}}"
-          then:
-            - service: counter.reset
-              data: {}
-              target:
-                entity_id: counter.current_room_to_vacuum
-          else:
-            - service: counter.increment
-              data: {}
-              target:
-                entity_id: counter.current_room_to_vacuum
+      - service: counter.reset
+        data: {}
+        target:
+          entity_id: counter.current_room_to_vacuum
       else:
-        - if:
-            - condition: state
-              entity_id: vacuum.rooben
-              state: error
-          then:
-            - service: script.notify_sarah_and_nathan
-              data:
-                use_alexa: false
-                notify_sarah: false
-                notify_nathan: true
-                text_nathan: false
-                text_sarah: false
-                text_ice_contacts: false
-                bypass_quiet_mode: false
-                message: Rooben has an Error
+      - service: counter.increment
+        data: {}
+        target:
+          entity_id: counter.current_room_to_vacuum
+    else:
+    - if:
+      - condition: state
+        entity_id: vacuum.rooben
+        state: error
+      then:
+      - service: script.notify_sarah_and_nathan
+        data:
+          use_alexa: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Rooben has an Error
   mode: single
 vacuum_until_condition_or_until_all_rooms_are_done:
   alias: Vacuum Until Condition or Until All Rooms Are Done
   sequence:
-    - variables:
-        first_room: states('counter.current_room_to_vacuum')
-    - repeat:
-        while:
-          - condition: or
-            conditions:
-              - condition: template
-                value_template:
-                  "{{not repeat.first and vacuum_until | int != states('counter.current_room_to_vacuum')
-                  | int}}"
-                alias: If not the first loop && we haven't yet done all the rooms
-        sequence: []
+  - variables:
+      first_room: states('counter.current_room_to_vacuum')
+  - repeat:
+      while:
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: '{{not repeat.first and vacuum_until | int != states(''counter.current_room_to_vacuum'')
+            | int}}'
+          alias: If not the first loop && we haven't yet done all the rooms
+      sequence: []
   fields:
     vacuum_until:
       name: Vacuum Until Condition
@@ -758,285 +751,497 @@ vacuum_until_condition_or_until_all_rooms_are_done:
       selector:
         condition:
   mode: single
-"1692121920484":
+'1692121920484':
   alias: NWS Weather Alert Pop Up
   sequence:
-    - service:
-        "{% if states('sensor.nws_alerts') != '0' %}\n  persistent_notification.create\n{%
-        endif %}\n"
-      data_template:
-        notification_id: nwswxalert
-        message: "{{ message }}"
-        title: "{{ title }}"
+  - service: "{% if states('sensor.nws_alerts') != '0' %}\n  persistent_notification.create\n{%
+      endif %}\n"
+    data_template:
+      notification_id: nwswxalert
+      message: '{{ message }}'
+      title: '{{ title }}'
 notify_mobile_devices:
   alias: Notify Mobile Devices
   use_blueprint:
     path: Grumblezz/notify_devices.yaml
     input:
       notify_message_actions_text: Select 1 of the following actions on your phone
-"1708021248590":
+'1708021248590':
   alias: ufoft
   sequence:
-    - service: media_player.play_media
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      alias: Black.mp4
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Door2.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 5
-        milliseconds: 0
-    - service: script.1695667825634
-      data: {}
-      enabled: false
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: vdieo
-      metadata: {}
-      alias: Nikola_intro.mp4
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Nikola_intro.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 39
-        milliseconds: 0
-    - service: script.1695668418139
-      data: {}
-      enabled: false
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: soil.mp4
-        media_content_type: video
-      metadata: {}
-      alias: soil.mp4
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Water.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 15
-        milliseconds: 0
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Scratching.wav
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: view.mp4
-        media_content_type: video
-      metadata: {}
-      alias: view.mp4
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 30
-        milliseconds: 0
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      alias: Ivan_sun.mp4
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Ivan_sun.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 1
-        milliseconds: 0
-    - service: script.1695668494663
-      data: {}
-      enabled: false
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 46
-        milliseconds: 0
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      alias: ride.mp4
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 1
-        milliseconds: 0
-    - type: turn_on
-      device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-      entity_id: ffaa2813ea121f6cdcee334357bc8d03
-      domain: light
-      alias: Toggle switch
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 1
-        milliseconds: 0
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Lightsswitch.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 19
-        milliseconds: 0
-    - service: script.1695668575447
-      data: {}
-      enabled: false
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      alias: Nikola_strah.mp4
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.audio_2
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: Nikola_strah.wav
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 2
-        milliseconds: 0
-    - type: turn_off
-      device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-      entity_id: ffaa2813ea121f6cdcee334357bc8d03
-      domain: light
-      alias: Toggle switch
-    - delay:
-        hours: 0
-        minutes: 1
-        seconds: 40
-        milliseconds: 0
-    - alias: Toggle Switch
-      type: turn_on
-      device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-      entity_id: ffaa2813ea121f6cdcee334357bc8d03
-      domain: light
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 1
-        milliseconds: 0
-    - type: turn_off
-      device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-      entity_id: ffaa2813ea121f6cdcee334357bc8d03
-      domain: light
-      alias: Turn off Light
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 10
-        milliseconds: 0
-    - type: turn_on
-      device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-      entity_id: ffaa2813ea121f6cdcee334357bc8d03
-      domain: light
-      alias: Turn on Light
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: Scratching.wav
-        media_content_type: video
-      metadata: {}
-      alias: bed.wav
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      alias: bush.mp4
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 1
-        milliseconds: 0
-    - service: script.1695668418139
-      data: {}
-      enabled: false
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 17
-        milliseconds: 0
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      data:
-        media_content_id: flower.mp4
-        media_content_type: video
-      metadata: {}
-      alias: zoom.mp4
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 14
-        milliseconds: 0
-    - service: script.1695732965297
-      data: {}
-      enabled: false
-    - event: neighbours-custom
-      event_data:
-        id: step-1-done
+  - service: media_player.play_media
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    alias: Black.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Door2.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - service: script.1695667825634
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: vdieo
+    metadata: {}
+    alias: Nikola_intro.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_intro.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 39
+      milliseconds: 0
+  - service: script.1695668418139
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: soil.mp4
+      media_content_type: video
+    metadata: {}
+    alias: soil.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Water.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 15
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Scratching.wav
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: view.mp4
+      media_content_type: video
+    metadata: {}
+    alias: view.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: Ivan_sun.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Ivan_sun.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: script.1695668494663
+    data: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 46
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: ride.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Toggle switch
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Lightsswitch.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 19
+      milliseconds: 0
+  - service: script.1695668575447
+    data: {}
+    enabled: false
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_strah.mp4
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.audio_2
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: Nikola_strah.wav
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+  - type: turn_off
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Toggle switch
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 40
+      milliseconds: 0
+  - alias: Toggle Switch
+    type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - type: turn_off
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Turn off Light
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - type: turn_on
+    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
+    entity_id: ffaa2813ea121f6cdcee334357bc8d03
+    domain: light
+    alias: Turn on Light
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: Scratching.wav
+      media_content_type: video
+    metadata: {}
+    alias: bed.wav
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: bush.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: script.1695668418139
+    data: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 17
+      milliseconds: 0
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
+    data:
+      media_content_id: flower.mp4
+      media_content_type: video
+    metadata: {}
+    alias: zoom.mp4
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 14
+      milliseconds: 0
+  - service: script.1695732965297
+    data: {}
+    enabled: false
+  - event: neighbours-custom
+    event_data:
+      id: step-1-done
   mode: single
+notify_sarah_and_nathan:
+  alias: Notify Sarah and Nathan
+  fields:
+    message:
+      description: (required) The message to send to all of the devices
+      example: Hello
+      selector:
+        text:
+      required: true
+    more_info:
+      description: (optional) More information to display on phone notifications.
+        Will not play over Alexa.
+      example: Click here to for more info
+      selector:
+        text:
+          multiline: true
+    url:
+      description: (optional) The url to open when the notification is clicked. Most
+        often will be a specific dashboard.
+      example: /lovelace/default_view
+      selector:
+        text:
+    image:
+      description: (optional) The public url of the image to be sent to the devices
+      example: /local/mail_and_packages/mail_today.gif
+      selector:
+        text:
+    use_alexa:
+      description: Should this notification be made over the echos
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    use_persistent_notification:
+      description: Should this notification be added to the HA sidebar
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    persistent_notification_id:
+      description: The persistent notification id to use with the service.This allows
+        the service to overwrite existing notifications with the same id
+      example: water_leak_notification
+      selector:
+        text:
+      required: false
+    mobile_message_group:
+      description: The group id used to visually group similar messages on mobile
+      example: water-leak
+      required: false
+      selector:
+        text:
+    notify_sarah:
+      description: Should this notification be sent to Sarah
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    notify_nathan:
+      description: Should this notification be sent to Nathan
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    text_nathan:
+      description: Should this notification be sent in an sms to Nathan
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    text_sarah:
+      description: Should this notification be sent in an sms to Sarah
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    text_ice_contacts:
+      description: Should this notification be sent in an sms to our emergency contacts
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    bypass_quiet_mode:
+      description: Alexa is not used by default if quiet mode is on. Setting this
+        field to true bypasses quiet mode.
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    notification_actions:
+      name: Custom Actions (Optional)
+      example: "- action: \"ALARM\" # The key you are sending for the event\n  title:
+        \"Sound Alarm\" # The button title\n- action: \"URI\" # Must be set to URI
+        if you plan to use a URI\n  title: \"Open Url\"\n  uri: \"https://google.com\"
+        # URL to open when action is selected, can also be a lovelace view/dashboard"
+      description: See [building-actionable-notifications](https://companion.home-assistant.io/docs/notifications/actionable-notifications#building-actionable-notifications)
+      required: false
+      selector:
+        object:
+  variables:
+    quiet_mode: '{{ not bypass_quiet_mode and is_state(''input_boolean.quiet_mode'',
+      ''on'')}}'
+  sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_nathan }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            clickAction: '{{ url }}'
+            image: '{{ image }}'
+            actions: '{{ notification_actions }}'
+            group: '{{ mobile_message_group}}'
+        service: notify.mobile_app_pixel_7
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ use_alexa and not quiet_mode }}'
+      sequence:
+      - data_template:
+          data:
+            type: announce
+          message: '{{ message }}'
+        service: notify.alexa_media_everywhere
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_sarah }}'
+      sequence:
+      - data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          data:
+            url: '{{ url }}'
+            image: '{{ image }}'
+            actions: ' {{ notification_actions }}'
+            group: '{{ mobile_message_group}}'
+        service: notify.mobile_app_iphone_68
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{text_nathan or text_sarah or text_ice_contacts}}'
+      sequence:
+      - service: rest_command.text_message
+        continue_on_error: true
+        data:
+          contacts: '{% set contacts = [] %}
+
+            {% if text_nathan %}{% set contacts = contacts + [''nathan''] %} {% endif
+            %}
+
+            {% if text_sarah %}{% set contacts = contacts + [''sarah''] %} {% endif
+            %}
+
+            {% if text_ice_contacts %}{% set contacts = contacts + [''contacts'']
+            %} {% endif %}
+
+            {{contacts}}'
+          message: '{{message}}
+
+
+            {{more_info}}
+
+
+            -----
+
+            Automatically Sent from Nathan and Sarah''s Home Assistant'
+    default: []
+  - alias: Add persistent notification
+    choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ use_persistent_notification and persistent_notification_id
+          is defined}}'
+      sequence:
+      - service: persistent_notification.create
+        data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%} {%- if image is defined -%}{{"\n"}}{{"\n"}}![image]({{image}})
+            {%- endif -%} {%- if url is defined -%}{{"\n"}}{{"\n"}}---{{"\n"}}{{"\n"}}[More
+            Info]({{url}}) {%- endif -%}'
+          notification_id: '{{persistent_notification_id}}'
+    - conditions:
+      - condition: template
+        value_template: '{{ use_persistent_notification and not persistent_notification_id
+          is defined }}'
+      sequence:
+      - service: persistent_notification.create
+        data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%} {%- if image is defined -%}{{"\n"}}{{"\n"}}![image]({{image}})
+            {%- endif -%} {%- if url is defined -%}{{"\n"}}{{"\n"}}---{{"\n"}}{{"\n"}}[More
+            Info]({{url}}) {%- endif -%}'
+    default: []
+  mode: queued
+  max: 10

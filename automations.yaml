@@ -6305,6 +6305,23 @@
           metadata: {}
           target:
             entity_id: scene.baby_bedtime
+      - wait_for_trigger:
+        - device_id: 2b1952c00e2b77698c3056571603399b
+          domain: hue
+          platform: device
+          type: initial_press
+          subtype: 1
+          unique_id: 990fab8f-52b8-4f2c-8097-6f76c6a3d12c
+        continue_on_timeout: false
+        timeout:
+          hours: 0
+          minutes: 45
+          seconds: 0
+          milliseconds: 0
+      - service: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.sleep
     - conditions:
       - condition: trigger
         id:

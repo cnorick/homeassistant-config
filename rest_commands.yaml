@@ -3,4 +3,10 @@ wall_panel:
   method: POST
   #payload: '{"speak": "hello"}'
   payload: '{"{{ command }}":{{ data }}}'
-  content_type:  'application/json; charset=utf-8'
+  content_type: "application/json; charset=utf-8"
+
+text_message:
+  url: !secret text_url
+  method: POST
+  content_type: "application/json; charset=utf-8"
+  payload: '{"message": "{{ message | base64_encode }}", "contacts": {{ contacts | to_json }}}'
