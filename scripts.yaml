@@ -498,20 +498,22 @@ tier_toggle_devices:
 start_tesla:
   alias: Start Tesla
   sequence:
-  - service: scene.turn_on
-    data: {}
+  - action: climate.turn_on
     target:
-      entity_id: scene.tesla_climate
+      entity_id: climate.tesleigh_lynn_hvac_climate_system
+    data: {}
+    continue_on_error: true
   - if:
     - condition: numeric_state
       entity_id: sensor.tesleigh_lynn_temperature_outside
       below: '45'
     then:
-    - service: climate.set_preset_mode
-      data:
-        preset_mode: Defrost
+    - data:
+        preset_mode: defrost
       target:
         entity_id: climate.tesleigh_lynn_hvac_climate_system
+      action: climate.set_preset_mode
+      continue_on_error: true
   mode: single
 vacuum_rooms:
   alias: Vacuum Room(s)
@@ -524,40 +526,57 @@ vacuum_rooms:
         select:
           multiple: true
           options:
-          - label: Bedroom
-            value: '1'
-          - label: Nursery
-            value: '4'
-          - label: Hallway
-            value: '20'
-          - label: Kitchen
-            value: '13'
-          - label: Dining Room
-            value: '21'
-          - label: Office
-            value: '16'
-          - label: Mud Room
-            value: '22'
-          - label: Living Room
-            value: '6'
-  variables:
-    regions: "[\n  {%- for room in rooms -%}\n    {\"region_id\":\"{{ room | string
-      }}\", \"type\": \"rid\"}{%- if not loop.last %}, {% endif -%}\n  {%- endfor
-      -%}\n]"
+          - Bedroom
+          - Nursery
+          - Hallway
+          - Kitchen
+          - Dining Room
+          - Office
+          - Laundry Room
+          - Living Room
+    repeat:
+      selector:
+        number:
+          min: 1
+          max: 5
+      name: repeat
+      default: 1
+    overrideenablevacuumcheck:
+      selector:
+        boolean: {}
+      name: overrideEnableVacuumCheck
+      default: false
+      required: false
   sequence:
-  - condition: state
-    entity_id: input_boolean.enable_vacuum
-    state: 'on'
-  - service: vacuum.send_command
-    data:
-      command: start
-      params:
-        ordered: 1
-        pmap_id: 7WVY_fOWSBiyx-jFdoKcoQ
-        regions: '{{regions}}'
-        user_pmapv_id: 231204T184944
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{overrideenablevacuumcheck}}'
+    - condition: state
+      entity_id: input_boolean.enable_vacuum
+      state: 'on'
+  - service: roborock.get_maps
+    metadata: {}
+    data: {}
     target:
-      entity_id: vacuum.rooben
+      entity_id: vacuum.rob
+    response_variable: maps
+  - variables:
+      segments: "{% set segToRoomDict = maps['vacuum.rob'].maps[0].rooms %}\n{% set
+        data = namespace(roomToSegArr=[], segments=[]) %}\n{% for seg, room in segToRoomDict
+        | items %}\n  {% set data.roomToSegArr = data.roomToSegArr + [(room | lower,
+        seg)] %}\n{%- endfor -%}\n{% set data.roomsDict = dict.from_keys(data.roomToSegArr)
+        %}\n\n{% for room in rooms %}\n  {% set data.segments = data.segments + [data.roomsDict[room
+        | lower]]%}\n{%- endfor -%}\n\n{{data.segments}}"
+  - service: vacuum.send_command
+    metadata: {}
+    data:
+      command: app_segment_clean
+      params:
+      - segments: '{{segments}}'
+        repeat: '{{times}}'
+    target:
+      entity_id: vacuum.rob
   mode: single
 new_script:
   alias: Heat Coffee Water
@@ -640,8 +659,8 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
       state: home
       entity_id: device_tracker.tesleigh_lynn_location_tracker
     then:
-    - service: script.start_tesla
-      data: {}
+    - data: {}
+      action: script.start_tesla
     - delay:
         hours: 0
         minutes: 12
@@ -650,10 +669,9 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
     - if:
       - condition: state
         state: home
-        entity_id: device_tracker.tesleigh_lynn_location_tracker
+        entity_id: device_tracker.tesleigh_lynn_destination_location_tracker
       then:
-      - service: select.select_option
-        data:
+      - data:
           option: 'Off'
         target:
           entity_id:
@@ -662,14 +680,15 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
           - select.tesleigh_lynn_heated_seat_rear_right
           - select.tesleigh_lynn_heated_seat_right
           - select.tesleigh_lynn_heated_seat_rear_left
-      - service: switch.turn_off
-        data: {}
+        action: select.select_option
+      - data: {}
         target:
           entity_id: switch.tesleigh_lynn_heated_steering
-      - service: climate.turn_off
-        data: {}
+        action: switch.turn_off
+      - data: {}
         target:
           entity_id: climate.tesleigh_lynn_hvac_climate_system
+        action: climate.turn_off
   mode: single
 lock_front_door:
   alias: Lock Front Door
@@ -682,40 +701,28 @@ vacuum_next_area:
   alias: Vacuum Next Area
   variables:
     room_list:
-    - '4'
-    - '13'
-    - '16'
-    - '20'
-    - '21'
-    - '1'
-    - '6'
+    - Bedroom
+    - Nursery
+    - Bathroom
   sequence:
   - if:
     - condition: state
-      entity_id: vacuum.rooben
+      entity_id: vacuum.rob
       state: docked
     then:
     - service: script.vacuum_rooms
       data:
-        rooms: '{{room_list[states(''counter.current_room_to_vacuum'')]}}'
-    - if:
-      - condition: template
-        value_template: '{{states(''counter.current_room_to_vacuum'') | int == state_attr(''counter.current_room_to_vacuum'',
-          ''maximum'') | int}}'
-      then:
-      - service: counter.reset
-        data: {}
-        target:
-          entity_id: counter.current_room_to_vacuum
-      else:
-      - service: counter.increment
-        data: {}
-        target:
-          entity_id: counter.current_room_to_vacuum
+        rooms:
+        - '{{states(''input_select.rooms_not_vacuumed_in_morning'')}}'
+    - service: input_select.select_next
+      target:
+        entity_id: input_select.rooms_not_vacuumed_in_morning
+      data:
+        cycle: true
     else:
     - if:
       - condition: state
-        entity_id: vacuum.rooben
+        entity_id: vacuum.rob
         state: error
       then:
       - service: script.notify_sarah_and_nathan
@@ -727,7 +734,8 @@ vacuum_next_area:
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-          message: Rooben has an Error
+          message: Rob has an Error
+      enabled: true
   mode: single
 vacuum_until_condition_or_until_all_rooms_are_done:
   alias: Vacuum Until Condition or Until All Rooms Are Done
@@ -1114,6 +1122,13 @@ notify_sarah_and_nathan:
       selector:
         boolean:
       required: false
+    text_garrett:
+      description: Should this notification be sent in an sms to Garrett
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
     text_ice_contacts:
       description: Should this notification be sent in an sms to our emergency contacts
       example: 'False'
@@ -1146,7 +1161,7 @@ notify_sarah_and_nathan:
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ notify_nathan }}'
+        value_template: '{{ notify_nathan | default(false) }}'
       sequence:
       - data:
           title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
@@ -1157,7 +1172,7 @@ notify_sarah_and_nathan:
             image: '{{ image }}'
             actions: '{{ notification_actions }}'
             group: '{{ mobile_message_group}}'
-        service: notify.mobile_app_pixel_7
+        action: notify.mobile_app_pixel_7
     default: []
   - choose:
     - conditions:
@@ -1168,12 +1183,12 @@ notify_sarah_and_nathan:
           data:
             type: announce
           message: '{{ message }}'
-        service: notify.alexa_media_everywhere
+        action: notify.alexa_media_everywhere
     default: []
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ notify_sarah }}'
+        value_template: '{{ notify_sarah | default(false)}}'
       sequence:
       - data:
           title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
@@ -1184,14 +1199,14 @@ notify_sarah_and_nathan:
             image: '{{ image }}'
             actions: ' {{ notification_actions }}'
             group: '{{ mobile_message_group}}'
-        service: notify.mobile_app_iphone_68
+        action: notify.mobile_app_iphone_68
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{text_nathan or text_sarah or text_ice_contacts}}'
+        value_template: '{{text_nathan | default(false) or text_sarah | default(false)
+          or text_ice_contacts | default(false) or text_garrett | default(false)}}'
       sequence:
-      - service: rest_command.text_message
-        continue_on_error: true
+      - continue_on_error: true
         data:
           contacts: '{% set contacts = [] %}
 
@@ -1201,8 +1216,12 @@ notify_sarah_and_nathan:
             {% if text_sarah %}{% set contacts = contacts + [''sarah''] %} {% endif
             %}
 
-            {% if text_ice_contacts %}{% set contacts = contacts + [''contacts'']
-            %} {% endif %}
+            {% if text_garrett %}{% set contacts = contacts + [''garrett''] %} {%
+            endif %}
+
+
+            {% if text_ice_contacts %}{% set contacts = contacts + [''ice''] %} {%
+            endif %}
 
             {{contacts}}'
           message: '{{message}}
@@ -1214,6 +1233,7 @@ notify_sarah_and_nathan:
             -----
 
             Automatically Sent from Nathan and Sarah''s Home Assistant'
+        action: rest_command.text_message
     default: []
   - alias: Add persistent notification
     choose:
@@ -1222,26 +1242,65 @@ notify_sarah_and_nathan:
         value_template: '{{ use_persistent_notification and persistent_notification_id
           is defined}}'
       sequence:
-      - service: persistent_notification.create
-        data:
+      - data:
           title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
           message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
             endif -%} {%- if image is defined -%}{{"\n"}}{{"\n"}}![image]({{image}})
             {%- endif -%} {%- if url is defined -%}{{"\n"}}{{"\n"}}---{{"\n"}}{{"\n"}}[More
             Info]({{url}}) {%- endif -%}'
           notification_id: '{{persistent_notification_id}}'
+        action: persistent_notification.create
     - conditions:
       - condition: template
         value_template: '{{ use_persistent_notification and not persistent_notification_id
           is defined }}'
       sequence:
-      - service: persistent_notification.create
-        data:
+      - data:
           title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
           message: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
             endif -%} {%- if image is defined -%}{{"\n"}}{{"\n"}}![image]({{image}})
             {%- endif -%} {%- if url is defined -%}{{"\n"}}{{"\n"}}---{{"\n"}}{{"\n"}}[More
             Info]({{url}}) {%- endif -%}'
+        action: persistent_notification.create
     default: []
   mode: queued
   max: 10
+deep_clean:
+  alias: Deep Clean
+  sequence:
+  - condition: state
+    entity_id: vacuum.rob
+    state: docked
+  - service: vacuum.start
+    metadata: {}
+    data: {}
+    target:
+      entity_id: vacuum.rob
+  - service: select.select_option
+    metadata: {}
+    data:
+      option: Intense
+    target:
+      entity_id: select.rob_mop_intensity
+  - service: vacuum.set_fan_speed
+    target:
+      entity_id: vacuum.rob
+    data:
+      fan_speed: Turbo
+  description: ''
+notify_ice_contacts:
+  alias: Notify ICE Contacts
+  sequence:
+  - action: script.notify_sarah_and_nathan
+    metadata: {}
+    data:
+      use_alexa: true
+      use_persistent_notification: true
+      notify_sarah: true
+      notify_nathan: true
+      text_nathan: true
+      text_sarah: true
+      text_ice_contacts: true
+      bypass_quiet_mode: false
+      message: '{{states(''input_text.manual_ice_sms_text'')}}'
+  description: ''

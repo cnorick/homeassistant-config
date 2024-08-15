@@ -288,14 +288,21 @@
 - id: alexa_media_player_authentication_required
   alias: Alexa Media Player Authentication Required
   trigger:
-    platform: event
+  - platform: event
     event_type: alexa_media_relogin_required
   condition: []
   action:
-  - service: notify.mobile_app_pixel
+  - action: script.notify_sarah_and_nathan
     data:
-      title: Alexa Media Player Integration
-      message: "\U0001F511 Authentication Required"
+      use_alexa: false
+      use_persistent_notification: true
+      notify_sarah: false
+      notify_nathan: true
+      text_nathan: false
+      text_sarah: false
+      text_ice_contacts: false
+      bypass_quiet_mode: false
+      message: Alexa Re-authentication Required
 - id: '1620443082110'
   alias: Alarm -- Run Alarm when Triggered
   description: ''
@@ -1019,87 +1026,6 @@
       bypass_quiet_mode: false
   mode: queued
   max: 10
-- id: '1630441700096'
-  alias: Turn On AC When Headed Home and Leaving
-  description: ''
-  trigger:
-  - platform: numeric_state
-    entity_id: proximity.home
-    below: '80'
-    id: headed_home
-  - platform: numeric_state
-    entity_id: proximity.home
-    id: leaving_home
-    above: '80'
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: headed_home
-      sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: AC Turned On
-          more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
-            %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
-            | default(fallback.to_state) %} {% set value = value.attributes | default(fallback.to_state.attributes)
-            %} {% set value = value.nearest | default(fallback.to_state.attributes.nearest)
-            %} {% set person = value.split('','') | join('' and'') %} {% set verb
-            = ''is'' %} {% if person == ''you'' or value.split('','') | count > 1
-            %} {% set verb = ''are'' %} {% endif %} Home Assistant has observed {{
-            person }} {{ verb }} headed home and has turned on the AC. If this is
-            not expected, click this notification to turn it off.'
-          url: /lovelace/climate
-          notify_nathan: true
-          notify_sarah: true
-          text_nathan: false
-          text_sarah: false
-          text_ice_contacts: false
-          bypass_quiet_mode: false
-      - service: input_boolean.turn_off
-        data: {}
-        target:
-          entity_id: input_boolean.keep_ac_in_eco
-      - service: climate.set_preset_mode
-        data:
-          preset_mode: none
-        target:
-          entity_id: climate.kitchen
-    - conditions:
-      - condition: trigger
-        id: leaving_home
-      sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: AC Turned Off
-          more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
-            %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
-            | default(fallback.to_state) %} {% set value = value.attributes | default(fallback.to_state.attributes)
-            %} {% set value = value.nearest | default(fallback.to_state.attributes.nearest)
-            %} {% set person = value.split('','') | join('' and'') %} {% set verb
-            = ''is'' %} {% if person == ''you'' or value.split('','') | count > 1
-            %} {% set verb = ''are'' %} {% endif %} Home Assistant has observed {{
-            person }} {{ verb }} leaving home and has turned off the AC. If this is
-            not expected, click this notification to turn it back on.'
-          url: /lovelace/climate
-          notify_nathan: true
-          notify_sarah: true
-          text_nathan: false
-          text_sarah: false
-          text_ice_contacts: false
-          bypass_quiet_mode: false
-      - service: input_boolean.turn_on
-        data: {}
-        target:
-          entity_id: input_boolean.keep_ac_in_eco
-      - service: climate.set_preset_mode
-        data:
-          preset_mode: eco
-        target:
-          entity_id: climate.kitchen
-    default: []
-  mode: single
 - id: '1637193742323'
   alias: Christmas Lights
   description: ''
@@ -1573,10 +1499,10 @@
   - service: script.vacuum_rooms
     data:
       rooms:
-      - '6'
-      - '20'
-      - '13'
-      - '21'
+      - Kitchen
+      - Living Room
+      - Dining Room
+      - Laundry Room
 - id: '1586661602545'
   alias: Turn On Master Bedroom Before Bed
   description: ''
@@ -2808,10 +2734,10 @@
         preset_mode: none
       enabled: true
   - data: {}
-    entity_id: vacuum.rooben
+    entity_id: vacuum.rob
     service: vacuum.stop
     enabled: false
-  - wait_template: '{{ is_state(''vacuum.rooben'', ''idle'') }}'
+  - wait_template: '{{ is_state(''vacuum.rob'', ''idle'') }}'
     continue_on_timeout: true
     timeout: 00:00:10
     enabled: false
@@ -2821,7 +2747,7 @@
       entity_id: input_boolean.visitors
     then:
     - data: {}
-      entity_id: vacuum.rooben
+      entity_id: vacuum.rob
       service: vacuum.return_to_base
       enabled: true
   - delay: 00:10:00
@@ -3380,51 +3306,120 @@
   trigger:
   - platform: time
     at: input_datetime.birthday_reminder_time
+    id: reminder-time
+  - platform: state
+    entity_id:
+    - sensor.wall_connector_vehicle
+    id: wall-connector-vehicle-change
   condition: []
   action:
-  - if:
-    - condition: time
-      weekday:
-      - mon
-      before: 00:00:00
-    then:
-    - service: script.notify_sarah_and_nathan
-      data:
-        message: Tesla Charging Summary
-        url: /lovelace/tesla
-        more_info: 'Cost at Home so far this Month: ${{states(''sensor.tesla_home_monthly_charging_cost'')}}
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - reminder-time
+      sequence:
+      - if:
+        - condition: time
+          weekday:
+          - mon
+          before: 00:00:00
+        then:
+        - data:
+            message: Tesla Charging Summary
+            url: /lovelace/tesla
+            more_info: 'Cost at Home so far this Month: ${{states(''sensor.tesla_home_monthly_charging_cost'')}}
 
-          Cost at Rusty and Donna''s Last Week: ${{states(''sensor.last_week_s_charging_cost_at_rusty_and_donna_s'')}}
+              Cost at Rusty and Donna''s Last Week: ${{states(''sensor.last_week_s_charging_cost_at_rusty_and_donna_s'')}}
 
-          Click for more'
-        notify_sarah: true
-        notify_nathan: true
-        use_alexa: false
-        text_nathan: false
-        text_sarah: false
-        text_ice_contacts: false
-        bypass_quiet_mode: false
-  - if:
-    - condition: template
-      value_template: '{{ now().day == 1 }}'
-    then:
-    - service: script.notify_sarah_and_nathan
-      data:
-        message: '{{(now().replace(day=1) - timedelta(days=1)).strftime(''%B'')}}
-          Tesla Charging Summary'
-        url: /lovelace/tesla
-        more_info: 'Home Charging: ${{states(''sensor.home_charging_cost_last_month'')}}
+              Click for more'
+            notify_sarah: true
+            notify_nathan: true
+            use_alexa: false
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+          action: script.notify_sarah_and_nathan
+      - if:
+        - condition: template
+          value_template: '{{ now().day == 1 }}'
+        then:
+        - data:
+            message: '{{(now().replace(day=1) - timedelta(days=1)).strftime(''%B'')}}
+              Tesla Charging Summary'
+            url: /lovelace/tesla
+            more_info: 'Home Charging: ${{states(''sensor.home_charging_cost_last_month'')}}
 
-          Garrett Charging: ${{states(''sensor.others_charging_at_home_cost_last_month'')}}'
-        notify_sarah: true
-        notify_nathan: true
-        use_alexa: false
-        text_nathan: false
-        text_sarah: false
-        text_ice_contacts: false
-        bypass_quiet_mode: false
-        use_persistent_notification: true
-        persistent_notification_id: charging-stats
+              Garrett Charging: ${{states(''sensor.others_charging_at_home_cost_last_month'')}}'
+            notify_sarah: true
+            notify_nathan: true
+            use_alexa: false
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            use_persistent_notification: true
+            persistent_notification_id: charging-stats
+          action: script.notify_sarah_and_nathan
+        - action: script.notify_sarah_and_nathan
+          metadata: {}
+          data:
+            use_alexa: false
+            use_persistent_notification: true
+            notify_sarah: false
+            notify_nathan: true
+            text_nathan: false
+            text_sarah: false
+            text_garrett: true
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            message: Tianna Charging for Last Month
+            more_info: 'Total Cost Last Month: ${{((state_attr("sensor.tiana_utility_meter",
+              "last_period") | float(0)) * (states("sensor.brightridge_electricity_price")
+              | float)) | round(2)}}
+
+              Energy Usage: {{(state_attr("sensor.tiana_utility_meter", "last_period")
+              | float(0) | round(2))}} kWh
+
+              Electric Price: ${{states("sensor.brightridge_electricity_price") |
+              float | round(3)}}
+
+              Click to Pay: https://account.venmo.com/?txn=pay&audience=friends&recipients=nathanorick&amount={{((state_attr("sensor.tiana_utility_meter",
+              "last_period") | float(0)) * (states("sensor.brightridge_electricity_price")
+              | float)) | round(2)}}&note=Juice%20%E2%9A%A1%EF%B8%8F'
+    - conditions:
+      - condition: trigger
+        id:
+        - wall-connector-vehicle-change
+      - condition: template
+        value_template: '{{trigger.from_state.state == states(''input_text.tiana_vin'')}}'
+      sequence:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: true
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_garrett: true
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Thanks for Charging
+          more_info: 'Cost this Session: ${{(states("sensor.tiana_energy_added") |
+            float(0)* (states("sensor.brightridge_electricity_price") | float)) |
+            round(2)}}
+
+            Total Cost This Month: ${{((states("sensor.tiana_utility_meter") | float(0))
+            * (states("sensor.brightridge_electricity_price") | float)) | round(2)}}
+
+            Energy Usage: {{(states("sensor.tiana_utility_meter") | float(0) | round(2))}}
+            kWh
+
+            Electric Price: ${{states("sensor.brightridge_electricity_price") | float
+            | round(3)}} / kWh'
   mode: single
 - id: '1656699090791'
   alias: Ikea Shortcut Button -- Nursery
@@ -4934,6 +4929,8 @@
       - condition: trigger
         id:
         - omada-no-guests-on-network
+      - condition: template
+        value_template: '{{ trigger.from_state.state != "unavailable" }}'
       sequence:
       - service: script.notify_sarah_and_nathan
         metadata: {}
@@ -5741,7 +5738,7 @@
       - service: vacuum.return_to_base
         data: {}
         target:
-          entity_id: vacuum.rooben
+          entity_id: vacuum.rob
   mode: parallel
   max: 10
 - id: '1696595424459'
@@ -5916,7 +5913,7 @@
             text_sarah: false
             text_ice_contacts: false
             bypass_quiet_mode: false
-            message: Baby Crying
+            message: Baby Crying Bedroom
             notification_actions:
             - action: TURN-OFF-AWAKE-NOTIFICATION
               title: Turn Off
@@ -5999,7 +5996,7 @@
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-          message: Baby Crying
+          message: Baby Crying Nursery
           mobile_message_group: baby-cry
           notification_actions:
           - action: TURN-OFF-AWAKE-NOTIFICATION
@@ -6238,7 +6235,7 @@
           - binary_sensor.bedroom_presence_presence_sensor_1
           for:
             hours: 0
-            minutes: 8
+            minutes: 4
             seconds: 0
           from: 'off'
           to: 'on'
@@ -6270,11 +6267,16 @@
         data: {}
         target:
           entity_id: automation.turn_on_guest_bathroom_when_motion_detected_3
-      - service: input_button.press
-        metadata: {}
-        data: {}
-        target:
-          entity_id: input_button.start_baby_bedtime
+      - if:
+        - condition: state
+          entity_id: binary_sensor.occupied
+          state: 'on'
+        then:
+        - service: input_button.press
+          metadata: {}
+          data: {}
+          target:
+            entity_id: input_button.start_baby_bedtime
     - conditions:
       - condition: trigger
         id:
@@ -6314,14 +6316,19 @@
           unique_id: 990fab8f-52b8-4f2c-8097-6f76c6a3d12c
         continue_on_timeout: false
         timeout:
-          hours: 0
-          minutes: 45
+          hours: 2
+          minutes: 30
           seconds: 0
           milliseconds: 0
       - service: scene.turn_on
         metadata: {}
         target:
           entity_id: scene.sleep
+      - service: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.notify_baby_awake
     - conditions:
       - condition: trigger
         id:
@@ -6425,6 +6432,9 @@
       - condition: state
         entity_id: binary_sensor.owlet_baby_care_sock_awake
         state: unavailable
+      - condition: state
+        entity_id: binary_sensor.occupied
+        state: 'on'
       sequence:
       - service: input_button.press
         target:
@@ -7375,21 +7385,40 @@
   trigger:
   - platform: state
     entity_id:
-    - sensor.omada_guest_checker_mqtt_sensor
+    - binary_sensor.power_outage_checker_locust_online_status
     to: unavailable
-    id: power-out
+    id: power-out-locust
   - platform: state
     entity_id:
-    - sensor.omada_guest_checker_mqtt_sensor
-    id: power-on
+    - binary_sensor.power_outage_checker_walnut_online_status
+    to: unavailable
+    id: power-out-walnut
+  - platform: state
+    entity_id:
+    - binary_sensor.power_outage_checker_locust_online_status
+    id: power-on-locust
     from: unavailable
+    to: 'on'
+  - platform: state
+    entity_id:
+    - binary_sensor.power_outage_checker_walnut_online_status
+    id: power-on-walnut
+    from: unavailable
+    to: 'on'
   condition: []
   action:
   - choose:
     - conditions:
       - condition: trigger
         id:
-        - power-out
+        - power-out-locust
+        - power-out-walnut
+      - condition: state
+        entity_id: binary_sensor.power_outage_checker_locust_online_status
+        state: unavailable
+      - condition: state
+        entity_id: binary_sensor.power_outage_checker_walnut_online_status
+        state: unavailable
       sequence:
       - service: script.notify_sarah_and_nathan
         metadata: {}
@@ -7407,7 +7436,10 @@
     - conditions:
       - condition: trigger
         id:
-        - power-on
+        - power-on-walnut
+      - condition: state
+        entity_id: binary_sensor.power_outage_checker_locust_online_status
+        state: unavailable
       sequence:
       - service: script.notify_sarah_and_nathan
         metadata: {}
@@ -7422,4 +7454,177 @@
           bypass_quiet_mode: false
           message: Power Back On
           more_info: The power came back on at {{ now() | as_local }}
+    - conditions:
+      - condition: trigger
+        id:
+        - power-on-locust
+      - condition: state
+        entity_id: binary_sensor.power_outage_checker_walnut_online_status
+        state: unavailable
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: true
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          message: Power Back On
+          more_info: The power came back on at {{ now() | as_local }}
+  mode: single
+- id: '1721912607838'
+  alias: Vacation Mode
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.vacation_mode
+    to: 'on'
+    from: 'off'
+    id: vacation-mode-on
+  - platform: state
+    entity_id:
+    - input_boolean.vacation_mode
+    to: 'on'
+    from: 'off'
+    id: vacation-mode-off
+  - platform: numeric_state
+    entity_id: proximity.home
+    below: '80'
+    id: headed_home
+  - platform: numeric_state
+    entity_id: proximity.home
+    id: leaving_home
+    above: '80'
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - vacation-mode-off
+      sequence:
+      - service: input_boolean.turn_off
+        data: {}
+        target:
+          entity_id: input_boolean.keep_ac_in_eco
+      - service: climate.set_preset_mode
+        data:
+          preset_mode: none
+        target:
+          entity_id: climate.kitchen
+    - conditions:
+      - condition: trigger
+        id:
+        - vacation-mode-on
+      sequence:
+      - service: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.keep_ac_in_eco
+      - service: climate.set_preset_mode
+        data:
+          preset_mode: eco
+        target:
+          entity_id: climate.kitchen
+      - service: script.deep_clean
+        metadata: {}
+        data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - headed_home
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: AC Turned On
+          more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
+            %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
+            | default(fallback.to_state) %} {% set value = value.attributes | default(fallback.to_state.attributes)
+            %} {% set value = value.nearest | default(fallback.to_state.attributes.nearest)
+            %} {% set person = value.split('','') | join('' and'') %} {% set verb
+            = ''is'' %} {% if person == ''you'' or value.split('','') | count > 1
+            %} {% set verb = ''are'' %} {% endif %} Home Assistant has observed {{
+            person }} {{ verb }} headed home and has turned on the AC and turned off
+            vacation mode. If this is not expected, click this notification to turn
+            it off.'
+          url: /lovelace/climate
+          notify_nathan: true
+          notify_sarah: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+      - service: input_boolean.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.vacation_mode
+    - conditions:
+      - condition: trigger
+        id:
+        - leaving_home
+      sequence:
+      - service: script.notify_sarah_and_nathan
+        data:
+          message: AC Turned Off
+          more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
+            %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
+            | default(fallback.to_state) %} {% set value = value.attributes | default(fallback.to_state.attributes)
+            %} {% set value = value.nearest | default(fallback.to_state.attributes.nearest)
+            %} {% set person = value.split('','') | join('' and'') %} {% set verb
+            = ''is'' %} {% if person == ''you'' or value.split('','') | count > 1
+            %} {% set verb = ''are'' %} {% endif %} Home Assistant has observed {{
+            person }} {{ verb }} leaving home and has turned off the AC and turned
+            on vacation mode. If this is not expected, click this notification to
+            turn it back on.'
+          url: /lovelace/climate
+          notify_nathan: true
+          notify_sarah: true
+          text_nathan: false
+          text_sarah: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+      - service: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.vacation_mode
+    default: []
+  mode: parallel
+  max: 10
+- id: '1721933199557'
+  alias: Set Up Vacuum Room List
+  description: ''
+  trigger:
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - metadata: {}
+    data: {}
+    target:
+      entity_id: vacuum.rob
+    response_variable: maps
+    action: roborock.get_maps
+  - variables:
+      options: "{% set segToRoomDict = maps['vacuum.rob'].maps[0].rooms %} {% set
+        data = namespace(roomArr=[]) %} {% for seg, room in segToRoomDict | items
+        %}\n  {% set data.roomArr = data.roomArr + [room] %}\n{%- endfor -%}\n{{data.roomArr}}"
+  - metadata: {}
+    data:
+      options: '{{options}}'
+    target:
+      entity_id:
+      - input_select.vacuum_rooms
+    action: input_select.set_options
   mode: single

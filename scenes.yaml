@@ -895,31 +895,6 @@
       friendly_name: Nathan's Nightstand
       supported_features: 63
       state: 'on'
-- id: '1665147205036'
-  name: Tesla Climate
-  entities:
-    climate.tesleigh_lynn_hvac_climate_system:
-      hvac_modes:
-      - heat_cool
-      - 'off'
-      min_temp: 59
-      max_temp: 82
-      preset_modes:
-      - Normal
-      - Defrost
-      - Keep On
-      - Dog Mode
-      - Camp Mode
-      current_temperature: 87
-      temperature: 68
-      preset_mode: Normal
-      attribution: Data provided by Tesla
-      friendly_name: Tesleigh Lynn Hvac (climate) system
-      supported_features: 17
-      state: heat_cool
-  metadata:
-    climate.tesleigh_lynn_hvac_climate_system:
-      entity_only: true
 - id: '1679091745412'
   name: Cleaning
   entities:
