@@ -1496,13 +1496,13 @@
     at: input_datetime.roomba_run_time
   condition: []
   action:
-  - service: script.vacuum_rooms
-    data:
+  - data:
       rooms:
       - Kitchen
       - Living Room
       - Dining Room
-      - Laundry Room
+      - Office
+    action: script.vacuum_rooms
 - id: '1586661602545'
   alias: Turn On Master Bedroom Before Bed
   description: ''
@@ -2708,14 +2708,14 @@
         after: sunset
         after_offset: -01:00:00
       sequence:
-      - service: light.turn_on
-        target:
+      - target:
           entity_id: '{{ lights }}'
+        action: light.turn_on
     default: []
-  - service: switch.turn_off
-    entity_id: switch.mudroom_camera
-  - service: alarm_control_panel.alarm_disarm
-    entity_id: alarm_control_panel.alexa_guard_ee9c2
+  - entity_id: switch.mudroom_camera
+    action: switch.turn_off
+  - entity_id: alarm_control_panel.alexa_guard_ee9c2
+    action: alarm_control_panel.alarm_disarm
   - if:
     - condition: not
       conditions:
@@ -2723,21 +2723,22 @@
         entity_id: climate.kitchen
         state: 'off'
     then:
-    - service: input_boolean.turn_off
-      data: {}
+    - data: {}
       target:
         entity_id: input_boolean.keep_ac_in_eco
-    - service: climate.set_preset_mode
-      target:
+      action: input_boolean.turn_off
+    - target:
         entity_id: climate.kitchen
       data:
         preset_mode: none
       enabled: true
+      action: climate.set_preset_mode
   - data: {}
-    entity_id: vacuum.rob
-    service: vacuum.stop
     enabled: false
-  - wait_template: '{{ is_state(''vacuum.rob'', ''idle'') }}'
+    action: vacuum.stop
+    target:
+      entity_id: vacuum.roborock_s8_max_ultra
+  - wait_template: '{{ is_state(''vacuum.roborock_s8_max_ultra'', ''idle'') }}'
     continue_on_timeout: true
     timeout: 00:00:10
     enabled: false
@@ -2747,13 +2748,14 @@
       entity_id: input_boolean.visitors
     then:
     - data: {}
-      entity_id: vacuum.rob
-      service: vacuum.return_to_base
       enabled: true
+      action: vacuum.return_to_base
+      target:
+        entity_id: vacuum.roborock_s8_max_ultra
   - delay: 00:10:00
-  - service: light.turn_off
-    target:
+  - target:
       entity_id: '{{ lights }}'
+    action: light.turn_off
   variables:
     lights:
     - light.front_porch
@@ -5239,155 +5241,6 @@
         target:
           entity_id: media_player.bathroom_echo
   mode: single
-- id: '1692121776382'
-  alias: NWS Check for Multi Alerts
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: sensor.nws_alerts
-  condition:
-  - '{{ states(''sensor.nws_alerts'') | int > 0 }}'
-  - '{{ trigger.to_state.state|int > trigger.from_state.state|int }}'
-  action:
-  - choose:
-    - conditions:
-      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) > 1 }}'
-      sequence:
-      - service: input_boolean.turn_on
-        entity_id: input_boolean.nws_multi_alert
-      - delay:
-          seconds: 30
-      - service: input_boolean.turn_on
-        entity_id: input_boolean.nws_multi_alert
-    - conditions:
-      - '{{ (trigger.to_state.state | int - trigger.from_state.state|int) == 1 }}'
-      sequence:
-      - service: input_boolean.turn_off
-        entity_id: input_boolean.nws_multi_alert
-- id: '1692122004156'
-  alias: NWS Weather Alert Pop Up Control
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: sensor.nws_alerts
-  condition:
-  - condition: template
-    value_template: '{{ states(''sensor.nws_alerts'') | int > 0 }}'
-  - condition: template
-    value_template: '{{ trigger.to_state.state|int > trigger.from_state.state|int
-      }}'
-  - condition: template
-    value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[0]
-      not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and (state_attr(''sensor.nws_alerts'',
-      ''event_id'').split(''-'')[0] != states(''sensor.nws_alerts_event_ids'')) }}'
-  action:
-  - delay:
-      seconds: 5
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.nws_multi_alert
-        state: 'on'
-      - condition: template
-        value_template: '{{ (trigger.to_state.state | int - trigger.from_state.state|int)
-          == 2 }}'
-      - condition: template
-        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1]
-          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
-          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
-          }}'
-      sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
-            }}"
-
-            '
-          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
-            }}"
-
-            '
-          use_persisten_notification: true
-          persistent_notification_id: nwswxalert
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
-            }}"
-
-            '
-          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
-            }}"
-
-            '
-          use_persisten_notification: true
-          persistent_notification_id: nwswxalert
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.nws_multi_alert
-        state: 'on'
-      - condition: template
-        value_template: '{{ (trigger.to_state.state | int - trigger.from_state.state|int)
-          == 3 }}'
-      - condition: template
-        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1]
-          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
-          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[1] != states(''sensor.nws_alerts_event_ids''))
-          }}'
-      - condition: template
-        value_template: '{{ (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2]
-          not in states.sensor.nws_alerts_event_ids.attributes.values()|list) and
-          (state_attr(''sensor.nws_alerts'', ''event_id'').split(''-'')[2] != states(''sensor.nws_alerts_event_ids''))
-          }}'
-      sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
-            }}"
-
-            '
-          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
-            }}"
-
-            '
-          use_persisten_notification: true
-          persistent_notification_id: nwswxalert
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[1]
-            }}"
-
-            '
-          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[1]
-            }}"
-
-            '
-          use_persisten_notification: true
-          persistent_notification_id: nwswxalert
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[2]
-            }}"
-
-            '
-          more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[2]
-            }}"
-
-            '
-          use_persisten_notification: true
-          persistent_notification_id: nwswxalert
-    default:
-    - service: script.notify_sarah_and_nathan
-      data:
-        message: '"{{ state_attr(''sensor.nws_alerts'', ''title'').split('' - '')[0]
-          }}"
-
-          '
-        more_info: '"{{ state_attr(''sensor.nws_alerts'', ''display_desc'').split(''\n\n-\n\n'')[0]
-          }}"
-
-          '
-        use_persisten_notification: true
-        persistent_notification_id: nwswxalert
 - id: '1692122338194'
   alias: NWS Announce Weather Alert
   trigger:
@@ -5484,40 +5337,6 @@
         use_persistent_notification: true
         persistent_notification_id: weather
   initial_state: 'on'
-- id: '1692123608848'
-  alias: NWS Update Event ID Variable
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: sensor.nws_alerts
-  action:
-  - service: variable.set_variable
-    data:
-      variable: nws_alerts_event_ids
-      attributes:
-        history_1: '{{ states(''sensor.nws_alerts_event_ids'') }}'
-        history_2: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_1'')
-          }}'
-        history_3: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_2'')
-          }}'
-        history_4: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_3'')
-          }}'
-        history_5: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_4'')
-          }}'
-        history_6: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_5'')
-          }}'
-        history_7: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_6'')
-          }}'
-        history_8: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_7'')
-          }}'
-        history_9: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_8'')
-          }}'
-        history_10: '{{ state_attr(''sensor.nws_alerts_event_ids'', ''history_9'')
-          }}'
-  - service: variable.set_variable
-    data:
-      variable: nws_alerts_event_ids
-      value: '{{ (trigger.to_state.attributes.event_id).split(''-'')[0] }}'
 - id: '1694468089195'
   alias: Bedroom Presence
   description: ''
@@ -5576,11 +5395,11 @@
         state: 'off'
       alias: Sarah Gets Up at Night
       sequence:
-      - service: light.turn_on
-        data:
+      - data:
           brightness: 7
         target:
           entity_id: light.sarah_s_nightstand
+        action: light.turn_on
       - wait_for_trigger:
         - platform: state
           entity_id:
@@ -5599,10 +5418,10 @@
         entity_id: light.sarah_s_nightstand
         attribute: brightness
         below: 26
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: light.sarah_s_nightstand
+        action: light.turn_off
     - conditions:
       - condition: trigger
         id:
@@ -5615,11 +5434,11 @@
         state: 'off'
       alias: Nathan Gets Up at Night
       sequence:
-      - service: light.turn_on
-        data:
+      - data:
           brightness: 8
         target:
           entity_id: light.nathan_s_nightstand
+        action: light.turn_on
       - wait_for_trigger:
         - platform: state
           entity_id:
@@ -5637,10 +5456,10 @@
         entity_id: light.nathan_s_nightstand
         attribute: brightness
         below: 26
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: light.nathan_s_nightstand
+        action: light.turn_off
     - conditions:
       - condition: trigger
         id:
@@ -5673,11 +5492,11 @@
             state: 'on'
           then:
           - stop: Came out of the bathroom. Leave lights on
-      - service: light.turn_off
-        data:
+      - data:
           transition: 7
         target:
           area_id: b2672f722c53428e92427703040fb764
+        action: light.turn_off
     - conditions:
       - condition: trigger
         id:
@@ -5686,10 +5505,10 @@
         entity_id: light.bathroom
         state: 'off'
       sequence:
-      - service: scene.turn_on
-        target:
+      - target:
           entity_id: scene.bathroom_night
         metadata: {}
+        action: scene.turn_on
       - wait_for_trigger:
         - platform: state
           entity_id:
@@ -5716,10 +5535,10 @@
         then:
         - stop: Done. Bathroom Lights will stay on
         else:
-        - service: light.turn_off
-          data: {}
+        - data: {}
           target:
             entity_id: light.bathroom
+          action: light.turn_off
     - conditions:
       - condition: trigger
         id:
@@ -5735,10 +5554,10 @@
           - binary_sensor.bedroom_presence_presence_sensor_11
           to: 'on'
         continue_on_timeout: false
-      - service: vacuum.return_to_base
-        data: {}
+      - data: {}
+        action: vacuum.return_to_base
         target:
-          entity_id: vacuum.rob
+          entity_id: vacuum.roborock_s8_max_ultra
   mode: parallel
   max: 10
 - id: '1696595424459'
@@ -5823,6 +5642,10 @@
     from: false
     to: true
     id: clean-brezza
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
   - platform: state
     entity_id:
     - binary_sensor.owlet_baby_care_sock_awake
@@ -5870,6 +5693,10 @@
     from: false
     to: true
     id: add-brezza-water
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
   - platform: state
     entity_id: binary_sensor.hallway_input
     not_from: unavailable
@@ -5904,8 +5731,7 @@
           state: 'on'
           entity_id: input_boolean.notify_baby_awake
         then:
-        - service: script.notify_sarah_and_nathan
-          data:
+        - data:
             use_alexa: false
             notify_sarah: true
             notify_nathan: true
@@ -5918,22 +5744,22 @@
             - action: TURN-OFF-AWAKE-NOTIFICATION
               title: Turn Off
             mobile_message_group: baby-cry
+          action: script.notify_sarah_and_nathan
         - if:
           - condition: state
             entity_id: binary_sensor.bedroom_presence_presence_sensor_1
             state: 'off'
           then:
-          - service: notify.alexa_media_living_room_echo
-            data:
+          - data:
               message: 'Baby Crying '
+            action: notify.alexa_media_living_room_echo
       - if:
         - condition: state
           entity_id: binary_sensor.sarah_baby_shift
           state: 'on'
           enabled: true
         then:
-        - service: light.turn_on
-          data:
+        - data:
             rgb_color:
             - 0
             - 255
@@ -5941,25 +5767,25 @@
             brightness: 50
           target:
             entity_id: light.bedroom_ceiling_3
+          action: light.turn_on
         - delay:
             hours: 0
             minutes: 1
             seconds: 0
             milliseconds: 0
-        - service: light.turn_on
-          target:
+        - target:
             entity_id: light.bedroom_ceiling_3
           data:
             color_temp: 347
             brightness: 22
+          action: light.turn_on
         enabled: false
       - if:
         - condition: state
           state: 'on'
           entity_id: binary_sensor.tater_baby_shift
         then:
-        - service: light.turn_on
-          data:
+        - data:
             rgb_color:
             - 255
             - 0
@@ -5967,17 +5793,18 @@
             brightness: 64
           target:
             entity_id: light.bedroom_ceiling_1
+          action: light.turn_on
         - delay:
             hours: 0
             minutes: 1
             seconds: 0
             milliseconds: 0
-        - service: light.turn_on
-          target:
+        - target:
             entity_id: light.bedroom_ceiling_1
           data:
             color_temp: 349
             brightness: 20
+          action: light.turn_on
         enabled: false
     - conditions:
       - condition: trigger
@@ -5987,8 +5814,7 @@
         state: 'on'
         entity_id: input_boolean.notify_baby_awake
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           use_alexa: false
           notify_sarah: true
           notify_nathan: true
@@ -6003,6 +5829,7 @@
             title: Turn Off
           - action: ACKNOWLEDGE-BABY-CRYING
             title: Acknowledge
+        action: script.notify_sarah_and_nathan
       - wait_for_trigger:
         - platform: event
           event_type: mobile_app_notification_action
@@ -6011,7 +5838,7 @@
         timeout:
           hours: 0
           minutes: 0
-          seconds: 20
+          seconds: 55
           milliseconds: 0
       - if:
         - condition: template
@@ -6028,36 +5855,35 @@
             entity_id: input_boolean.quiet_mode
             state: 'off'
           then:
-          - service: notify.alexa_media_living_room_echo
-            data:
+          - data:
               message: 'Baby Crying '
+            action: notify.alexa_media_living_room_echo
       - if:
         - condition: state
           entity_id: input_boolean.night_mode
           state: 'on'
         then:
-        - service: media_player.volume_set
-          metadata: {}
+        - metadata: {}
           data:
             volume_level: 1
           target:
             entity_id: media_player.bedroom_echo
-        - service: notify.alexa_media
-          data:
+          action: media_player.volume_set
+        - data:
             data:
               type: tts
             target:
             - media_player.bedroom_echo
             message: <audio src="https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/sounds/nws_alert_tone.mp3"
               />
+          action: notify.alexa_media
         enabled: true
       - if:
         - condition: state
           state: 'on'
           entity_id: binary_sensor.tater_baby_shift
         then:
-        - service: light.turn_on
-          data:
+        - data:
             rgb_color:
             - 255
             - 0
@@ -6065,25 +5891,25 @@
             brightness: 64
           target:
             entity_id: light.bedroom_ceiling_1
+          action: light.turn_on
         - delay:
             hours: 0
             minutes: 1
             seconds: 0
             milliseconds: 0
-        - service: light.turn_on
-          target:
+        - target:
             entity_id: light.bedroom_ceiling_1
           data:
             color_temp: 349
             brightness: 20
+          action: light.turn_on
         enabled: true
       - if:
         - condition: state
           entity_id: binary_sensor.sarah_baby_shift
           state: 'on'
         then:
-        - service: light.turn_on
-          data:
+        - data:
             rgb_color:
             - 0
             - 255
@@ -6091,47 +5917,47 @@
             brightness: 50
           target:
             entity_id: light.bedroom_ceiling_3
+          action: light.turn_on
         - delay:
             hours: 0
             minutes: 1
             seconds: 0
             milliseconds: 0
-        - service: light.turn_on
-          target:
+        - target:
             entity_id: light.bedroom_ceiling_3
           data:
             color_temp: 347
             brightness: 22
+          action: light.turn_on
         enabled: true
     - conditions:
       - condition: trigger
         id:
         - day-bottle
       sequence:
-      - service: fpa.turn_on
-        metadata: {}
+      - metadata: {}
         data:
           bottle_id: '118458'
         target:
           entity_id: sensor.my_baby_brezza
+        action: fpa.turn_on
     - conditions:
       - condition: trigger
         id:
         - night-bottle
       sequence:
-      - service: fpa.turn_on
-        metadata: {}
+      - metadata: {}
         data:
           bottle_id: '118472'
         target:
           entity_id: sensor.my_baby_brezza
+        action: fpa.turn_on
     - conditions:
       - condition: trigger
         id:
         - clean-brezza
       sequence:
-      - service: script.notify_sarah_and_nathan
-        metadata: {}
+      - metadata: {}
         data:
           use_alexa: false
           notify_sarah: true
@@ -6141,6 +5967,7 @@
           text_ice_contacts: false
           bypass_quiet_mode: false
           message: Clean Baby Brezza
+        action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id:
@@ -6149,8 +5976,7 @@
         state: 'on'
         entity_id: input_boolean.notify_baby_awake
       sequence:
-      - service: script.notify_sarah_and_nathan
-        metadata: {}
+      - metadata: {}
         data:
           use_alexa: false
           notify_sarah: true
@@ -6165,6 +5991,7 @@
           - action: TURN-OFF-AWAKE-NOTIFICATION
             title: Turn Off
           mobile_message_group: baby-cry
+        action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id:
@@ -6175,8 +6002,7 @@
           entity_id: input_boolean.notify_baby_asleep
           state: 'on'
         then:
-        - service: script.notify_sarah_and_nathan
-          metadata: {}
+        - metadata: {}
           data:
             use_alexa: false
             use_persistent_notification: false
@@ -6193,13 +6019,13 @@
               title: Turn Off
             - action: SWITCH-TO-BABY-AWAKE
               title: Switch to Awake Notitifications
+          action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id:
         - bath-time
       sequence:
-      - service: script.notify_sarah_and_nathan
-        metadata: {}
+      - metadata: {}
         data:
           use_alexa: false
           use_persistent_notification: false
@@ -6213,22 +6039,23 @@
           notification_actions:
           - action: START_BATH
             title: Start Bathtime
+        action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id:
         - start-bath
         - start-bath-button
       sequence:
-      - service: scene.turn_on
-        metadata: {}
+      - metadata: {}
         target:
           entity_id: scene.baby_bathtime
-      - service: climate.set_temperature
-        target:
+        action: scene.turn_on
+      - target:
           entity_id: climate.bedroom_thermostat
         data:
           temperature: 80
           hvac_mode: heat
+        action: climate.set_temperature
       - wait_for_trigger:
         - platform: state
           entity_id:
@@ -6262,51 +6089,51 @@
           minutes: 15
           seconds: 0
           milliseconds: 0
-      - service: automation.turn_on
-        metadata: {}
+      - metadata: {}
         data: {}
         target:
           entity_id: automation.turn_on_guest_bathroom_when_motion_detected_3
+        action: automation.turn_on
       - if:
         - condition: state
           entity_id: binary_sensor.occupied
           state: 'on'
         then:
-        - service: input_button.press
-          metadata: {}
+        - metadata: {}
           data: {}
           target:
             entity_id: input_button.start_baby_bedtime
+          action: input_button.press
     - conditions:
       - condition: trigger
         id:
         - start-bedtime-button
       sequence:
-      - service: input_boolean.turn_on
-        metadata: {}
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.notify_baby_asleep
+        action: input_boolean.turn_on
       - if:
         - condition: state
           entity_id: sensor.my_baby_brezza
           attribute: bottle_missing
           state: false
         then:
-        - service: input_button.press
-          metadata: {}
+        - metadata: {}
           data: {}
           target:
             entity_id: input_button.make_night_bottle
+          action: input_button.press
       - if:
         - condition: state
           entity_id: binary_sensor.nursery_door_opening
           state: 'on'
         then:
-        - service: scene.turn_on
-          metadata: {}
+        - metadata: {}
           target:
             entity_id: scene.baby_bedtime
+          action: scene.turn_on
       - wait_for_trigger:
         - device_id: 2b1952c00e2b77698c3056571603399b
           domain: hue
@@ -6320,42 +6147,41 @@
           minutes: 30
           seconds: 0
           milliseconds: 0
-      - service: scene.turn_on
-        metadata: {}
+      - metadata: {}
         target:
           entity_id: scene.sleep
-      - service: input_boolean.turn_on
-        metadata: {}
+        action: scene.turn_on
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.notify_baby_awake
+        action: input_boolean.turn_on
     - conditions:
       - condition: trigger
         id:
         - turn-off-sleep-notifications
       sequence:
-      - service: input_boolean.turn_off
-        metadata: {}
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.notify_baby_asleep
+        action: input_boolean.turn_off
     - conditions:
       - condition: trigger
         id:
         - turn-off-awake-notifications
       sequence:
-      - service: input_boolean.turn_off
-        metadata: {}
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.notify_baby_awake
+        action: input_boolean.turn_off
     - conditions:
       - condition: trigger
         id:
         - add-brezza-water
       sequence:
-      - service: script.notify_sarah_and_nathan
-        metadata: {}
+      - metadata: {}
         data:
           use_alexa: false
           use_persistent_notification: false
@@ -6366,22 +6192,23 @@
           text_ice_contacts: false
           bypass_quiet_mode: false
           message: Brezza out of water
+        action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id:
         - switch-to-baby-awake-notifications
       sequence:
-      - service: input_boolean.turn_on
-        metadata: {}
+      - metadata: {}
         data: {}
         target:
           entity_id:
           - input_boolean.notify_baby_awake
-      - service: input_boolean.turn_off
-        metadata: {}
+        action: input_boolean.turn_on
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.notify_baby_asleep
+        action: input_boolean.turn_off
     - conditions:
       - condition: trigger
         id:
@@ -6400,28 +6227,28 @@
           seconds: 2
           milliseconds: 0
         continue_on_timeout: false
-      - service: input_button.press
-        target:
+      - target:
           entity_id: input_button.start_bath_time
         data: {}
+        action: input_button.press
     - conditions:
       - condition: trigger
         id:
         - owlet-alert
       sequence:
-      - service: media_player.volume_set
-        metadata: {}
+      - metadata: {}
         data:
           volume_level: 1
         target:
           entity_id: media_player.bedroom_echo
-      - service: notify.alexa_media
-        data:
+        action: media_player.volume_set
+      - data:
           data:
             type: tts
           target: media_player.bedroom_echo
           message: <audio src="https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/sounds/nws_alert_tone.mp3"
             />
+        action: notify.alexa_media
     - conditions:
       - condition: trigger
         id:
@@ -6436,10 +6263,10 @@
         entity_id: binary_sensor.occupied
         state: 'on'
       sequence:
-      - service: input_button.press
-        target:
+      - target:
           entity_id: input_button.start_baby_bedtime
         data: {}
+        action: input_button.press
   mode: parallel
   max: 10
 - id: '1705793102114'
@@ -7489,8 +7316,8 @@
   - platform: state
     entity_id:
     - input_boolean.vacation_mode
-    to: 'on'
-    from: 'off'
+    to: 'off'
+    from: 'on'
     id: vacation-mode-off
   - platform: numeric_state
     entity_id: proximity.home
@@ -7508,39 +7335,38 @@
         id:
         - vacation-mode-off
       sequence:
-      - service: input_boolean.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: input_boolean.keep_ac_in_eco
-      - service: climate.set_preset_mode
-        data:
+        action: input_boolean.turn_off
+      - data:
           preset_mode: none
         target:
           entity_id: climate.kitchen
+        action: climate.set_preset_mode
     - conditions:
       - condition: trigger
         id:
         - vacation-mode-on
       sequence:
-      - service: input_boolean.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id: input_boolean.keep_ac_in_eco
-      - service: climate.set_preset_mode
-        data:
+        action: input_boolean.turn_on
+      - data:
           preset_mode: eco
         target:
           entity_id: climate.kitchen
-      - service: script.deep_clean
-        metadata: {}
+        action: climate.set_preset_mode
+      - metadata: {}
         data: {}
+        action: script.deep_clean
     - conditions:
       - condition: trigger
         id:
         - headed_home
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           message: AC Turned On
           more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
             %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
@@ -7559,18 +7385,18 @@
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-      - service: input_boolean.turn_off
-        metadata: {}
+        action: script.notify_sarah_and_nathan
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.vacation_mode
+        action: input_boolean.turn_off
     - conditions:
       - condition: trigger
         id:
         - leaving_home
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           message: AC Turned Off
           more_info: '{% set fallback = {"to_state": {"attributes": {"nearest": "you"}}}
             %} {% set value = trigger | default(fallback) %} {% set value = value.to_state
@@ -7589,11 +7415,12 @@
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-      - service: input_boolean.turn_on
-        metadata: {}
+        action: script.notify_sarah_and_nathan
+      - metadata: {}
         data: {}
         target:
           entity_id: input_boolean.vacation_mode
+        action: input_boolean.turn_on
     default: []
   mode: parallel
   max: 10
@@ -7610,16 +7437,17 @@
       minutes: 5
       seconds: 0
       milliseconds: 0
+    enabled: true
   - metadata: {}
     data: {}
-    target:
-      entity_id: vacuum.rob
     response_variable: maps
     action: roborock.get_maps
+    target:
+      entity_id: vacuum.roborock_s8_max_ultra
   - variables:
-      options: "{% set segToRoomDict = maps['vacuum.rob'].maps[0].rooms %} {% set
-        data = namespace(roomArr=[]) %} {% for seg, room in segToRoomDict | items
-        %}\n  {% set data.roomArr = data.roomArr + [room] %}\n{%- endfor -%}\n{{data.roomArr}}"
+      options: "{% set segToRoomDict = maps['vacuum.roborock_s8_max_ultra'].maps[0].rooms
+        %} {% set data = namespace(roomArr=[]) %} {% for seg, room in segToRoomDict
+        | items %}\n  {% set data.roomArr = data.roomArr + [room] %}\n{%- endfor -%}\n{{data.roomArr}}"
   - metadata: {}
     data:
       options: '{{options}}'

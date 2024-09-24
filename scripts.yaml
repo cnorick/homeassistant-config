@@ -534,6 +534,7 @@ vacuum_rooms:
           - Office
           - Laundry Room
           - Living Room
+          - Bathroom
     repeat:
       selector:
         number:
@@ -555,28 +556,28 @@ vacuum_rooms:
     - condition: state
       entity_id: input_boolean.enable_vacuum
       state: 'on'
-  - service: roborock.get_maps
-    metadata: {}
+  - metadata: {}
     data: {}
-    target:
-      entity_id: vacuum.rob
     response_variable: maps
+    action: roborock.get_maps
+    target:
+      entity_id: vacuum.roborock_s8_max_ultra
   - variables:
-      segments: "{% set segToRoomDict = maps['vacuum.rob'].maps[0].rooms %}\n{% set
-        data = namespace(roomToSegArr=[], segments=[]) %}\n{% for seg, room in segToRoomDict
-        | items %}\n  {% set data.roomToSegArr = data.roomToSegArr + [(room | lower,
-        seg)] %}\n{%- endfor -%}\n{% set data.roomsDict = dict.from_keys(data.roomToSegArr)
+      segments: "{% set segToRoomDict = maps['vacuum.roborock_s8_max_ultra'].maps[0].rooms
+        %}\n{% set data = namespace(roomToSegArr=[], segments=[]) %}\n{% for seg,
+        room in segToRoomDict | items %}\n  {% set data.roomToSegArr = data.roomToSegArr
+        + [(room | lower, seg)] %}\n{%- endfor -%}\n{% set data.roomsDict = dict.from_keys(data.roomToSegArr)
         %}\n\n{% for room in rooms %}\n  {% set data.segments = data.segments + [data.roomsDict[room
         | lower]]%}\n{%- endfor -%}\n\n{{data.segments}}"
-  - service: vacuum.send_command
-    metadata: {}
+  - metadata: {}
     data:
       command: app_segment_clean
       params:
       - segments: '{{segments}}'
         repeat: '{{times}}'
+    action: vacuum.send_command
     target:
-      entity_id: vacuum.rob
+      entity_id: vacuum.roborock_s8_max_ultra
   mode: single
 new_script:
   alias: Heat Coffee Water
@@ -707,26 +708,25 @@ vacuum_next_area:
   sequence:
   - if:
     - condition: state
-      entity_id: vacuum.rob
       state: docked
+      entity_id: vacuum.roborock_s8_max_ultra
     then:
-    - service: script.vacuum_rooms
-      data:
+    - data:
         rooms:
         - '{{states(''input_select.rooms_not_vacuumed_in_morning'')}}'
-    - service: input_select.select_next
-      target:
+      action: script.vacuum_rooms
+    - target:
         entity_id: input_select.rooms_not_vacuumed_in_morning
       data:
         cycle: true
+      action: input_select.select_next
     else:
     - if:
       - condition: state
-        entity_id: vacuum.rob
         state: error
+        entity_id: vacuum.roborock_s8_max_ultra
       then:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           use_alexa: false
           notify_sarah: false
           notify_nathan: true
@@ -734,7 +734,8 @@ vacuum_next_area:
           text_sarah: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-          message: Rob has an Error
+          message: Rich Strike has an Error
+        action: script.notify_sarah_and_nathan
       enabled: true
   mode: single
 vacuum_until_condition_or_until_all_rooms_are_done:
@@ -1269,24 +1270,24 @@ deep_clean:
   alias: Deep Clean
   sequence:
   - condition: state
-    entity_id: vacuum.rob
     state: docked
-  - service: vacuum.start
-    metadata: {}
+    entity_id: vacuum.roborock_s8_max_ultra
+  - metadata: {}
     data: {}
+    action: vacuum.start
     target:
-      entity_id: vacuum.rob
-  - service: select.select_option
-    metadata: {}
+      entity_id: vacuum.roborock_s8_max_ultra
+  - metadata: {}
     data:
       option: Intense
+    action: select.select_option
     target:
-      entity_id: select.rob_mop_intensity
-  - service: vacuum.set_fan_speed
-    target:
-      entity_id: vacuum.rob
-    data:
+      entity_id: select.roborock_s8_max_ultra_mop_intensity
+  - data:
       fan_speed: Turbo
+    action: vacuum.set_fan_speed
+    target:
+      entity_id: vacuum.roborock_s8_max_ultra
   description: ''
 notify_ice_contacts:
   alias: Notify ICE Contacts
@@ -1303,4 +1304,32 @@ notify_ice_contacts:
       text_ice_contacts: true
       bypass_quiet_mode: false
       message: '{{states(''input_text.manual_ice_sms_text'')}}'
+  description: ''
+vacuum_single_room:
+  alias: Vacuum Single Room
+  sequence:
+  - if:
+    - condition: state
+      entity_id: vacuum.roborock_s8_max_ultra
+      state: cleaning
+    then:
+    - action: vacuum.stop
+      metadata: {}
+      data: {}
+      target:
+        entity_id: vacuum.roborock_s8_max_ultra
+  - action: script.vacuum_rooms
+    metadata: {}
+    data:
+      repeat: 1
+      overrideenablevacuumcheck: true
+      rooms: '{{[room]}}'
+  fields:
+    room:
+      selector:
+        state:
+          entity_id: input_select.vacuum_rooms
+      name: Room
+      required: true
+  mode: single
   description: ''
