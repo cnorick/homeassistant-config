@@ -25,3 +25,4 @@ home-assistant.log*
 zigbee.db-journal
 zigbee.db-shm
 zigbee.db-wal
+tesla_fleet.key

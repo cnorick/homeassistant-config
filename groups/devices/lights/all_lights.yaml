@@ -32,6 +32,7 @@ tplink_lights:
 other_lights:
   entities:
     - light.under_desk_lights
+    # - light.gazebo_fan
     # - light.nursery_ceiling_fan # Since this is on a remote and the on/off button are the same command, it gets toggled at the wrong time.
 
 all_lights:

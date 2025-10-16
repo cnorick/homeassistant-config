@@ -36,26 +36,26 @@
       unit_of_measurement: kWh
       state: >-
         {% if trigger.id == "unplugged" %}
-          {% if is_state("device_tracker.tesleigh_lynn_location_tracker", "home") %}
-            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.tesleigh_lynn_energy_added') | float(0)}}
+          {% if is_state("device_tracker.tesleigh_lynn_location", "home") %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.tesleigh_lynn_charge_energy_added') | float(0)}}
           {% else %}
             {{states('sensor.tesla_energy_added_at_home') | float(0)}}
           {% endif %}
         {% elif trigger.id == "left" %}
-          {% if states.binary_sensor.tesleigh_lynn_charger.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.tesleigh_lynn_charger', 'off') %}
-            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.tesleigh_lynn_energy_added') | float(0)}}
+          {% if states.binary_sensor.tesleigh_lynn_charge_cable.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.tesleigh_lynn_charge_cable', 'off') %}
+            {{states('sensor.tesla_energy_added_at_home') | float(0) + states('sensor.tesleigh_lynn_location') | float(0)}}
           {% else %}
             {{states('sensor.tesla_energy_added_at_home') | float(0)}}
           {% endif %}
         {% endif %}
   trigger:
     - platform: state
-      entity_id: binary_sensor.tesleigh_lynn_charger
+      entity_id: binary_sensor.tesleigh_lynn_charge_cable
       id: unplugged
       from: "on"
       to: "off"
     - platform: state
-      entity_id: device_tracker.tesleigh_lynn_location_tracker
+      entity_id: device_tracker.tesleigh_lynn_location
       id: left
       from: "home"
 - sensor:
@@ -68,26 +68,26 @@
       unit_of_measurement: kWh
       state: >-
         {% if trigger.id == "unplugged" %}
-          {% if is_state("device_tracker.tesleigh_lynn_location_tracker", "Donna and Rusty's") %}
-            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.tesleigh_lynn_energy_added') | float(0)}}
+          {% if is_state("device_tracker.tesleigh_lynn_location", "Donna and Rusty's") %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.tesleigh_lynn_charge_energy_added') | float(0)}}
           {% else %}
             {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0)}}
           {% endif %}
         {% elif trigger.id == "left" %}
-          {% if states.binary_sensor.tesleigh_lynn_charger.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.tesleigh_lynn_charger', 'off') %}
-            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.tesleigh_lynn_energy_added') | float(0)}}
+          {% if states.binary_sensor.tesleigh_lynn_charge_cable.last_changed + timedelta(minutes=1) >= now() and is_state('binary_sensor.tesleigh_lynn_charge_cable', 'off') %}
+            {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0) + states('sensor.tesleigh_lynn_charge_energy_added') | float(0)}}
           {% else %}
             {{states('sensor.energy_added_at_rusty_and_donna_s') | float(0)}}
           {% endif %}
         {% endif %}
   trigger:
     - platform: state
-      entity_id: binary_sensor.tesleigh_lynn_charger
+      entity_id: binary_sensor.tesleigh_lynn_charge_cable
       id: unplugged
       from: "on"
       to: "off"
     - platform: state
-      entity_id: device_tracker.tesleigh_lynn_location_tracker
+      entity_id: device_tracker.tesleigh_lynn_location
       id: left
       from: "Donna and Rusty's"
 - sensor:
@@ -146,3 +146,75 @@
       unit_of_measurement: $
       state: >-
         {{((states("sensor.monthly_energy_usage") | float) * (states("sensor.brightridge_electricity_price") | float)) | round(2)}}
+
+- trigger:
+    - platform: event
+      event_type: event_template_reloaded
+      id: refresh
+    - platform: homeassistant
+      event: start
+      id: refresh
+    - platform: time_pattern
+      minutes: "/1"
+  action:
+    - variables:
+        result: >
+          {% from 'interpolate.jinja' import value_to_range %}
+          {% set CO2 = [420,800,900,1000,2000,2500] %}
+          {% set CO  = [0.0, 3.0, 4.0, 5.0, 10.0, 15.0] %}
+          {% set NO2 = [0.0, 0.0, 0.1, 0.2, 0.25, 0.3] %}
+          {% set PM  = [0,30,60,100,200,400] %}
+          {% set PMda= [0,10,15,20,25,30] %}
+          {% set VOC = [0,80,120,250] %}
+          {% set NOx = [0,100,200,300,400] %}
+          {% set results = [
+            (value_to_range(states('sensor.apollo_air_1_8941f4_co2') | int(0), CO2),'CO2'),
+            (value_to_range(states('sensor.apollo_air_1_8941f4_carbon_monoxide') | float(0), CO),'CO'),
+            (value_to_range(states('sensor.apollo_air_1_8941f4_nitrogen_dioxide') | float(0), NO2),'NO2'),
+            (value_to_range(states('sensor.apollo_air_1_8941f4_pm_2_5_m_weight_concentration') | float(0), PM),'PM'),
+            (value_to_range(states('sensor.pm2_5_daily_average') | float(0), PMda),'PMda'),
+            (value_to_range(states('sensor.apollo_air_1_8941f4_sen55_voc') | int (0), VOC),'VOC'),
+            (value_to_range(states('sensor.apollo_air_1_8941f4_sen55_nox') | int (0), NOx),'NOx')
+            ] %}
+          {{ (results | sort) | last }}
+        index: "{{ result[0] | float(0) }}"
+    # - sequence:
+    #     - service: light.turn_on
+    #       target:
+    #         entity_id: light.apollo_air_1_8941f4_rgb_light
+    #       data:
+    #         rgb_color: >
+    #           {% from 'interpolate.jinja' import range_to_value %}
+    #           {%- set red  = [  0,200,238,255,255,255] -%}
+    #           {%- set green= [255,255,255,225,127,  0] -%}
+    #           {%- set blue = [ 25,  0,  0,  0,  0, 25] -%}
+    #           {%- set targetRGB = 
+    #             [range_to_value(index, red)|int(0),
+    #             range_to_value(index, green)|int(0),
+    #             range_to_value(index, blue)|int(0)
+    #             ] -%}
+    #           {{ targetRGB }}
+    #         brightness: >
+    #           {% from 'interpolate.jinja' import range_to_value %}
+    #           {% set brightness = [30,40,50,100,180,255,255] %}
+    #           {{ range_to_value(index,brightness) }}
+    #         effect: >
+    #           {% set effect = ['none','Slow Pulse','Fast Pulse'] %}
+    #           {{ effect[0] if index < 3.5 else 
+    #              effect[1] if index < 4.2 else
+    #              effect[2] }}
+  sensor:
+    - name: Air Quality Index inside
+      unique_id: air_quality_index_1
+      state: "{{ index }}"
+      device_class: aqi
+      attributes:
+        status: >
+          {% set mapper = {0: 'Excellent',
+                           1: 'Good',
+                           2: 'Fair',
+                           3: 'Weak',
+                           4: 'Poor',
+                           5: 'Terrible'} %}
+          {{ mapper[index|int(0)] }}
+        dominant: "{{ result[1] }}"

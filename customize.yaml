@@ -24,3 +24,5 @@ binary_sensor.guest_bedroom_door:
   device_class: door
 climate.bedroom_thermostat:
   target_temp_step: 1
+sensor.total_kitchen_watts:
+  device_class: power

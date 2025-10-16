@@ -1,101 +1,106 @@
 - cal_id: corick@vols.utk.edu
   entities:
-  - device_id: utk
-    ignore_availability: true
-    name: UTK
-    track: false
+    - device_id: utk
+      ignore_availability: true
+      name: UTK
+      track: false
 
 - cal_id: jta8mn45ge0lmu7cl0lvlm9igs@group.calendar.google.com
   entities:
-  - device_id: secret
-    ignore_availability: true
-    name: Secret
-    track: false
+    - device_id: secret
+      ignore_availability: true
+      name: Secret
+      track: false
 
 - cal_id: 37ei9ahtvp4251itaeb1listp0@group.calendar.google.com
   entities:
-  - device_id: home
-    ignore_availability: true
-    name: Home
-    track: true
-  - device_id: alarm
-    ignore_availability: true
-    name: Alarm
-    search: '#alarm'
-    track: true
-  - device_id: vacation
-    ignore_availability: true
-    name: Vacation
-    search: '#vacation'
-    track: true
-  - device_id: visitors
-    ignore_availability: true
-    name: Visitors
-    search: '#visitors'
-    track: true
-  - device_id: wfh
-    ignore_availability: true
-    name: Working From Home
-    search: '#wfh'
-    track: true
-  - device_id: vacuum
-    ignore_availability: true
-    name: Vacuum
-    search: '#vacuum'
-    track: true
-  - device_id: cleaners
-    ignore_availability: true
-    name: Cleaners
-    search: '#cleaners'
-    track: true
+    - device_id: home
+      ignore_availability: true
+      name: Home
+      track: true
+    - device_id: alarm
+      ignore_availability: true
+      name: Alarm
+      search: "#alarm"
+      track: true
+    - device_id: vacation
+      ignore_availability: true
+      name: Vacation
+      search: "#vacation"
+      track: true
+    - device_id: visitors
+      ignore_availability: true
+      name: Visitors
+      search: "#visitors"
+      track: true
+    - device_id: wfh
+      ignore_availability: true
+      name: Working From Home
+      search: "#wfh"
+      track: true
+    - device_id: vacuum
+      ignore_availability: true
+      name: Vacuum
+      search: "#vacuum"
+      track: true
+    - device_id: cleaners
+      ignore_availability: true
+      name: Cleaners
+      search: "#cleaners"
+      track: true
+    - device_id: babysitter
+      ignore_availability: true
+      name: Babysitter
+      search: "#babysitter"
+      track: true
 
 - cal_id: cnathanorick@gmail.com
   entities:
-  - device_id: gmail
-    ignore_availability: true
-    name: Gmail
-    track: true
+    - device_id: gmail
+      ignore_availability: true
+      name: Gmail
+      track: true
 
 - cal_id: addressbook#contacts@group.v.calendar.google.com
   entities:
-  - device_id: birthdays
-    ignore_availability: true
-    name: Birthdays
-    track: true
+    - device_id: birthdays
+      ignore_availability: true
+      name: Birthdays
+      track: true
 
 - cal_id: en.usa#holiday@group.v.calendar.google.com
   entities:
-  - device_id: holidays_in_united_states
-    ignore_availability: true
-    name: Holidays in United States
-    track: true
+    - device_id: holidays_in_united_states
+      ignore_availability: true
+      name: Holidays in United States
+      track: true
 
 - cal_id: family14545398298039458461@group.calendar.google.com
   entities:
-  - device_id: family
-    ignore_availability: true
-    name: Family
-    track: false
+    - device_id: family
+      ignore_availability: true
+      name: Family
+      track: false
 
 - cal_id: 1pd7nr1sa8qj14i73fgsu9odnc@group.calendar.google.com
   entities:
-  - device_id: work
-    ignore_availability: true
-    name: Work
-    track: true
-  - device_id: ooo
-    ignore_availability: true
-    name: Out of Office
-    search: 'OOO'
-    track: true
-  - device_id: work_holiday
-    ignore_availability: true
-    name: Work Holiday
-    search: '#Holiday'
-    track: true
+    - device_id: work
+      ignore_availability: true
+      name: Work
+      track: true
+    - device_id: ooo
+      ignore_availability: true
+      name: Out of Office
+      search: "OOO"
+      track: true
+    - device_id: work_holiday
+      ignore_availability: true
+      name: Work Holiday
+      search: "#Holiday"
+      track: true
 
 - cal_id: nathan.orick@capitalone.com
   entities:
-  - device_id: nathan_orick_capitalone_com
-    ignore_availability: true
-    name: nathan.orick@capitalone.com
+    - device_id: nathan_orick_capitalone_com
+      ignore_availability: true
+      name: nathan.orick@capitalone.com

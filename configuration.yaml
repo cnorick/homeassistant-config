@@ -98,13 +98,16 @@ rest_command: !include rest_commands.yaml
 camera: !include cameras.yaml
 # image_processing: !include image_processing.yaml
 
-aws:
-  credentials:
-    - name: HomeAssistantUser
-      aws_access_key_id: !secret aws_access_key_id
-      aws_secret_access_key: !secret aws_secret_access_key
-  notify:
-    - service: sns
-      region_name: us-east-1
-      aws_access_key_id: !secret aws_access_key_id
-      aws_secret_access_key: !secret aws_secret_access_key
+notify:
+  - name: nathan_gmail
+    platform: smtp
+    server: "smtp.gmail.com"
+    port: 587
+    timeout: 15
+    sender: !secret gmail_email
+    encryption: starttls
+    username: !secret gmail_email
+    password: !secret gmail_password
+    recipient:
+      - !secret gmail_email
+    sender_name: "Home Assistant"

@@ -1,0 +1,45 @@
+{# 
+  A dedicated interpolation function for a lists of increasing input values.
+  The output range depends on the size of the values list.
+  If the size of values is n, the ouput range is 0..n-1
+  Outlyers are either clipped to the first value if smaller, or the last value
+  Use-case: map air sensor values on a quality scale 
+#}
+{%- macro value_to_range(value, values = [0,1]) -%}   
+    {%- set nr = values | count -%}
+    {%- if value <= values[0] -%}
+      {{ 0.0 }}
+    {%- elif value >= values[nr-1] -%}
+      {{ nr-1 }}
+    {%- else -%}
+      {%- for i in range(nr-1) %}
+        {%- set v1 = values[i] -%}
+        {%- set v2 = values[i+1] -%}
+        {%- if v2 >= value -%}
+          {%- set interpolated = i + (value - v1) / (v2 - v1)  -%}
+          {{ interpolated }}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+  {%- endif -%}
+{%- endmacro -%}
+
+{# 
+  A dedicated interpolation function for any lists of at least 2 output values,
+  where the input value range depends on the size of the output values list.
+  If the size of output values is n, the expected input range is 0..n-1.
+  Note that inputs outside that range are clipped      
+  Use-case: generate continuous RGB / brightness values for an Air quality value
+#}
+{%- macro range_to_value(value, values=[0,1]) -%}
+  {%- set base = int(value) -%}
+  {%- set remain = value - base -%}
+  {%- set nr = values|length -%}
+  {%- if base < 0 -%}
+  {{ values[0] }}
+  {%- elif base < nr - 1 -%}
+  {{ int((1.0 - remain)*values[base] + remain*values[base+1])  }}
+  {%- else -%}
+  {{ values[nr-1] }}
+  {%- endif -%}
+{%- endmacro -%}

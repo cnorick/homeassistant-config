@@ -9,4 +9,8 @@ text_message:
   url: !secret text_url
   method: POST
   content_type: "application/json; charset=utf-8"
-  payload: '{"message": "{{ message | base64_encode }}", "contacts": {{ contacts | to_json }}}'
+  payload: '{"message": "{{ message | base64_encode }}", "contacts": {{ contacts | default([]) | to_json }}, "phoneNumbers": {{phoneNumbers | default([]) | to_json}}}'
+
+record:
+  url: !secret record_url
+  method: POST

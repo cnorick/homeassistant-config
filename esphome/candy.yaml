@@ -1,18 +1,23 @@
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
 esphome:
   name: candy
-  platform: ESP32
-  board: esp32dev
   on_boot:
     - script.execute: strip_boot
 
 # Enable logging
 logger:
+  #level: VERBOSE
 
 # Enable Home Assistant API
 # api:
 
 ota:
-  password: "e9703875c803eb941d5b9e8f0120d3a8"
+  - platform: esphome
+    password: "e9703875c803eb941d5b9e8f0120d3a8"
 
 wifi:
   ssid: !secret candy_wifi_ssid
@@ -230,7 +235,7 @@ light:
     effects: *light_strip_effects
 
 mqtt:
-  broker: 10.3.141.1
+  broker: halloween.local
   topic_prefix: candy-esp-1
 
   on_message:

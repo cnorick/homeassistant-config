@@ -499,21 +499,23 @@ start_tesla:
   alias: Start Tesla
   sequence:
   - action: climate.turn_on
-    target:
-      entity_id: climate.tesleigh_lynn_hvac_climate_system
     data: {}
     continue_on_error: true
+    target:
+      entity_id:
+      - climate.tesleigh_lynn_climate
   - if:
     - condition: numeric_state
-      entity_id: sensor.tesleigh_lynn_temperature_outside
+      entity_id: sensor.tesleigh_lynn_outside_temperature
       below: '45'
     then:
     - data:
-        preset_mode: defrost
-      target:
-        entity_id: climate.tesleigh_lynn_hvac_climate_system
+        preset_mode: Defrost
       action: climate.set_preset_mode
       continue_on_error: true
+      target:
+        entity_id:
+        - climate.tesleigh_lynn_climate
   mode: single
 vacuum_rooms:
   alias: Vacuum Room(s)
@@ -658,7 +660,7 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
   - if:
     - condition: state
       state: home
-      entity_id: device_tracker.tesleigh_lynn_location_tracker
+      entity_id: device_tracker.tesleigh_lynn_location
     then:
     - data: {}
       action: script.start_tesla
@@ -670,25 +672,29 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
     - if:
       - condition: state
         state: home
-        entity_id: device_tracker.tesleigh_lynn_destination_location_tracker
+        entity_id: device_tracker.tesleigh_lynn_location
       then:
       - data:
-          option: 'Off'
+          option: 'off'
         target:
           entity_id:
-          - select.tesleigh_lynn_heated_seat_left
-          - select.tesleigh_lynn_heated_seat_rear_center
-          - select.tesleigh_lynn_heated_seat_rear_right
-          - select.tesleigh_lynn_heated_seat_right
-          - select.tesleigh_lynn_heated_seat_rear_left
+          - select.tesleigh_lynn_seat_heater_front_left
+          - select.tesleigh_lynn_seat_heater_front_right
+          - select.tesleigh_lynn_seat_heater_rear_center
+          - select.tesleigh_lynn_seat_heater_rear_left
+          - select.tesleigh_lynn_seat_heater_rear_right
         action: select.select_option
+        enabled: false
       - data: {}
         target:
-          entity_id: switch.tesleigh_lynn_heated_steering
+          entity_id:
+          - switch.tesleigh_lynn_auto_steering_wheel_heater
         action: switch.turn_off
+        enabled: false
       - data: {}
         target:
-          entity_id: climate.tesleigh_lynn_hvac_climate_system
+          entity_id:
+          - climate.tesleigh_lynn_climate
         action: climate.turn_off
   mode: single
 lock_front_door:
@@ -1155,6 +1161,25 @@ notify_sarah_and_nathan:
       required: false
       selector:
         object:
+    use_siren:
+      selector:
+        boolean: {}
+      name: Use Siren
+      description: Whether or not to sound the siren
+      default: false
+      required: false
+    email_nathan:
+      description: Should this notification be sent in an email to Nathan
+      example: 'False'
+      default: false
+      selector:
+        boolean:
+      required: false
+    notify_pine_private:
+      selector:
+        boolean: {}
+      description: Whether or not to send a message on the Pine Private Meshtastic
+        Channel
   variables:
     quiet_mode: '{{ not bypass_quiet_mode and is_state(''input_boolean.quiet_mode'',
       ''on'')}}'
@@ -1264,31 +1289,62 @@ notify_sarah_and_nathan:
             Info]({{url}}) {%- endif -%}'
         action: persistent_notification.create
     default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ use_siren | default(false) }}'
+      sequence:
+      - action: siren.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: siren.esp_siren_esp_siren
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 30
+      - action: siren.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: siren.esp_siren_esp_siren
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ email_nathan | default(false) }}'
+      sequence:
+      - action: notify.nathan_gmail
+        data:
+          title: '{%- if more_info is defined -%}{{message}}{%- endif -%}'
+          message: "{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif\n -%}"
+          data:
+            html: "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
+              \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html lang=\"en\"
+              xmlns=\"http://www.w3.org/1999/xhtml\"> <body> <p>{%- if more_info is
+              defined -%}{{more_info}}{%- else -%}{{message}}{%- endif -%}</p>\n{%-
+              if url is defined -%} <br/> <a href=\"{{ url }}\">More info</a> {%-
+              endif -%}\n{%- if image is defined -%}\n    <br/>\n\n    <img src=\"{{
+              image }}\"/>\n{%- endif -%}\n</body> </html>"
+          target:
+          - '{{states("input_text.nathan_email")}}'
+    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ notify_pine_private | default(false) }}'
+      sequence:
+      - action: meshtastic.broadcast_channel_message
+        continue_on_error: true
+        data:
+          ack: true
+          channel: meshtastic.gateway_tree_channel_pineprivate
+          message: '{% set m = message ~ ''\n\n'' ~ more_info %}
+
+            {{m[:200]}}'
+    default: []
   mode: queued
   max: 10
-deep_clean:
-  alias: Deep Clean
-  sequence:
-  - condition: state
-    state: docked
-    entity_id: vacuum.roborock_s8_max_ultra
-  - metadata: {}
-    data: {}
-    action: vacuum.start
-    target:
-      entity_id: vacuum.roborock_s8_max_ultra
-  - metadata: {}
-    data:
-      option: Intense
-    action: select.select_option
-    target:
-      entity_id: select.roborock_s8_max_ultra_mop_intensity
-  - data:
-      fan_speed: Turbo
-    action: vacuum.set_fan_speed
-    target:
-      entity_id: vacuum.roborock_s8_max_ultra
-  description: ''
 notify_ice_contacts:
   alias: Notify ICE Contacts
   sequence:
@@ -1332,4 +1388,132 @@ vacuum_single_room:
       name: Room
       required: true
   mode: single
+  description: ''
+display_morning_dashboard:
+  sequence:
+  - variables:
+      remote: '{{remote_input}}'
+      chromecast: '{{chromecast_input}}'
+      dashboard_path: '{{dashboard_path_input}}'
+      view_path: '{{view_path_input}}'
+  - action: media_player.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: '{{chromecast}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - action: remote.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: '{{remote}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 15
+  - action: cast.show_lovelace_view
+    metadata: {}
+    data:
+      entity_id: '{{chromecast}}'
+      dashboard_path: '{{dashboard_path}}'
+      view_path: '{{view_path}}'
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - action: media_player.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: '{{chromecast}}'
+  - action: cast.show_lovelace_view
+    metadata: {}
+    data:
+      entity_id: '{{chromecast}}'
+      dashboard_path: '{{dashboard_path}}'
+      view_path: '{{view_path}}'
+  fields:
+    remote_input:
+      selector:
+        entity:
+          filter:
+            domain: remote
+      name: Remote
+      description: The Google TV Remote entity
+      required: true
+    chromecast_input:
+      selector:
+        entity:
+          filter:
+            domain: media_player
+      required: true
+      name: Chromecast
+      description: The cast media_player to use to cast to
+    dasboard_path_input:
+      selector:
+        text: {}
+      name: Dasboard Path
+      required: true
+    view_path_input:
+      selector:
+        text:
+      name: View Path
+      required: true
+  alias: Display Dashboard
+  description: ''
+add_to_alexa_shopping:
+  sequence:
+  - action: media_player.play_media
+    data:
+      media_content_type: custom
+      media_content_id: add {{item}} to shopping list
+    target:
+      entity_id: media_player.office_echo
+  fields:
+    item:
+      selector:
+        text:
+      name: item
+      description: What to add to the shopping list
+      required: true
+  alias: Add to Alexa Shopping
+  description: ''
+send_recipe:
+  sequence:
+  - condition: template
+    value_template: '{{states(''sensor.meal_plan'') | int(0) > recipe_index}}'
+  - variables:
+      meal: '{{state_attr(''sensor.meal_plan'', ''mealplan'')[recipe_index]}}'
+  - action: script.notify_sarah_and_nathan
+    metadata: {}
+    data:
+      use_alexa: false
+      use_persistent_notification: false
+      notify_sarah: true
+      notify_nathan: true
+      text_nathan: false
+      text_sarah: false
+      text_garrett: false
+      text_ice_contacts: false
+      bypass_quiet_mode: false
+      use_siren: false
+      email_nathan: false
+      message: '{{meal.name}}'
+      more_info: Open Recipe
+      url: '{{meal.url}}'
+      image: '{{meal.external_image}}'
+  fields:
+    recipe_index:
+      selector:
+        number:
+          min: 1
+          max: 7
+      name: Recipe index
+      description: The index of the recip
+      required: true
+  alias: Send Recipe
   description: ''
