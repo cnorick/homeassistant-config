@@ -1180,6 +1180,10 @@ notify_sarah_and_nathan:
         boolean: {}
       description: Whether or not to send a message on the Pine Private Meshtastic
         Channel
+    print_receipt:
+      selector:
+        boolean: {}
+      default: false
   variables:
     quiet_mode: '{{ not bypass_quiet_mode and is_state(''input_boolean.quiet_mode'',
       ''on'')}}'
@@ -1198,7 +1202,7 @@ notify_sarah_and_nathan:
             image: '{{ image }}'
             actions: '{{ notification_actions }}'
             group: '{{ mobile_message_group}}'
-        action: notify.mobile_app_pixel_7
+        action: notify.mobile_app_pixel_10_pro
     default: []
   - choose:
     - conditions:
@@ -1342,7 +1346,104 @@ notify_sarah_and_nathan:
           message: '{% set m = message ~ ''\n\n'' ~ more_info %}
 
             {{m[:200]}}'
-    default: []
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ print_receipt | default(false) }}'
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{{more_info is defined}}'
+        then:
+        - action: escpos_printer.print_text
+          continue_on_error: true
+          metadata: {}
+          data:
+            text: '{{message}}'
+            align: left
+            cut: none
+            feed: 2
+            bold: true
+          target:
+            entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - action: escpos_printer.print_text
+        continue_on_error: true
+        metadata: {}
+        data:
+          align: left
+          text: '{%- if more_info is defined -%}{{more_info}}{%- else -%}{{message}}{%-
+            endif -%}'
+          bold: false
+          cut: none
+          feed: 2
+        target:
+          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - if:
+        - condition: template
+          value_template: '{{image is defined}}'
+        then:
+        - action: escpos_printer.print_image
+          continue_on_error: true
+          metadata: {}
+          data:
+            image: '{{ image }}'
+            high_density: true
+            align: center
+            cut: none
+            feed: 2
+          target:
+            entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - if:
+        - condition: template
+          value_template: '{{url is defined}}'
+        then:
+        - action: escpos_printer.print_qr
+          continue_on_error: true
+          metadata: {}
+          data:
+            data: '{{url}}'
+            size: 5
+            ec: M
+            align: center
+            cut: none
+            feed: 0
+      - action: escpos_printer.print_text
+        continue_on_error: true
+        metadata: {}
+        data:
+          align: right
+          text: '{% set current_time = now() %}
+
+            {{ current_time.strftime(''%A, %B %d, %Y'') }}
+
+            {{ current_time.strftime(''%I:%M:%S %p'') }}'
+          bold: false
+          cut: none
+          feed: 0
+        target:
+          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - action: escpos_printer.feed
+        continue_on_error: true
+        metadata: {}
+        data:
+          lines: 2
+        target:
+          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - action: escpos_printer.cut
+        continue_on_error: true
+        metadata: {}
+        data:
+          mode: full
+        target:
+          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      - action: escpos_printer.beep
+        continue_on_error: true
+        metadata: {}
+        data:
+          times: 3
+          duration: 2
+        target:
+          entity_id: notify.esc_pos_printer_192_168_3_131_9100
   mode: queued
   max: 10
 notify_ice_contacts:
@@ -1488,24 +1589,106 @@ send_recipe:
     value_template: '{{states(''sensor.meal_plan'') | int(0) > recipe_index}}'
   - variables:
       meal: '{{state_attr(''sensor.meal_plan'', ''mealplan'')[recipe_index]}}'
-  - action: script.notify_sarah_and_nathan
+  - action: mealie.get_recipe
     metadata: {}
     data:
-      use_alexa: false
-      use_persistent_notification: false
-      notify_sarah: true
-      notify_nathan: true
-      text_nathan: false
-      text_sarah: false
-      text_garrett: false
-      text_ice_contacts: false
-      bypass_quiet_mode: false
-      use_siren: false
-      email_nathan: false
-      message: '{{meal.name}}'
-      more_info: Open Recipe
-      url: '{{meal.url}}'
-      image: '{{meal.external_image}}'
+      config_entry_id: 01JQV7H0NCEG91ZWHK91VJESNW
+      recipe_id: '{{meal.id}}'
+    response_variable: recipe
+    enabled: true
+  - if:
+    - condition: template
+      value_template: '{{print_recipe | default(false)}}'
+    then:
+    - action: escpos_printer.print_text
+      metadata: {}
+      data:
+        text: '{{ recipe.recipe.name }}'
+        align: center
+        bold: true
+        feed: 2
+        cut: none
+        underline: single
+      target:
+        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+    - action: escpos_printer.print_image
+      metadata: {}
+      data:
+        image: '{{ meal.image }}'
+        high_density: true
+        align: center
+        cut: none
+      target:
+        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+      enabled: false
+    - action: escpos_printer.print_text
+      metadata: {}
+      data:
+        text: 'Total Time: {{ recipe.recipe.total_time | default(''?'') }} (Prep:
+          {{ recipe.recipe.prep_time | default(''?'') }}, Cook: {{ recipe.recipe.perform_time
+          | default(''?'')}})
+
+
+
+          ***
+
+          Ingredients
+
+          {% for ingredient in recipe.recipe.ingredients %}
+
+          * {{ ingredient.note }}
+
+          {% endfor %}
+
+          ***
+
+          Instructions
+
+          {% for instruction in recipe.recipe.instructions %}
+
+          {{ loop.index }}. {{ instruction.text }}
+
+          {% endfor %}
+
+          ***
+
+          Notes: {{ recipe.recipe.description }}'
+        align: left
+        cut: none
+        feed: 1
+      target:
+        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+    - action: escpos_printer.print_qr
+      metadata: {}
+      data:
+        data: '{{ meal.url }}'
+        size: 8
+        ec: M
+        align: center
+        cut: full
+        feed: 2
+      target:
+        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+    else:
+    - action: script.notify_sarah_and_nathan
+      metadata: {}
+      data:
+        use_alexa: false
+        use_persistent_notification: false
+        notify_sarah: true
+        notify_nathan: true
+        text_nathan: false
+        text_sarah: false
+        text_garrett: false
+        text_ice_contacts: false
+        bypass_quiet_mode: false
+        use_siren: false
+        email_nathan: false
+        message: '{{meal.name}}'
+        more_info: Open Recipe
+        url: '{{meal.url}}'
+        image: '{{meal.external_image}}'
+      enabled: true
   fields:
     recipe_index:
       selector:
@@ -1515,5 +1698,141 @@ send_recipe:
       name: Recipe index
       description: The index of the recip
       required: true
+    print_recipe:
+      selector:
+        boolean: {}
+      name: Print Recipe
   alias: Send Recipe
   description: ''
+flash_the_selected_lights:
+  sequence:
+  - action: scene.create
+    metadata: {}
+    data:
+      scene_id: flash_restore_state
+      snapshot_entities: '{{ light_selection }}'
+    alias: Save a restore point for the selected lights
+  - alias: Flash the lights the selected number of times
+    repeat:
+      count: '{{ flash_lights_count }}'
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          rgb_color: '{{ flash_lights_color }}'
+          brightness_pct: '{{ flash_brightness }}'
+          transition: '{{ transition_length }}'
+        target:
+          entity_id: '{{ light_selection }}'
+        alias: Flash the selected light a chosen color and brightness
+      - delay: '{{ flash_duration }}'
+        alias: The selected delay between flashes
+      - alias: Flash from off or the original state of the lights
+        choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ flash_from_off }}'
+            alias: Flashing the lights from an off state was requested
+          sequence:
+          - action: light.turn_off
+            metadata: {}
+            data:
+              transition: '{{ transition_length }}'
+            target:
+              entity_id: '{{ light_selection }}'
+            alias: Turn off the selected lights
+        - conditions:
+          - condition: template
+            value_template: '{{ not flash_from_off }}'
+            alias: Flashing the lights from the original state was requested
+          sequence:
+          - action: scene.turn_on
+            metadata: {}
+            data: {}
+            target:
+              entity_id: scene.flash_restore_state
+            alias: Restore the original state of the lights
+      - delay: '{{ flash_duration }}'
+        alias: The selected delay between flashes
+  - action: scene.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: scene.flash_restore_state
+    alias: Restore the original state of the lights
+  - alias: Delete the saved light scene
+    action: scene.delete
+    metadata: {}
+    data: {}
+    target:
+      entity_id: scene.flash_restore_state
+  fields:
+    light_selection:
+      name: "\U0001F4A1 Light Selection"
+      description: Select which lights to flash
+      selector:
+        entity:
+          multiple: true
+          domain: light
+      required: true
+    flash_lights_color:
+      selector:
+        color_rgb: {}
+      name: "\U0001F3A8 Flash Lights Color"
+      description: What color should the lights flash?
+      default:
+      - 0
+      - 0
+      - 0
+      required: true
+    flash_brightness:
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+      name: "\U0001F31E Flash Brightness"
+      description: How bright should the flash be?
+      default: 90
+      required: true
+    flash_lights_count:
+      selector:
+        number:
+          min: 1
+          max: 15
+          step: 1
+      name: "\U0001F522 Flash Lights Count"
+      description: How many times should the lights flash?
+      required: true
+      default: 10
+    flash_duration:
+      selector:
+        number:
+          min: 0.1
+          max: 5
+          step: 0.1
+      name: ⏱️ Flash Duration
+      description: Length of time between flashes (in seconds)
+      default: 1
+      required: true
+    flash_from_off:
+      selector:
+        boolean: {}
+      name: "\U0001F319 Flash From Off"
+      description: Should the lights turn off between flashes?
+      default: true
+      required: false
+    transition_length:
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.1
+      name: "\U0001F501 Transition Length"
+      description: Set a custom transition time for the lights (In seconds)
+      default: 0.3
+      required: true
+  alias: Flash the Selected Lights
+  description: Flash the selected lights from either the current or off state then
+    return to the original lighting scene
+  mode: restart

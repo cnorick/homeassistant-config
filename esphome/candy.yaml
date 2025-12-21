@@ -8,30 +8,55 @@ esphome:
   on_boot:
     - script.execute: strip_boot
 
-# Enable logging
-logger:
-  #level: VERBOSE
-
 # Enable Home Assistant API
 # api:
 
 ota:
-  - platform: esphome
-    password: "e9703875c803eb941d5b9e8f0120d3a8"
+  platform: esphome
+  password: !secret ota_password
 
 wifi:
-  ssid: !secret candy_wifi_ssid
-  password: !secret candy_wifi_password
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Candy Fallback Hotspot"
-    password: "FifAVGq33ulU"
+    password: !secret ap_password
 
 captive_portal:
 
 web_server:
   port: 80
+
+logger:
+  baud_rate: 0
+
+# Taken from https://community.home-assistant.io/t/how-to-uart-read-without-custom-component/491950
+uart:
+  baud_rate: 115200
+  tx_pin: 1
+  rx_pin: 3
+  debug:
+    direction: RX
+    dummy_receiver: true
+    after:
+      delimiter: "\n"
+    sequence:
+      - lambda: |-
+          UARTDebug::log_string(direction, bytes);  //Still log the data
+
+          //Example to convert uart text to string
+          std::string str(bytes.begin(), bytes.end());
+
+          const std::string::size_type pos = str.find_last_not_of(" \t\n\r");
+          if (pos != std::string::npos) {
+              str.erase(pos + 1);
+          } else {
+              str.clear();
+          }
+          //watch for potential problems with non printable or special characters in string
+          id(rawUartString).publish_state(str.c_str());
 
 switch:
   - platform: gpio
@@ -176,38 +201,38 @@ light:
             int Sparking = 110;
             static byte heat[188];
             int cooldown;
-        
+
             // Step 1.  Cool down every cell a little
             for( int i = 0; i < it.size(); i++) {
               cooldown = random(0, ((Cooling * 10) / it.size()) + 2);
-        
+
               if(cooldown>heat[i]) {
                 heat[i]=0;
               } else {
                 heat[i]=heat[i]-cooldown;
               }
             }
-        
+
             // Step 2.  Heat from each cell drifts 'up' and diffuses a little
             for( int k= it.size() - 1; k >= 2; k--) {
               heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
             }
-        
+
             // Step 3.  Randomly ignite new 'sparks' near the bottom
             if( random(255) < Sparking ) {
               int y = random(7);
               heat[y] = heat[y] + random(160,255);
             }
-        
+
             // Step 4.  Convert heat to LED colors
             for( int Pixel = 0; Pixel < it.size(); Pixel++) {
               // Scale 'heat' down from 0-255 to 0-191
               byte t192 = round((heat[Pixel]/255.0)*191);
-        
+
               // calculate ramp up from
               byte heatramp = t192 & 0x3F; // 0..63
               heatramp <<= 2; // scale up to 0..252
-        
+
               // figure out which third of the spectrum we're in:
               //this is where you can reverse the effect by switching the commented out lines in all 3 places.
               if( t192 > 0x80) {                     // hottest
@@ -234,132 +259,289 @@ light:
     default_transition_length: 1ms
     effects: *light_strip_effects
 
-mqtt:
-  broker: halloween.local
-  topic_prefix: candy-esp-1
+text_sensor:
+  - platform: template
+    name: "Raw UART String"
+    id: "rawUartString"
+    on_value:
+      then:
+        - logger.log:
+            format: "%s"
+            args: ["x.c_str()"]
+        - if:
+            condition:
+              lambda: 'return x == "999";'
+            then:
+              - uart.write: "CANDY_LIGHT_CONTROLLER_V1\n"
+        - if:
+            condition:
+              lambda: 'return x == "dispensing-status:preparing";'
+            then:
+              - script.execute: strip_prepping_dispense
+        - if:
+            condition:
+              lambda: 'return x == "dispensing-status:dispensing";'
+            then:
+              - switch.turn_on: dispenser_light
+        - if:
+            condition:
+              lambda: 'return x == "dispensing-status:idle";'
+            then:
+              - switch.turn_off: dispenser_light
+              - script.execute: strip_idle
+        - if:
+            condition:
+              lambda: 'return x == "spinner-status:spinning";'
+            then:
+              - switch.turn_off: dispenser_light
+              - script.execute: strip_spinning
+        - if:
+            condition:
+              lambda: 'return x == "startup-status:started";'
+            then:
+              - script.execute: flash_light_fast
+              - script.execute: strip_connected
+              - delay: 2s
+              - script.stop: flash_light_fast
+              - switch.turn_off: dispenser_light
+        - if:
+            condition:
+              lambda: 'return x == "startup-status:stopped";'
+            then:
+              - script.execute: flash_light
+              - script.execute: strip_disconnected
+              - delay: 2s
+              - script.stop: flash_light
+              - switch.turn_off: dispenser_light
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:beast";'
+            then:
+              - delay: 1s
+              - script.execute: strip_lightning
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:werewolf";'
+            then:
+              - script.execute: strip_lightning
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:jumpscare";'
+            then:
+              - script.execute: turn_off_strip
+              - delay: 5s
+              - script.execute: strip_lightning
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:thunder";'
+            then:
+              - script.execute: turn_off_strip
+              - delay: 4.8s
+              - script.execute: strip_lightning
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:singingGhosts1";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:singingGhosts2";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:ghost4";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:laugh";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:scream";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:wind";'
+            then:
+              - script.execute: strip_fire
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:heartbeat";'
+            then:
+              - script.execute: strip_heartbeat
+        - if:
+            condition:
+              lambda: 'return x == "idle-sound-status:idle";'
+            then:
+              - script.execute: strip_idle
+        - if:
+            condition:
+              lambda: 'return x == "spin-started-for-prize:xxl";'
+            then:
+              - script.execute: fade_off_strip
+        - if:
+            condition:
+              lambda: 'return x == "spin-started-for-prize:xxxs";'
+            then:
+              - script.execute: fade_off_strip
+        - if:
+            condition:
+              lambda: 'return x.starts_with("strip-brightness");'
+            then:
+              - script.execute: strip_boot
+              - light.turn_on:
+                  id: light_strip_right
+                  brightness: !lambda &brightnessLambda |-
+                    float bright = 1.0;
+                    float brightFromString = 2.0;
+                    if (sscanf(x.c_str(), "strip-brightness:%f", &brightFromString) == 1) {
+                      bright = brightFromString;
+                    }
+                    return bright;
+              - light.turn_on:
+                  id: light_strip_left
+                  brightness: *brightnessLambda
 
-  on_message:
-    - topic: candy-controller/dispensing-status
-      payload: preparing
-      then:
-        - script.execute: strip_prepping_dispense
-        
-    - topic: candy-controller/dispensing-status
-      payload: dispensing
-      then:
-        - switch.turn_on: dispenser_light
-        # - script.execute: strip_dispensing
-        
-    - topic: candy-controller/dispensing-status
-      payload: idle
-      then:
-        - switch.turn_off: dispenser_light
-        - script.execute: strip_idle
-        
-    - topic: candy-controller/spinner-status
-      payload: spinning
-      then:
-        - switch.turn_off: dispenser_light
-        - script.execute: strip_spinning
-        
-    - topic: candy-controller/startup-status
-      payload: started
-      then:
-        - script.execute: flash_light_fast
-        - script.execute: strip_connected
-        - delay: 2s
-        - script.stop: flash_light_fast
-        - switch.turn_off: dispenser_light
-        
-    - topic: candy-controller/startup-status
-      payload: stopped
-      then:
-        - script.execute: flash_light
-        - script.execute: strip_disconnected
-        - delay: 2s
-        - script.stop: flash_light
-        - switch.turn_off: dispenser_light
-        
-    - topic: candy-controller/idle-sound-status
-      payload: beast
-      then:
-        - delay: 1s
-        - script.execute: strip_lightning
-        
-    - topic: candy-controller/idle-sound-status
-      payload: werewolf
-      then:
-        - script.execute: strip_lightning
+# mqtt:
+#   broker: halloween.local
+#   topic_prefix: candy-esp-1
 
-    - topic: candy-controller/idle-sound-status
-      payload: jumpscare
-      then:
-        - script.execute: turn_off_strip
-        - delay: 5s
-        - script.execute: strip_lightning
-        
-    - topic: candy-controller/idle-sound-status
-      payload: thunder
-      then:
-        - script.execute: turn_off_strip
-        - delay: 4.8s
-        - script.execute: strip_lightning        
+# on_message:
+#   - topic: candy-controller/dispensing-status
+#     payload: preparing
+#     then:
+#       - script.execute: strip_prepping_dispense
 
-    - topic: candy-controller/idle-sound-status
-      payload: singingGhosts1
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/dispensing-status
+#   payload: dispensing
+#   then:
+#     - switch.turn_on: dispenser_light
+#     # - script.execute: strip_dispensing
 
-    - topic: candy-controller/idle-sound-status
-      payload: singingGhosts2
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/dispensing-status
+#   payload: idle
+#   then:
+#     - switch.turn_off: dispenser_light
+#     - script.execute: strip_idle
 
-    - topic: candy-controller/idle-sound-status
-      payload: ghost4
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/spinner-status
+#   payload: spinning
+#   then:
+#     - switch.turn_off: dispenser_light
+#     - script.execute: strip_spinning
 
-    - topic: candy-controller/idle-sound-status
-      payload: laugh
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/startup-status
+#   payload: started
+#   then:
+#     - script.execute: flash_light_fast
+#     - script.execute: strip_connected
+#     - delay: 2s
+#     - script.stop: flash_light_fast
+#     - switch.turn_off: dispenser_light
 
-    - topic: candy-controller/idle-sound-status
-      payload: scream
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/startup-status
+#   payload: stopped
+#   then:
+#     - script.execute: flash_light
+#     - script.execute: strip_disconnected
+#     - delay: 2s
+#     - script.stop: flash_light
+#     - switch.turn_off: dispenser_light
 
-    - topic: candy-controller/idle-sound-status
-      payload: wind
-      then:
-        - script.execute: strip_fire
+# - topic: candy-controller/idle-sound-status
+#   payload: beast
+#   then:
+#     - delay: 1s
+#     - script.execute: strip_lightning
 
-    - topic: candy-controller/idle-sound-status
-      payload: heartbeat
-      then:
-        - script.execute: strip_heartbeat
-        
-    - topic: candy-controller/idle-sound-status
-      payload: idle
-      then:
-        - script.execute: strip_idle
+# - topic: candy-controller/idle-sound-status
+#   payload: werewolf
+#   then:
+#     - script.execute: strip_lightning
 
-  on_json_message:
-    - topic: candy-controller/strip-brightness
-      then:
-        - script.execute: strip_boot
-        - light.turn_on:
-            id: light_strip_right
-            brightness: &brightnessLambda !lambda |-
-              double bright = 1.0;
-              if (x.containsKey("brightness"))
-                bright = x["brightness"];
-              return bright;
-        - light.turn_on:
-            id: light_strip_left
-            brightness: *brightnessLambda
-        
+# - topic: candy-controller/idle-sound-status
+#   payload: jumpscare
+#   then:
+#     - script.execute: turn_off_strip
+#     - delay: 5s
+#     - script.execute: strip_lightning
+
+# - topic: candy-controller/idle-sound-status
+#   payload: thunder
+#   then:
+#     - script.execute: turn_off_strip
+#     - delay: 4.8s
+#     - script.execute: strip_lightning
+
+# - topic: candy-controller/idle-sound-status
+#   payload: singingGhosts1
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: singingGhosts2
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: ghost4
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: laugh
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: scream
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: wind
+#   then:
+#     - script.execute: strip_fire
+
+# - topic: candy-controller/idle-sound-status
+#   payload: heartbeat
+#   then:
+#     - script.execute: strip_heartbeat
+
+# - topic: candy-controller/idle-sound-status
+#   payload: idle
+#   then:
+#     - script.execute: strip_idle
+
+# - topic: candy-controller/spin-started-for-prize
+#   payload: xxl
+#   then:
+#     - script.execute: fade_off_strip
+
+# - topic: candy-controller/spin-started-for-prize
+#   payload: xxxs
+#   then:
+#     - script.execute: fade_off_strip
+
+# on_json_message:
+#   - topic: candy-controller/strip-brightness
+#     then:
+#       - script.execute: strip_boot
+#       - light.turn_on:
+#           id: light_strip_right
+#           brightness: &brightnessLambda !lambda |-
+#             double bright = 1.0;
+#             if (x.containsKey("brightness"))
+#               bright = x["brightness"];
+#             return bright;
+#       - light.turn_on:
+#           id: light_strip_left
+#           brightness: *brightnessLambda
+
 script:
   - id: flash_light
     then:
@@ -379,8 +561,7 @@ script:
             - delay: 100ms
             - switch.turn_off: dispenser_light
             - delay: 100ms
-            
-            
+
   - id: strip_connected
     then:
       - light.turn_off: light_strip_left
@@ -402,7 +583,7 @@ script:
       - light.turn_on:
           id: light_strip_left
           effect: Dense Twinkle
-          
+
   - id: strip_disconnected
     then:
       - light.turn_off: light_strip_left
@@ -424,7 +605,7 @@ script:
       - light.turn_on:
           id: light_strip_left
           effect: Rainbow
-          
+
   - id: strip_prepping_dispense
     then:
       - light.turn_off:
@@ -445,7 +626,7 @@ script:
           id: light_strip_right
       - delay: 100ms
       - script.execute: strip_dispensing
-      
+
   - id: strip_dispensing
     then:
       - light.turn_on:
@@ -454,7 +635,7 @@ script:
       - light.turn_on:
           id: light_strip_right
           effect: Colors Falling
-          
+
   - id: strip_idle
     then:
       - light.turn_on:
@@ -463,7 +644,7 @@ script:
       - light.turn_on:
           id: light_strip_right
           effect: Dense Twinkle
-          
+
   - id: strip_spinning
     then:
       - light.turn_on:
@@ -472,7 +653,7 @@ script:
       - light.turn_on:
           id: light_strip_right
           effect: Reverse Fast Rainbow
-    
+
   - id: strip_boot
     then:
       - light.turn_on:
@@ -481,7 +662,7 @@ script:
       - light.turn_on:
           id: light_strip_right
           effect: "Rainbow"
-    
+
   - id: strip_lightning
     then:
       - light.turn_on:
@@ -523,7 +704,16 @@ script:
                 blue: 0
                 effect: None
             - delay: 530ms
-          
+
+  - id: fade_off_strip
+    then:
+      - light.turn_off:
+          id: light_strip_left
+          transition_length: 1.5s
+      - light.turn_off:
+          id: light_strip_right
+          transition_length: 1.5s
+
   - id: turn_off_strip
     then:
       - light.turn_off: light_strip_left

@@ -26,3 +26,8 @@ zigbee.db-journal
 zigbee.db-shm
 zigbee.db-wal
 tesla_fleet.key
+.shopping_list.json
+com.tesla.3p.public-key.pem
+home-assistant-rollback.log
+automations.yaml
+.ha_run.lock
