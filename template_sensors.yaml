@@ -218,3 +218,173 @@
                            5: 'Terrible'} %}
           {{ mapper[index|int(0)] }}
         dominant: "{{ result[1] }}"
+
+- binary_sensor:
+  - device_class: occupancy
+    default_entity_id: binary_sensor.occupied
+    name: Home Occupancy
+    state: >-
+      {{ is_state('person.sarah', 'home')
+      or is_state('person.nathan', 'home') }}
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_workday
+    state: >-
+      {{
+        is_state('binary_sensor.is_workday', 'on')
+        and states('sensor.time') > states('input_datetime.work_start_time').rsplit(':',1)[0]
+        and states('sensor.time') < states('input_datetime.work_end_time').rsplit(':',1)[0]
+      }}
+    name: is_workday
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_during_workday
+    state: >-
+      {{ 
+        is_state('binary_sensor.is_workday', 'on')
+        and states('sensor.time') > states('input_datetime.work_start_time').rsplit(':',1)[0]
+        and states('sensor.time') < states('input_datetime.work_end_time').rsplit(':',1)[0]
+      }}
+    name: is_during_workday
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_morning
+    state: >-
+      {{
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
+      }}
+    name: is_morning
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_lunch
+    state: >-
+      {{
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S'))
+        and
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        < as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
+      }}
+    name: is_lunch
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_afternoon
+    state: >-
+      {{
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.lunch_time'), '%H:%M:%S')) + 3600
+        and
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        < as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
+      }}
+    name: is_afternoon
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_evening
+    state: >-
+      {{
+        as_timestamp(strptime(states('sensor.time'), '%H:%M')) + 600
+        >= as_timestamp(strptime(states('input_datetime.work_end_time'), '%H:%M:%S'))
+      }}
+    name: is_evening
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.everyone_in_bed
+    state: >-
+      {{ 
+        (
+          is_state('binary_sensor.public_space_motion', 'off')
+          and states('sensor.timestamp') | float >= (states.binary_sensor.public_space_motion.last_changed | as_timestamp) + 600
+        )
+        and is_state('binary_sensor.bedroom_door', 'off')
+        and is_state('binary_sensor.occupied', 'on')
+        and (
+          is_state('input_boolean.visitors', 'off')
+          or (
+            is_state('input_boolean.visitors', 'on') and (is_state('binary_sensor.office_door', 'off') or True)
+          )
+        )
+        and is_state('binary_sensor.is_bedtime', 'on')
+        and is_state('group.bedroom_lights', 'off')
+        and (
+          is_state('input_boolean.visitors', 'off')
+          or (
+            is_state('input_boolean.visitors', 'on') and is_state('light.office', 'off')
+          )
+        )
+      }}
+    name: everyone_in_bed
+
+- binary_sensor:
+  - device_class: occupancy
+    default_entity_id: binary_sensor.are_master_bedroom_people_home
+    name: Are Sarah and Nathan Home
+    state: >-
+      {{ 
+        is_state('person.sarah', 'home')
+        or is_state('person.nathan', 'home')
+      }}
+
+- binary_sensor:
+  - device_class: motion
+    default_entity_id: binary_sensor.public_space_motion
+    name: Public Space Motion
+    state: >-
+      {{ 
+        is_state('binary_sensor.living_room_presence_presence_sensor_1', 'on')
+        or is_state('binary_sensor.kitchen_presence_sensor_presence_sensor_1', 'on')
+        or is_state('binary_sensor.wyze_motion4', 'on')
+        or is_state('binary_sensor.laundry_room_motion', 'on')
+        or is_state('binary_sensor.basement_motion_sensor', 'on')
+      }}
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.is_bedtime
+    name: Is Bedtime
+    state: >-
+      {{
+        states('sensor.time') > states('input_datetime.bedtime')
+        or states('sensor.time') < states('input_datetime.morning')
+      }}
+
+# This just simply tracks the template switch. It's here so Alexa
+# can make a routine to turn off the physical switch
+- binary_sensor:
+  - device_class: door
+    default_entity_id: binary_sensor.guest_air_freshener
+    name: Guest Air Freshener
+    state: '{{ is_state(''switch.guest_air_freshener'', ''on'') }}'
+
+- binary_sensor:
+  - default_entity_id: binary_sensor.nws_alerts_are_active
+    icon: >-
+      {% if states('sensor.nws_alerts') | int(0) > 0 %}
+        mdi:weather-lightning
+      {% else %}
+        mdi:weather-sunny
+      {% endif %}
+    name: NWS Alerts Are Active
+    state: '{{ states(''sensor.nws_alerts'') | int(0) > 0 }}'
+
+- sensor:
+  - default_entity_id: sensor.timestamp
+    state: '{{ states(''sensor.date_time_iso'') and now() | as_timestamp }}'
+    name: timestamp
+
+- switch:
+  - turn_on:
+    - data:
+        entity_id: var.guest_air_freshener
+        value: 'on'
+      action: var.set
+    turn_off:
+    - data:
+        entity_id: var.guest_air_freshener
+        value: 'off'
+      action: var.set
+    default_entity_id: switch.guest_air_freshener
+    icon: '{% if is_state(''var.guest_air_freshener'', ''on'') %} mdi:flower-tulip
+      {% else %} mdi:flower-tulip-outline {% endif %}'
+    name: Guest Air Freshener
+    state: '{{ is_state(''var.guest_air_freshener'', ''on'') }}'

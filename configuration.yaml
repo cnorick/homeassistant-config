@@ -30,9 +30,6 @@ spotcast:
   country: US #optional, added in 3.6.24
 
 binary_sensor:
-  - platform: template
-    sensors: !include binary_sensors/template_binary_sensors.yaml
-
   - platform: wyzesense
     device: auto
 
@@ -75,8 +72,6 @@ switch:
   #   mac: 'f3:7e:9f:7b:3e:95'
   # - platform: switchmate
   #   mac: 'f7:37:b9:d5:53:23'
-  - platform: template
-    switches: !include switches/template_switches.yaml
   - platform: wake_on_lan
     mac: !secret nathan_pc_mac
     name: "Tater_PC"
