@@ -24,14 +24,20 @@ shelly_lights:
     - light.hallway
     - light.basement_stairs
     - light.bomb_shelter
-    
+
 tplink_lights:
   entities:
     - light.string_lights
 
+govee_lights:
+  entities:
+    - light.eave_lights
+    - light.desk_light
+    - light.h616c_745e
+
 other_lights:
   entities:
-    - light.under_desk_lights
+    # - light.under_desk_lights
     # - light.gazebo_fan
     # - light.nursery_ceiling_fan # Since this is on a remote and the on/off button are the same command, it gets toggled at the wrong time.
 

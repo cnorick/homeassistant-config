@@ -31,3 +31,6 @@ com.tesla.3p.public-key.pem
 home-assistant-rollback.log
 automations.yaml
 .ha_run.lock
+.cache
+image
+additional_ca

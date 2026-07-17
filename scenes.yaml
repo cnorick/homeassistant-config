@@ -898,52 +898,6 @@
 - id: '1679091745412'
   name: Cleaning
   entities:
-    light.office:
-      min_color_temp_kelvin: 2000
-      max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 500
-      supported_color_modes:
-      - color_temp
-      - xy
-      color_mode: color_temp
-      brightness: 255
-      color_temp_kelvin: 2732
-      color_temp: 366
-      hs_color:
-      - 28.327
-      - 64.71
-      rgb_color:
-      - 255
-      - 167
-      - 89
-      xy_color:
-      - 0.524
-      - 0.387
-      is_hue_group: true
-      hue_scenes:
-      - Tropical twilight
-      - Arctic aurora
-      - Read
-      - Spring blossom
-      - Savanna sunset
-      - Nightlight
-      - Energize
-      - Bright
-      - Concentrate
-      - Dimmed
-      - Relax
-      hue_type: room
-      lights:
-      - Desk Lamp
-      - OC2
-      - Office Top Lamp
-      - OC1
-      dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Office
-      supported_features: 40
-      state: 'on'
     light.bathroom:
       supported_color_modes:
       - brightness
@@ -952,17 +906,25 @@
       is_hue_group: true
       hue_scenes:
       - Dimmed
-      - Bright
       - Nightlight
+      - Bright
       hue_type: room
       lights:
-      - Bath 4
-      - Bath 6
       - Bath 3
-      - Bath 2
-      - Bath 1
       - Bath 5
+      - Bath 4
+      - Bath 1
+      - Bath 6
       - Bath Ceiling
+      - Bath 2
+      entity_id:
+      - light.bath_2
+      - light.bath_1
+      - light.bath_6
+      - light.bath_4
+      - light.bath_ceiling
+      - light.bath_5
+      - light.bath_3
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Bathroom
@@ -980,9 +942,13 @@
       - Nightlight
       hue_type: room
       lights:
+      - Guest Bath 3
       - Guest Bath 1
       - Guest Bath 2
-      - Guest Bath 3
+      entity_id:
+      - light.guest_bath_1
+      - light.guest_bath_3
+      - light.guest_bath_2
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Guest Bathroom
@@ -998,31 +964,31 @@
     light.front_door:
       min_color_temp_kelvin: 2000
       max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 500
       supported_color_modes:
       - color_temp
       - xy
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
-      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
       rgb_color:
       - 255
-      - 167
-      - 89
+      - 168
+      - 90
       xy_color:
-      - 0.524
+      - 0.522
       - 0.387
       is_hue_group: true
       hue_scenes: []
       hue_type: room
       lights:
-      - FDC2
       - FDC1
+      - FDC2
+      entity_id:
+      - light.front_door_2
+      - light.front_door_1
       dynamics: false
       icon: mdi:lightbulb
       friendly_name: Front Door
@@ -1031,44 +997,45 @@
     light.living_room:
       min_color_temp_kelvin: 2000
       max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 500
       supported_color_modes:
       - color_temp
       - xy
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
-      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
       rgb_color:
       - 255
-      - 167
-      - 89
+      - 168
+      - 90
       xy_color:
-      - 0.524
+      - 0.522
       - 0.387
       is_hue_group: true
       hue_scenes:
-      - Read
-      - Tropical twilight
+      - Relax
+      - Nightlight
       - Arctic aurora
       - Spring blossom
-      - Nightlight
       - Savanna sunset
-      - Bright
-      - Energize
-      - Concentrate
       - Dimmed
+      - Tropical twilight
+      - Read
+      - Bright
+      - Concentrate
+      - Energize
       - Lamp Only
-      - Relax
       hue_type: room
       lights:
+      - LRC2
       - Living Room Lamp
       - LRC1
-      - LRC2
+      entity_id:
+      - light.living_room_ceiling_1
+      - light.hue_color_lamp_1_2
+      - light.living_room_lamp
       dynamics: false
       icon: mdi:lightbulb-group
       friendly_name: Living Room
@@ -1081,11 +1048,16 @@
       brightness: 255
       is_hue_group: true
       hue_scenes:
+      - Read
       - Bright
+      - candle
       hue_type: room
       lights:
-      - DRC 1
       - DRC 2
+      - DRC 1
+      entity_id:
+      - light.hue_white_lamp_1
+      - light.hue_white_lamp_3
       dynamics: false
       icon: mdi:lightbulb-group
       friendly_name: Dining Room
@@ -1122,45 +1094,48 @@
     light.bedroom:
       min_color_temp_kelvin: 2000
       max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 500
       supported_color_modes:
       - color_temp
       - xy
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
-      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
       rgb_color:
       - 255
-      - 167
-      - 89
+      - 168
+      - 90
       xy_color:
-      - 0.524
+      - 0.522
       - 0.387
       is_hue_group: true
       hue_scenes:
-      - Read
-      - Arctic aurora
-      - Tropical twilight
-      - Spring blossom
-      - Savanna sunset
-      - Nightlight
-      - Bright
-      - Energize
-      - Concentrate
-      - Dimmed
       - Relax
+      - Nightlight
+      - Spring blossom
+      - Arctic aurora
+      - Savanna sunset
+      - Dimmed
+      - Tropical twilight
+      - Read
+      - Bright
+      - Concentrate
+      - Energize
       hue_type: room
       lights:
-      - BRC3
-      - BRC1
-      - Sarah's Nightstand
-      - Nathan's Nightstand
       - BRC2
+      - Sarah's Nightstand
+      - BRC1
+      - Nathan's Nightstand
+      - BRC3
+      entity_id:
+      - light.bedroom_ceiling_2
+      - light.bedroom_ceiling_1
+      - light.sarah_s_nightstand
+      - light.nathan_s_nightstand
+      - light.hue_color_lamp_1
       dynamics: false
       icon: mdi:lightbulb-group
       friendly_name: Bedroom
@@ -1183,42 +1158,78 @@
     light.nursery:
       min_color_temp_kelvin: 2202
       max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 454
       supported_color_modes:
       - color_temp
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
-      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
       rgb_color:
       - 255
-      - 167
-      - 89
+      - 168
+      - 90
       xy_color:
-      - 0.524
+      - 0.522
       - 0.387
       is_hue_group: true
       hue_scenes:
-      - Quiet
+      - Dim
       - Bright
+      - Quiet
       hue_type: room
       lights:
-      - NC3
-      - NC1
+      - Jude's Bookshelf
+      - Jude's Nightstand
       - NC2
-      - Nursery Lamp
+      - NC1
+      - NC3
+      entity_id:
+      - light.hue_white_lamp_1_2
+      - light.hue_white_lamp_2
+      - light.guest_bedroom_lamp
+      - light.hue_white_lamp_3_2
+      - light.hue_white_lamp_1_3
       dynamics: false
       icon: mdi:lightbulb-group
-      friendly_name: Nursery
+      friendly_name: Jude's Room
+      supported_features: 40
+      state: 'on'
+    light.lilah_s_room:
+      supported_color_modes:
+      - brightness
+      color_mode: brightness
+      brightness: 255
+      is_hue_group: true
+      hue_scenes:
+      - Relax
+      - Nightlight
+      - Spring blossom
+      - Arctic aurora
+      - Savanna sunset
+      - Dimmed
+      - Tropical twilight
+      - Read
+      - Bright
+      - Concentrate
+      - Energize
+      - Video Games
+      hue_type: room
+      lights:
+      - Lilah's Nightstand
+      - LC1
+      - LC2
+      entity_id:
+      - light.hue_white_lamp_3_3
+      - light.hue_white_lamp_2_2
+      - light.hue_white_lamp_1_4
+      dynamics: false
+      icon: mdi:lightbulb-group
+      friendly_name: Lilah's Room
       supported_features: 40
       state: 'on'
   metadata:
-    light.office:
-      entity_only: true
     light.bathroom:
       entity_only: true
     light.guest_bathroom:
@@ -1247,35 +1258,11 @@
       entity_only: true
     light.nursery:
       entity_only: true
+    light.lilah_s_room:
+      entity_only: true
 - id: '1708568504163'
   name: Baby Bedtime
   entities:
-    light.guest_bedroom_lamp:
-      min_color_temp_kelvin: 2202
-      max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 454
-      supported_color_modes:
-      - color_temp
-      color_mode: color_temp
-      brightness: 255
-      color_temp_kelvin: 2732
-      color_temp: 366
-      hs_color:
-      - 28.327
-      - 64.71
-      rgb_color:
-      - 255
-      - 167
-      - 89
-      xy_color:
-      - 0.524
-      - 0.387
-      mode: normal
-      dynamics: none
-      friendly_name: Nursery Lamp
-      supported_features: 40
-      state: 'on'
     light.nursery_ceiling:
       supported_color_modes:
       - brightness
@@ -1288,14 +1275,93 @@
       - NC2
       - NC3
       - NC1
+      entity_id:
+      - light.hue_white_lamp_2
+      - light.hue_white_lamp_1_2
+      - light.hue_white_lamp_3_2
       dynamics: false
-      icon: mdi:lightbulb-group
-      friendly_name: Nursery Ceiling
+      friendly_name: Jude's Ceiling
       supported_features: 40
       state: 'off'
-  metadata:
-    light.nursery:
-      entity_only: true
+    light.hue_color_lamp_1_3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - 'off'
+      - candle
+      - fire
+      - prism
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - sunrise
+      - sunset
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect: 'off'
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2732
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 168
+      - 90
+      xy_color:
+      - 0.522
+      - 0.387
+      mode: normal
+      dynamics: none
+      friendly_name: Jude's Nightstand
+      supported_features: 44
+      state: 'on'
+    light.hue_color_lamp_1_4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - 'off'
+      - candle
+      - fire
+      - prism
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - sunrise
+      - sunset
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect: 'off'
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2732
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 168
+      - 90
+      xy_color:
+      - 0.522
+      - 0.387
+      mode: normal
+      dynamics: none
+      friendly_name: Jude's Bookshelf
+      supported_features: 44
+      state: 'on'
+  metadata: {}
 - id: '1708639614139'
   name: Baby Bathtime
   entities:

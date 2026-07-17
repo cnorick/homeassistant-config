@@ -153,10 +153,6 @@
     data: {}
     action: media_player.media_stop
   - wait_for_trigger:
-    - value_template: "{{\n    is_state('binary_sensor.office_door', 'off')\n    and
-        is_state('binary_sensor.public_space_motion', 'off')\n}}"
-      id: in_office
-      trigger: template
     - entity_id: binary_sensor.living_room_presence_presence_sensor_9
       from: 'off'
       to: 'on'
@@ -165,14 +161,6 @@
     timeout: 02:00:00
     continue_on_timeout: false
   - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{wait.trigger.id == "in_office"}}'
-      sequence:
-      - target:
-          entity_id: media_player.kitchen_echo_show
-        data: {}
-        action: media_player.media_stop
     - conditions:
       - condition: template
         value_template: '{{wait.trigger.id == "in_livingroom"}}'
@@ -622,7 +610,9 @@
           - condition: state
             entity_id: alarm_control_panel.alarmo
             attribute: arm_mode
-            state: armed_away
+            state:
+            - armed_away
+            - null
           sequence:
           - action: siren.turn_on
             metadata: {}
@@ -884,10 +874,12 @@
   use_blueprint:
     path: networkingcat/yet_another_motion_automation.yaml
     input:
-      time_scene_night: 0:00:00
+      time_scene_night: 00:00:00
       motion_entity: binary_sensor.wyze_motion4
       light_target:
-        entity_id: light.bomb_shelter
+        entity_id:
+        - light.bomb_shelter
+        - light.hue_lightstrip_1
 - id: '1622936976816'
   alias: Motion -- Mudroom
   description: ''
@@ -1814,7 +1806,7 @@
         entity_id: sensor.bathroom_humidity
         below: input_number.bathroom_humidity_threshold
       - condition: state
-        entity_id: binary_sensor.bathroom_motion_sensor_motion_detection
+        entity_id: binary_sensor.apollo_msr_2_f8ee88_radar_target
         state: 'off'
         for:
           hours: 0
@@ -1837,7 +1829,7 @@
       - condition: trigger
         id: humidity_lowered
       - condition: state
-        entity_id: binary_sensor.bathroom_motion_sensor_motion_detection
+        entity_id: binary_sensor.apollo_msr_2_f8ee88_radar_target
         state: 'off'
         for:
           hours: 0
@@ -2204,48 +2196,55 @@
 - id: '1604755622228'
   alias: Notify When There Are Packages
   description: Sends a notification to everyone when there are packages to be checked.
-  trigger:
-  - platform: state
-    entity_id: sensor.mail_packages_delivered
+  triggers:
+  - entity_id: sensor.imap_gmail_com_mail_packages_delivered
     not_from: unavailable
-  condition:
+    trigger: state
+  conditions:
   - condition: numeric_state
-    entity_id: sensor.mail_packages_delivered
+    entity_id: sensor.imap_gmail_com_mail_packages_delivered
     above: '0'
   - condition: state
     entity_id: input_boolean.night_mode
     state: 'off'
-  action:
-  - service: script.notify_sarah_and_nathan
-    data:
+  actions:
+  - data:
+      filename: /config/www/snapshots/front-yard.jpg
+    target:
+      entity_id: camera.front_yard
+    action: camera.snapshot
+  - data:
       message: Package Delivered
       more_info: Packages have been delivered. Click to see package status.
       url: /lovelace/mail
       use_alexa: true
       notify_nathan: true
-      notify_sarah: true
+      notify_sarah: false
       text_nathan: false
       text_sarah: false
       text_ice_contacts: false
       bypass_quiet_mode: false
+      image: local/snapshots/front-yard.jpg
+      print_receipt: false
+    action: script.notify_sarah_and_nathan
   mode: single
 - id: '1604755622229'
   alias: Notify When There Is Mail
   description: Sends a notification to everyone when there is mail to be checked.
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - binary_sensor.mailbox_vibration
     to: 'on'
     id: vibration
-  - platform: time
-    at: 00:00:00
+    trigger: state
+  - at: 00:00:00
     id: midnight
-  action:
+    trigger: time
+  actions:
   - choose:
     - conditions:
       - condition: numeric_state
-        entity_id: sensor.mail_usps_mail
+        entity_id: sensor.imap_gmail_com_mail_usps_mail
         above: '0'
       - condition: state
         entity_id: input_boolean.night_mode
@@ -2257,26 +2256,73 @@
       - condition: trigger
         id: vibration
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
-          message: Mail Time
-          more_info: Mail has been delivered to the mailbox. Click to see what you
-            have.
-          url: /lovelace/mail
-          image: '{{ states(''sensor.mail_image_url'') }}'
-          image_type: gif
-          use_alexa: true
-          notify_nathan: true
-          notify_sarah: true
-          text_nathan: false
-          text_sarah: false
-          text_ice_contacts: false
-          bypass_quiet_mode: false
-      - service: input_boolean.turn_on
-        entity_id: input_boolean.mail_in_box
+      - sequence:
+        - data:
+            message: Mail Time
+            use_alexa: true
+            notify_nathan: false
+            notify_sarah: false
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+          action: script.notify_sarah_and_nathan
+        - entity_id: input_boolean.mail_in_box
+          action: input_boolean.turn_on
+        - action: ai_task.generate_data
+          data:
+            task_name: Summarize Daily USPS Mail
+            instructions: "You are a helpful smart home assistant summarizing the
+              daily mail delivery. \nToday, we are receiving {{ states('sensor.imap_gmail_com_mail_usps_mail')
+              }} pieces of mail.\nPlease carefully review the attached image grid
+              showing today's mail and provide the information requested in the structured
+              output fields.\nGuidelines for your summary:  * Prioritize and highlight
+              any \"out of the ordinary\" mail. This includes handwritten envelopes,
+              personal correspondence (especially anything addressed to Nathan, Sarah,
+              or Jude), or non-routine letters/bills. * Identify standard monthly
+              utilities (e.g., BrightRidge, Atmos Energy, City of Johnson City) but
+              treat them as routine.  * Group obvious junk mail, generic flyers, or
+              mass-market presorted mail together (e.g., \"Plus 3 pieces of standard
+              junk mail\").  * If the scans are blurry or a sender is illegible, do
+              not guess or hallucinate the name. Simply note that there is a piece
+              of mail from an unrecognizable sender."
+            attachments:
+            - media_content_id: media-source://media_source/www/mail_and_packages/{{
+                states('sensor.imap_gmail_com_mail_grid_image_path').split('/')[-1]
+                }}
+              media_content_type: image/png
+            structure:
+              title:
+                description: 'A super brief, dynamic notification title (max 5-7 words)
+                  highlighting the most important or interesting piece of mail. (e.g.,
+                  ''Mail: Electric Bill & 2 Flyers'')'
+                selector:
+                  text: {}
+              more_info:
+                description: A short, glanceable list of all the delivery items formatted
+                  as a single, comma-separated list. Group junk together and note
+                  specific senders. e.g. Letter from Donna for Nathan, Bill from Brightridge,
+                  2 pieces of junk
+                selector:
+                  text:
+                    multiline: true
+          response_variable: mail_summary
+        - action: script.notify_sarah_and_nathan
+          data:
+            message: '{{ mail_summary.data.title }}'
+            more_info: '{{ mail_summary.data.more_info }}'
+            url: /lovelace/mail
+            image: '{{ states(''sensor.imap_gmail_com_mail_image_url'') }}'
+            use_alexa: false
+            notify_nathan: true
+            notify_sarah: true
+            text_nathan: false
+            text_sarah: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
     default:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.mail_in_box
+    - entity_id: input_boolean.mail_in_box
+      action: input_boolean.turn_off
   mode: single
 - id: '1586306345598'
   alias: Turn Off Fans When Cold
@@ -2764,6 +2810,7 @@
         data: {}
         target:
           entity_id: button.lxc_unmanic_111_shutdown
+        enabled: false
     - conditions:
       - condition: trigger
         id:
@@ -2784,6 +2831,7 @@
         data: {}
         target:
           entity_id: button.lxc_unmanic_111_start
+        enabled: false
 - id: '1587273614675'
   alias: Calendar Toggles Visitors
   description: ''
@@ -3071,26 +3119,32 @@
     data: {}
     target:
       entity_id: fan.gazebo_fan
-  - action: weather.get_forecasts
-    metadata: {}
-    data:
-      type: daily
-    target:
-      entity_id: weather.home
-    response_variable: forecasts
-  - alias: Reminder to Let Water Drip
-    choose:
-    - conditions:
-      - condition: template
-        value_template: '{{forecasts[''weather.home''].forecast[0].templow < 32 or
-          forecasts[''weather.home''].forecast[1].templow < 32}}'
-      sequence:
-      - data:
-          data:
-            type: tts
-          message: Don't forget to let the water drip. The low for tonight is {{forecasts["weather.home"].forecast[0].templow}}
-          target: media_player.bedroom_echo
-        action: notify.alexa_media
+  - sequence:
+    - action: weather.get_forecasts
+      metadata: {}
+      data:
+        type: hourly
+      target:
+        entity_id: weather.home
+      response_variable: forecasts
+    - variables:
+        lowest_temp_entry: "{% set next_sunrise = states('sensor.sun_next_rising')
+          %} {% set forecasts = forecasts['weather.home']['forecast'] %} {{ forecasts
+          \n   | selectattr('datetime', 'lt', next_sunrise) \n   | map(attribute='temperature')
+          \n   | min }}\n"
+    - alias: Reminder to Let Water Drip
+      choose:
+      - conditions:
+        - condition: template
+          value_template: '{{lowest_temp_entry < 32}}'
+        sequence:
+        - data:
+            data:
+              type: tts
+            message: Don't forget to let the water drip. The low for tonight is {{lowest_temp_entry}}
+            target: media_player.bedroom_echo
+          action: notify.alexa_media
+    alias: Reminder to let water drip
 - id: couch_sleepers
   alias: Toggle Automations When Someone is Sleeping on the Couch
   description: ''
@@ -3213,32 +3267,41 @@
       - condition: state
         entity_id: binary_sensor.water_drip_notification_done
         state: 'off'
-      sequence:
-      - action: weather.get_forecasts
-        metadata: {}
-        data:
-          type: daily
-        target:
-          entity_id: weather.home
-        response_variable: forecasts
-      - condition: template
-        value_template: '{{forecasts[''weather.home''].forecast[0].templow < 32 or
-          forecasts[''weather.home''].forecast[1].templow < 32}}
-
-          '
         enabled: true
-      - data:
+      sequence:
+      - alias: Reminder to let water drip
+        sequence:
+        - action: weather.get_forecasts
+          metadata: {}
           data:
-            type: tts
-          message: Don't forget to let the water drip. The low for tonight is {{forecasts["weather.home"].forecast[0].templow}}
-          target: media_player.kitchen_echo_show
-        action: notify.alexa_media
-      - data:
-          replace_attributes: false
-          value: 'true'
-        target:
-          entity_id: binary_sensor.water_drip_notification_done
-        action: variable.update_binary_sensor
+            type: hourly
+          target:
+            entity_id: weather.home
+          response_variable: forecasts
+        - variables:
+            lowest_temp_entry: "{% set next_sunrise = states('sensor.sun_next_rising')
+              %} {% set forecasts = forecasts['weather.home']['forecast'] %} {{ forecasts
+              \n   | selectattr('datetime', 'lt', next_sunrise) \n   | map(attribute='temperature')
+              \n   | min }}\n"
+        - alias: Reminder to Let Water Drip
+          choose:
+          - conditions:
+            - condition: template
+              value_template: '{{lowest_temp_entry < 32}}'
+            sequence:
+            - data:
+                data:
+                  type: tts
+                message: Don't forget to let the water drip. The low for tonight is
+                  {{lowest_temp_entry}}
+                target: media_player.kitchen_echo_show
+              action: notify.alexa_media
+            - data:
+                replace_attributes: false
+                value: 'true'
+              target:
+                entity_id: binary_sensor.water_drip_notification_done
+              action: variable.update_binary_sensor
     - conditions:
       - condition: trigger
         id:
@@ -3255,7 +3318,7 @@
   alias: Toggle Bathroom on Motion
   description: ''
   trigger:
-  - entity_id: binary_sensor.bathroom_motion_sensor_motion_detection
+  - entity_id: binary_sensor.apollo_msr_2_f8ee88_radar_target
     platform: state
     to: 'on'
   condition: []
@@ -3301,7 +3364,7 @@
     enabled: false
   - wait_for_trigger:
     - platform: state
-      entity_id: binary_sensor.bathroom_motion_sensor_motion_detection
+      entity_id: binary_sensor.apollo_msr_2_f8ee88_radar_target
       to: 'off'
       for:
         seconds: '{% set pee_timeout = states(''input_number.pee_timeout'') | int
@@ -3477,6 +3540,13 @@
       - target:
           entity_id: '{{ lights }}'
         action: light.turn_on
+        data: {}
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id: light.h616c_745e
+        data:
+          effect: '{{states(''input_select.porch_light_scenes'')}}'
     default: []
   - entity_id: switch.mudroom_camera
     action: switch.turn_off
@@ -3523,6 +3593,7 @@
   - target:
       entity_id: '{{ lights }}'
     action: light.turn_off
+    data: {}
   variables:
     lights:
     - light.front_porch
@@ -3532,6 +3603,7 @@
     - light.back_door
     - light.front_door
     - light.string_lights
+    - light.h616c_745e
 - id: '1651167205604'
   alias: Tag Office is scanned
   description: ''
@@ -4227,136 +4299,6 @@
             Electric Price: ${{states("sensor.brightridge_electricity_price") | float
             | round(3)}} / kWh'
   mode: single
-- id: '1656699090791'
-  alias: Ikea Shortcut Button -- Nursery
-  description: ''
-  trigger:
-  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: single
-  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
-    domain: zha
-    platform: device
-    type: remote_button_long_press
-    subtype: dim_up
-    id: long-down
-  - device_id: 8845d3be13bedb8d93a8ef44f4f2e90a
-    domain: zha
-    platform: device
-    type: remote_button_long_release
-    subtype: dim_up
-    id: long-up
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id:
-        - long-down
-      sequence:
-      - if:
-        - condition: template
-          value_template: '{% set area_lights = expand(area_entities(''Nursery''))
-            | selectattr(''domain'', ''eq'', ''light'') | list %}
-
-            {% set lights_on = area_lights | selectattr(''state'', ''eq'', ''on'')
-            | list | count > 0 %}
-
-
-            {{lights_on}}'
-        then:
-        - service: light.turn_off
-          data:
-            transition: 1
-          target:
-            area_id: nursery
-        else:
-        - service: light.turn_on
-          data:
-            transition: 1
-            brightness_pct: 100
-          target:
-            entity_id: light.guest_bedroom_lamp
-    - conditions:
-      - condition: trigger
-        id:
-        - single
-      sequence:
-      - service: light.toggle
-        target:
-          entity_id: light.guest_bedroom_lamp
-        data: {}
-    default: []
-  mode: single
-- id: '1658177531312'
-  alias: Ikea Shortcut Button -- Living Room
-  description: ''
-  trigger:
-  - device_id: 01632afbe7a0628355b82d4ddf1c27da
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: single
-  - device_id: 01632afbe7a0628355b82d4ddf1c27da
-    domain: zha
-    platform: device
-    type: remote_button_long_press
-    subtype: dim_up
-    id: long-down
-  - device_id: 01632afbe7a0628355b82d4ddf1c27da
-    domain: zha
-    platform: device
-    type: remote_button_long_release
-    subtype: dim_up
-    id: long-up
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: long-down
-      sequence:
-      - if:
-        - condition: template
-          value_template: '{% set area_lights = expand(area_entities(''Living Room''))
-            | selectattr(''domain'', ''eq'', ''light'') | list %}
-
-            {% set lights_on = area_lights | selectattr(''state'', ''eq'', ''on'')
-            | list | count > 0 %}
-
-
-            {{lights_on}}'
-        then:
-        - service: light.turn_off
-          data:
-            transition: 1
-          target:
-            area_id: living_space
-        else:
-        - service: light.turn_on
-          data:
-            transition: 1
-            brightness_pct: 100
-          target:
-            device_id:
-            - c730d517cc9d462698579ca079ca5754
-            - d424c5c84ec447c58f8161044e5cf3a3
-            - bf03597d00814f079ad3d5b9a625a708
-    - conditions:
-      - condition: trigger
-        id: single
-      sequence:
-      - service: light.toggle
-        data:
-          brightness_pct: 100
-        target:
-          entity_id: light.living_room_lamp
-    default: []
-  mode: single
 - id: '1663336492808'
   alias: House Keeper Mode
   description: ''
@@ -4420,6 +4362,7 @@
           - automation.kitchen_motion
           - automation.turn_on_lights_when_doors_are_opened
           - automation.work_from_home
+          - automation.bedroom_presence_2
         action: automation.turn_off
       - data: {}
         target:
@@ -4477,6 +4420,7 @@
           - automation.kitchen_motion
           - automation.turn_on_lights_when_doors_are_opened
           - automation.work_from_home
+          - automation.bedroom_presence_2
         action: automation.turn_on
       - data: {}
         target:
@@ -4763,41 +4707,29 @@
 - id: '1670001478544'
   alias: Christmas Present Hunt
   description: ''
-  trigger:
-  - device_id: e09b0160fe46cbe2aadf009d127c9f91
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-  - device_id: 01632afbe7a0628355b82d4ddf1c27da
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: start-button-pressed
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - input_boolean.christmas_hunt_enable
     from: 'off'
     to: 'on'
     id: hunt-enabled
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_select.christmas_current_step
     to: '1'
     id: clue-1-started
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_select.christmas_room_selector
     to: Main Bathroom
     id: clue-1-done
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_select.christmas_current_step
     to: '2'
     id: clue-2-started
-  - platform: template
-    value_template: '{{states(''binary_sensor.back_door_input'') == ''off'' and
+    trigger: state
+  - value_template: '{{states(''binary_sensor.back_door_input'') == ''off'' and
 
       states(''binary_sensor.island_input'') == ''on'' and
 
@@ -4807,70 +4739,65 @@
 
       states(''binary_sensor.kitchen_counter_input'') == ''on''}}'
     id: clue-2-done
-  - platform: state
-    entity_id:
+    trigger: template
+  - entity_id:
     - input_select.christmas_current_step
     to: '3'
     id: clue-3-started
-  - device_id: e09b0160fe46cbe2aadf009d127c9f91
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: clue-3-done
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_select.christmas_current_step
     to: '4'
     id: clue-4-started
-  - platform: event
-    event_type: jingle-bells
+    trigger: state
+  - event_type: jingle-bells
     id: clue-4-done
-  - platform: state
-    entity_id:
+    trigger: event
+  - entity_id:
     - input_select.christmas_current_step
     to: '5'
     id: clue-5-started
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_button.christmas_clue_5_solved
     id: clue-5-done
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - input_select.christmas_current_step
     to: '6'
     id: clue-6-started
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: state
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1  and states(''input_select.christmas_current_step'')
       == ''1''}}'
     id: clue-1-done
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: template
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1  and states(''input_select.christmas_current_step'')
       == ''2''}}'
     id: clue-2-done
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: template
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1  and states(''input_select.christmas_current_step'')
       == ''3''}}'
     id: clue-3-done
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: template
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1  and states(''input_select.christmas_current_step'')
       == ''4''}}'
     id: clue-4-done
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: template
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1  and states(''input_select.christmas_current_step'')
       == ''5''}}'
     id: clue-5-done
-  - platform: template
-    value_template: '{{states(''input_button.christmas_complete_current_clue'') |
+    trigger: template
+  - value_template: '{{states(''input_button.christmas_complete_current_clue'') |
       as_timestamp  > now() | as_timestamp - 1 and states(''input_select.christmas_current_step'')
       == ''6''}}'
     id: clue-6-done
-  condition:
+    trigger: template
+  conditions:
   - condition: or
     conditions:
     - condition: state
@@ -4878,91 +4805,95 @@
       state: 'on'
     - condition: trigger
       id: start-button-pressed
-  action:
+  actions:
   - choose:
     - conditions:
       - condition: trigger
         id: start-button-pressed
         alias: Start Button Pressed
       sequence:
-      - service: input_boolean.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id: input_boolean.christmas_hunt_enable
+        action: input_boolean.turn_on
     - conditions:
       - condition: trigger
         id: hunt-enabled
         alias: Hunt Started
       sequence:
-      - service: input_select.select_option
-        data:
+      - data:
           option: '0'
         target:
           entity_id: input_select.christmas_current_step
+        action: input_select.select_option
       - parallel:
         - choose:
           default:
-          - service: media_player.volume_set
-            data:
+          - data:
               volume_level: 0.6
             target:
               entity_id: media_player.everywhere
+            action: media_player.volume_set
           alias: Set Volume everywhere
         - choose:
           default:
-          - service: light.turn_off
-            data: {}
+          - data: {}
             target:
               entity_id: light.home
-          - service: switch.turn_off
-            data: {}
+            action: light.turn_off
+          - data: {}
             target:
               entity_id: switch.sarah_s_fan_socket_1
+            action: switch.turn_off
           alias: Turn off lights
         alias: Set volume and turn off lights
-      - service: media_player.volume_set
-        data:
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.living_room_echo
+        action: media_player.volume_set
       - parallel:
         - choose:
           default:
-          - service: media_player.play_media
-            data:
-              media_content_type: sound
-              media_content_id: christmas_05
+          - data:
+              media:
+                media_content_id: christmas_05
+                media_content_type: sound
+                metadata: {}
             target:
               entity_id:
               - media_player.living_room_echo
-          - service: notify.alexa_media_living_room_echo
-            data:
+            action: media_player.play_media
+          - data:
               data:
                 type: tts
               message: Merry Christmas! You've got some really nice presents waiting
                 for you this year, but they won't come free. I have a bunch of puzzles
                 for you to solve first. It'll probably take you a while, so I'll put
                 on some Christmas music while you work.
+            action: notify.alexa_media_living_room_echo
           alias: Explain the game
         - choose:
           default:
-          - service: media_player.select_source
-            data:
+          - data:
               source: Everywhere
             target:
               entity_id: media_player.spotify_nathan_orick
+            action: media_player.select_source
           - delay:
               hours: 0
               minutes: 0
               seconds: 20
               milliseconds: 0
             alias: Wait for source to change and wait for announcement to finish
-          - service: media_player.play_media
-            data:
-              media_content_type: playlist
-              media_content_id: https://open.spotify.com/playlist/37i9dQZF1DX6R7QUWePReA?si=e5dda850a8ef4d64
+          - data:
+              media:
+                media_content_id: https://open.spotify.com/playlist/37i9dQZF1DX6R7QUWePReA?si=e5dda850a8ef4d64
+                media_content_type: playlist
+                metadata: {}
             target:
               entity_id: media_player.spotify_nathan_orick
+            action: media_player.play_media
           alias: Turn on Music
         - choose: []
           alias: Handle Lights
@@ -4972,19 +4903,19 @@
               minutes: 0
               seconds: 5
               milliseconds: 0
-          - service: switch.turn_on
-            data: {}
+          - data: {}
             target:
               entity_id: switch.sarah_s_fan_socket_1
+            action: switch.turn_on
           - delay:
               hours: 0
               minutes: 0
               seconds: 20
               milliseconds: 0
-          - service: scene.turn_on
-            data: {}
+          - data: {}
             target:
               entity_id: scene.living_space_under_the_tree
+            action: scene.turn_on
         alias: Intro, start music, and turn on lights
       - if:
         - condition: not
@@ -4998,81 +4929,80 @@
               seconds: 3
         then:
         - wait_for_trigger:
-          - platform: state
-            entity_id:
+          - entity_id:
             - media_player.spotify_nathan_orick
             to: playing
             for:
               hours: 0
               minutes: 0
               seconds: 3
+            trigger: state
           timeout:
             hours: 0
             minutes: 0
             seconds: 10
             milliseconds: 0
         alias: Wait for music
-      - service: notify.alexa_media_living_room_echo
-        data:
+      - data:
           data:
             type: tts
           message: Ok, now that we have some tunes, let me give you your first clue
         alias: Working on First Clue Announcement
+        action: notify.alexa_media_living_room_echo
       - delay:
           hours: 0
           minutes: 0
           seconds: 10
           milliseconds: 0
-      - service: input_select.select_option
-        data:
+      - data:
           option: '1'
         target:
           entity_id: input_select.christmas_current_step
-      - service: input_select.select_option
-        data:
+        action: input_select.select_option
+      - data:
           option: None Selected
         target:
           entity_id: input_select.christmas_room_selector
-      - service: script.notify_sarah_and_nathan
-        data:
+        action: input_select.select_option
+      - data:
           message: Click For the First Clue
           notify_nathan: true
           notify_sarah: true
           use_alexa: false
           url: /lovelace/christmas-hunt
         alias: Send First Clue Notification
-      - service: notify.alexa_media_living_room_echo
-        data:
+        action: script.notify_sarah_and_nathan
+      - data:
           data:
             type: tts
           message: Ok, I just sent you a notification. Check your phone for the first
             clue... Good luck!
         alias: Check your phone announcement
-      - service: media_player.volume_set
-        data:
+        action: notify.alexa_media_living_room_echo
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.living_room_echo
+        action: media_player.volume_set
     - conditions:
       - condition: trigger
         id: clue-1-started
       sequence:
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           area_id: living_space
-      - service: automation.turn_off
-        data: {}
+        action: light.turn_off
+      - data: {}
         target:
           entity_id: automation.turn_on_bathroom_when_motion_detected_2
+        action: automation.turn_off
       - repeat:
           while:
           - condition: state
             entity_id: input_select.christmas_current_step
             state: '1'
           sequence:
-          - service: script.tier_toggle_devices
-            data:
+          - data:
               action: true
               entity_1:
                 entity_id: light.bath_1
@@ -5089,8 +5019,8 @@
               entity_7:
                 entity_id: light.bath_ceiling
               delay: 250
-          - service: script.tier_toggle_devices
-            data:
+            action: script.tier_toggle_devices
+          - data:
               action: false
               entity_1:
                 entity_id: light.bath_1
@@ -5107,40 +5037,40 @@
               entity_7:
                 entity_id: light.bath_ceiling
               delay: 250
+            action: script.tier_toggle_devices
         alias: Blink Bathroom Lights Until Clue 1 is Done
     - conditions:
       - condition: trigger
         id: clue-1-done
       sequence:
-      - service: media_player.volume_set
-        data:
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.bathroom_echo
-      - service: input_select.select_option
-        data:
+        action: media_player.volume_set
+      - data:
           option: '1.5'
         target:
           entity_id: input_select.christmas_current_step
         alias: Update Step to 1.5 so lights quit blinking
-      - service: notify.alexa_media_bathroom_echo
-        data:
+        action: input_select.select_option
+      - data:
           message: Nice job! That wasn't too hard, right?
-      - service: scene.turn_on
-        data: {}
+        action: notify.alexa_media_bathroom_echo
+      - data: {}
         target:
           entity_id: scene.living_space_under_the_tree
-      - service: light.turn_off
-        data: {}
+        action: scene.turn_on
+      - data: {}
         target:
           area_id: a6f57bbbc237412ea553e7537a1bb3f2
+        action: light.turn_off
       - delay:
           hours: 0
           minutes: 0
           seconds: 1
           milliseconds: 0
-      - service: light.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id:
           - light.bath_1
@@ -5150,48 +5080,48 @@
           - light.bath_4
           - light.bath_3
           - light.bath_2
-      - service: switch.turn_on
-        data: {}
+        action: light.turn_on
+      - data: {}
         target:
           entity_id: switch.bathroom_fan
-      - service: light.turn_on
-        data: {}
+        action: switch.turn_on
+      - data: {}
         target:
           entity_id: light.bedroom_rope_lights
+        action: light.turn_on
       - delay:
           hours: 0
           minutes: 0
           seconds: 3
           milliseconds: 0
-      - service: switch.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: switch.bathroom_fan
-      - service: automation.turn_on
-        data: {}
+        action: switch.turn_off
+      - data: {}
         target:
           entity_id: automation.turn_on_bathroom_when_motion_detected_2
+        action: automation.turn_on
       - delay:
           hours: 0
           minutes: 0
           seconds: 3
           milliseconds: 0
-      - service: input_select.select_option
-        data:
+      - data:
           option: '2'
         target:
           entity_id: input_select.christmas_current_step
+        action: input_select.select_option
     - conditions:
       - condition: trigger
         id: clue-2-started
       sequence:
-      - service: notify.alexa_media_bathroom_echo
-        data:
+      - data:
           message: Okie dokie. Now, we're gonna make it a whole lot harder. Head back
             over to Home Assistant for your next clue. I'll send you another link
             just in case you lost it.
-      - service: script.notify_sarah_and_nathan
-        data:
+        action: notify.alexa_media_bathroom_echo
+      - data:
           message: Click For the Second Clue
           notify_nathan: true
           notify_sarah: true
@@ -5200,11 +5130,12 @@
           image: https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/photos/clue2.jpg
           image_type: jpeg
         alias: Send Second Clue Notification
-      - service: media_player.volume_set
-        data:
+        action: script.notify_sarah_and_nathan
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.bathroom_echo
+        action: media_player.volume_set
     - conditions:
       - condition: trigger
         id: clue-2-done
@@ -5212,29 +5143,28 @@
         entity_id: input_select.christmas_current_step
         state: '2'
       sequence:
-      - service: light.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id:
           - light.kitchen_counter
           - light.kitchen_overhead
           - light.island
-      - service: media_player.volume_set
-        data:
+        action: light.turn_on
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.kitchen_echo_show
-      - service: notify.alexa_media_kitchen_echo_show
-        data:
+        action: media_player.volume_set
+      - data:
           message: Sweet! Nicely done! I think there's a present for this one. Hang
             on.
+        action: notify.alexa_media_kitchen_echo_show
       - delay:
           hours: 0
           minutes: 0
           seconds: 15
           milliseconds: 0
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id:
           - light.kitchen_counter
@@ -5242,27 +5172,28 @@
           - light.island
           - light.back_porch
           - light.back_door
-      - service: media_player.volume_set
-        data:
+        action: light.turn_off
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.kitchen_echo_show
-      - service: media_player.volume_set
-        data:
+        action: media_player.volume_set
+      - data:
           volume_level: 1
         target:
           entity_id: media_player.nathan_s_echo_dot
-      - service: notify.alexa_media_nathan_s_echo_dot
-        data:
+        action: media_player.volume_set
+      - data:
           message: Ok, come in here! I'm in the laundry room! ... Come into the laundry
             room! ... Come here! ... Laundry Room ... I'm in the Laundry room
+        action: notify.alexa_media_nathan_s_echo_dot
       - repeat:
           count: '10'
           sequence:
-          - service: light.toggle
-            data: {}
+          - data: {}
             target:
               entity_id: light.laundry_room
+            action: light.toggle
           - delay:
               hours: 0
               minutes: 0
@@ -5272,63 +5203,63 @@
       - wait_template: '{{states(''binary_sensor.laundry_room_motion'') == ''on''}}'
         continue_on_timeout: true
         timeout: '30'
-      - service: notify.alexa_media_nathan_s_echo_dot
-        data:
+      - data:
           message: Check inside the dryer!
+        action: notify.alexa_media_nathan_s_echo_dot
       - delay:
           hours: 0
           minutes: 0
           seconds: 30
           milliseconds: 0
-      - service: input_select.select_option
-        data:
+      - data:
           option: '3'
         target:
           entity_id: input_select.christmas_current_step
+        action: input_select.select_option
     - conditions:
       - condition: trigger
         id: clue-3-started
       sequence:
-      - service: automation.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: automation.turn_on_basement_when_door_is_opened
-      - service: automation.turn_off
-        data: {}
+        action: automation.turn_off
+      - data: {}
         target:
           entity_id: automation.motion_bomb_shelter
-      - service: notify.alexa_media_nathan_s_echo_dot
-        data:
+        action: automation.turn_off
+      - data:
           message: Ok, you gotta go downstairs for this one. Open your present, and
             check out your phone.
-      - service: media_player.volume_set
-        data:
+        action: notify.alexa_media_nathan_s_echo_dot
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.nathan_s_echo_dot
-      - service: script.notify_sarah_and_nathan
-        data:
+        action: media_player.volume_set
+      - data:
           use_alexa: false
           notify_sarah: true
           notify_nathan: true
           message: Click for Third Clue
           url: /lovelace/christmas-hunt
-      - service: light.turn_on
-        data: {}
+        action: script.notify_sarah_and_nathan
+      - data: {}
         target:
           entity_id:
           - light.basement_stairs
           - light.bl1
           - light.bl2
+        action: light.turn_on
       - wait_for_trigger:
-        - platform: state
-          entity_id:
+        - entity_id:
           - binary_sensor.basement_motion_sensor
           to: 'on'
           for:
             hours: 0
             minutes: 0
             seconds: 0
+          trigger: state
         timeout:
           hours: 0
           minutes: 2
@@ -5339,13 +5270,12 @@
           minutes: 0
           seconds: 4
           milliseconds: 0
-      - service: media_player.volume_set
-        data:
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.nathan_s_2nd_echo_dot
-      - service: notify.alexa_media_nathan_s_2nd_echo_dot
-        data:
+        action: media_player.volume_set
+      - data:
           message: '''Twas the night before Christmas, when all through the house
             Not a creature was stirring, not even a mouse; The stockings were hung
             by the chimney with care, In hopes that St. Nicholas soon would be there;  The
@@ -5384,28 +5314,29 @@
             sprang to his sleigh, to his team gave a whistle, And away they all flew
             like the down of a thistle. But I heard him exclaim, ere he drove out
             of sight, HAPPY CHRISTMAS TO ALL, AND TO ALL A GOOD-NIGHT!'
+        action: notify.alexa_media_nathan_s_2nd_echo_dot
       - delay:
           hours: 0
           minutes: 0
           seconds: 30
           milliseconds: 0
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id:
           - light.bl1
           - light.bl2
           - light.basement_stairs
+        action: light.turn_off
       - delay:
           hours: 0
           minutes: 0
           seconds: 10
           milliseconds: 0
-      - service: light.turn_on
-        data:
+      - data:
           transition: 10
         target:
           entity_id: light.bomb_shelter
+        action: light.turn_on
       - delay:
           hours: 0
           minutes: 0
@@ -5414,10 +5345,10 @@
       - repeat:
           count: '5'
           sequence:
-          - service: switch.toggle
-            data: {}
+          - data: {}
             target:
               entity_id: switch.grow_light
+            action: switch.toggle
           - delay:
               hours: 0
               minutes: 0
@@ -5426,18 +5357,18 @@
       - wait_template: '{{states(''binary_sensor.wyze_motion4'') == ''on''}}'
         continue_on_timeout: true
         timeout: '120'
-      - service: switch.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: switch.grow_light
-      - service: light.turn_off
-        data: {}
+        action: switch.turn_off
+      - data: {}
         target:
           entity_id: light.bomb_shelter
-      - service: switch.turn_on
-        data: {}
+        action: light.turn_off
+      - data: {}
         target:
           entity_id: switch.grow_mat
+        action: switch.turn_on
     - conditions:
       - condition: trigger
         id: clue-3-done
@@ -5445,49 +5376,49 @@
         entity_id: input_select.christmas_current_step
         state: '3'
       sequence:
-      - service: automation.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id: automation.turn_on_basement_when_door_is_opened
-      - service: input_select.select_option
-        data:
+        action: automation.turn_on
+      - data:
           option: '4'
         target:
           entity_id: input_select.christmas_current_step
-      - service: automation.turn_on
-        data: {}
+        action: input_select.select_option
+      - data: {}
         target:
           entity_id: automation.motion_bomb_shelter
-      - service: switch.turn_off
-        data: {}
+        action: automation.turn_on
+      - data: {}
         target:
           entity_id: switch.grow_mat
-      - service: light.turn_on
-        data: {}
+        action: switch.turn_off
+      - data: {}
         target:
           entity_id:
           - light.bl1
           - light.bl2
           - light.bomb_shelter
+        action: light.turn_on
     - conditions:
       - condition: trigger
         id: clue-4-started
       sequence:
-      - service: notify.alexa_media_nathan_s_2nd_echo_dot
-        data:
+      - data:
           message: Another clue incoming
-      - service: media_player.volume_set
-        data:
+        action: notify.alexa_media_nathan_s_2nd_echo_dot
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.nathan_s_2nd_echo_dot
-      - service: script.notify_sarah_and_nathan
-        data:
+        action: media_player.volume_set
+      - data:
           url: /lovelace/christmas-hunt
           message: Click for Fourth Clue
           use_alexa: false
           notify_sarah: true
           notify_nathan: true
+        action: script.notify_sarah_and_nathan
     - conditions:
       - condition: trigger
         id: clue-4-done
@@ -5495,52 +5426,52 @@
         entity_id: input_select.christmas_current_step
         state: '4'
       sequence:
-      - service: scene.turn_on
-        data: {}
+      - data: {}
         target:
           entity_id: scene.living_space_bright
-      - service: media_player.volume_set
-        data:
+        action: scene.turn_on
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.living_room_echo
-      - service: notify.alexa_media_living_room_echo
-        data:
+        action: media_player.volume_set
+      - data:
           message: Great job playing the right song! You get a present for this one
             too. Just check the coat closet.
+        action: notify.alexa_media_living_room_echo
       - delay:
           hours: 0
           minutes: 0
           seconds: 30
           milliseconds: 0
-      - service: input_select.select_option
-        data:
+      - data:
           option: '5'
         target:
           entity_id: input_select.christmas_current_step
+        action: input_select.select_option
     - conditions:
       - condition: trigger
         id: clue-5-started
       sequence:
-      - service: notify.alexa_media_living_room_echo
-        data:
+      - data:
           message: Ok, time for the last puzzle. Check your phone.
-      - service: media_player.volume_set
-        data:
+        action: notify.alexa_media_living_room_echo
+      - data:
           volume_level: 0.6
         target:
           entity_id: media_player.living_room_echo
-      - service: script.notify_sarah_and_nathan
-        data:
+        action: media_player.volume_set
+      - data:
           message: Click for Fifth Clue
           url: /lovelace/christmas-hunt
           use_alexa: false
           notify_sarah: true
           notify_nathan: true
-      - service: scene.turn_on
-        data: {}
+        action: script.notify_sarah_and_nathan
+      - data: {}
         target:
           entity_id: scene.living_space_under_the_tree
+        action: scene.turn_on
     - conditions:
       - condition: trigger
         id: clue-5-done
@@ -5548,17 +5479,16 @@
         entity_id: input_select.christmas_current_step
         state: '5'
       sequence:
-      - service: light.turn_off
-        data: {}
+      - data: {}
         target:
           entity_id: light.office_lamp_top
-      - service: media_player.volume_set
-        data:
+        action: light.turn_off
+      - data:
           volume_level: 0.9
         target:
           entity_id: media_player.office_echo
-      - service: light.turn_on
-        data:
+        action: media_player.volume_set
+      - data:
           rgb_color:
           - 255
           - 0
@@ -5569,26 +5499,27 @@
           - light.hue_color_downlight_1
           - light.office_ceiling_2
           - light.office_ceiling_1
-      - service: notify.alexa_media_office_echo
-        data:
+        action: light.turn_on
+      - data:
           message: Welcome to Hell
+        action: notify.alexa_media_office_echo
       - delay:
           hours: 0
           minutes: 0
           seconds: 6
           milliseconds: 0
-      - service: notify.alexa_media_office_echo
-        data:
+      - data:
           message: Jk. You Win! Your last present is hidden behind the office chair
-      - service: scene.turn_on
-        data: {}
+        action: notify.alexa_media_office_echo
+      - data: {}
         target:
           entity_id: scene.office_arctic_aurora
-      - service: input_select.select_option
-        data:
+        action: scene.turn_on
+      - data:
           option: '6'
         target:
           entity_id: input_select.christmas_current_step
+        action: input_select.select_option
     - conditions:
       - condition: trigger
         id: clue-6-started
@@ -5598,40 +5529,39 @@
           minutes: 0
           seconds: 30
           milliseconds: 0
-      - service: notify.alexa_media_office_echo
-        data:
+      - data:
           message: Thanks for playing, and Merry Christmas
+        action: notify.alexa_media_office_echo
       - delay:
           hours: 0
           minutes: 1
           seconds: 0
           milliseconds: 0
-      - service: input_select.select_option
-        data:
+      - data:
           option: '0'
         target:
           entity_id: input_select.christmas_current_step
-      - service: input_boolean.turn_off
-        data: {}
+        action: input_select.select_option
+      - data: {}
         target:
           entity_id: input_boolean.christmas_hunt_enable
-      - service: media_player.media_pause
-        data: {}
+        action: input_boolean.turn_off
+      - data: {}
         target:
           entity_id: media_player.spotify_nathan_orick
+        action: media_player.media_pause
   mode: parallel
   max: 5
 - id: '1671113410657'
   alias: Smoke Alarm
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - switch.smoke_alarm
     to: 'on'
     id: alarm-on
-  - platform: state
-    entity_id:
+    trigger: state
+  - entity_id:
     - switch.smoke_alarm
     to: 'off'
     from: 'on'
@@ -5640,15 +5570,15 @@
       hours: 0
       minutes: 0
       seconds: 30
-  condition: []
-  action:
+    trigger: state
+  conditions: []
+  actions:
   - choose:
     - conditions:
       - condition: trigger
         id: alarm-on
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           message: Smoke Alarm Detected
           use_alexa: true
           notify_sarah: true
@@ -5657,12 +5587,17 @@
           text_sarah: true
           text_ice_contacts: true
           bypass_quiet_mode: true
+        action: script.notify_sarah_and_nathan
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Smoke
+        continue_on_error: true
     - conditions:
       - condition: trigger
         id: alarm-off
       sequence:
-      - service: script.notify_sarah_and_nathan
-        data:
+      - data:
           message: Smoke Alarm Has Stopped
           use_alexa: false
           notify_sarah: true
@@ -5671,6 +5606,12 @@
           text_sarah: true
           text_ice_contacts: true
           bypass_quiet_mode: true
+        action: script.notify_sarah_and_nathan
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Disarm
+        continue_on_error: true
   mode: single
 - id: '1673822055354'
   alias: Handle Guest Login
@@ -6265,7 +6206,7 @@
       - wait_for_trigger:
         - platform: state
           entity_id:
-          - binary_sensor.bathroom_motion_sensor_motion_detection
+          - binary_sensor.apollo_msr_2_f8ee88_radar_target
           to: 'on'
         - platform: state
           entity_id:
@@ -6283,7 +6224,7 @@
           milliseconds: 0
       - if:
         - condition: state
-          entity_id: binary_sensor.bathroom_motion_sensor_motion_detection
+          entity_id: binary_sensor.apollo_msr_2_f8ee88_radar_target
           state: 'on'
         then:
         - stop: Done. Bathroom Lights will stay on
@@ -6532,7 +6473,7 @@
           - data:
               message: 'Baby Crying '
             action: notify.alexa_media_living_room_echo
-        enabled: false
+        enabled: true
       - if:
         - condition: state
           entity_id: binary_sensor.sarah_baby_shift
@@ -6946,7 +6887,7 @@
         action: scene.turn_on
         data: {}
         target:
-          entity_id: scene.sleep
+          entity_id: scene.hatch_sleep
       - metadata: {}
         data: {}
         target:
@@ -7089,12 +7030,12 @@
           text_garrett: false
           text_ice_contacts: false
           bypass_quiet_mode: false
-          message: Nursery to cold
+          message: Nursery too cold
       - data:
           data:
             type: tts
           target: media_player.bedroom_echo
-          message: <audio src="https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/sounds/soft-alert.mp3"
+          message: <audio src="https://zeryje96cijoslllthx5qprkm9drlxwz.ui.nabu.casa/local/sounds/crimson-dreams.mp3"
             />
         action: notify.alexa_media
     - conditions:
@@ -7342,810 +7283,6 @@
       data_clickaction_url: /lovelace/Cameras
     enabled: false
   mode: single
-- id: '1708023680158'
-  alias: Neighbors Automation
-  description: ''
-  trigger:
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: start
-    id: start
-    alias: Start
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-1-done
-    id: step-2
-    alias: Step 2
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-2-done
-    id: step-3
-    alias: Step 3
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-3-done
-    id: step-4
-    alias: Step 4
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-4-done
-    id: step-5
-    alias: Step 5
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-5-done
-    id: step-6
-    alias: Step 6
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-6-done
-    id: step-7
-    alias: Step 7
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-7-done
-    id: step-8
-    alias: Step 8
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-8-done
-    id: step-9
-    alias: Step 9
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id:
-        - start
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        alias: Black.mp4
-      - alias: Door2.wav
-        service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 5
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-1-done
-      alias: Step 1
-    - conditions:
-      - condition: trigger
-        id:
-        - step-2
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        alias: swamp.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: vdieo
-        alias: Nikola_intro.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Nikola_intro.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 39
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-2-done
-      alias: Step 2
-    - conditions:
-      - condition: trigger
-        id:
-        - step-3
-      sequence:
-      - alias: branches.mp4
-        service: media_player.play_media
-        data:
-          media_content_id: view.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: soil.mp4
-          media_content_type: video
-        alias: soil.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Water.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 15
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-3-done
-      alias: Step 3
-    - conditions:
-      - condition: trigger
-        id:
-        - step-4
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Scratching.wav
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: view.mp4
-          media_content_type: video
-        alias: view.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 30
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-4-done
-      alias: Step 4
-    - conditions:
-      - condition: trigger
-        id:
-        - step-5
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        alias: Ivan_sun.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Ivan_sun.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - service: media_player.play_media
-        data:
-          media_content_id: view.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        alias: hole.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 46
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-5-done
-      alias: Step 5
-    - conditions:
-      - condition: trigger
-        id:
-        - step-6
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        alias: ride.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Toggle switch
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-6-done
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Lightsswitch.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 19
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-6-done
-      alias: Step 6
-    - conditions:
-      - condition: trigger
-        id:
-        - step-7
-        alias: Step 7
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: view.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        alias: riverbank.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        alias: Nikola_strah.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_2
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: Nikola_strah.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 2
-          milliseconds: 0
-      - type: turn_off
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Toggle switch
-      - delay:
-          hours: 0
-          minutes: 1
-          seconds: 40
-          milliseconds: 0
-      - alias: Toggle Switch
-        type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - type: turn_off
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Turn off Light
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 10
-          milliseconds: 0
-      - type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Turn on Light
-      - event: neighbours-custom
-        event_data:
-          id: step-7-done
-      alias: Step 7
-    - conditions:
-      - condition: trigger
-        id:
-        - step-8
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: Scratching.wav
-          media_content_type: video
-        alias: bed.wav
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        alias: bush.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - alias: branches.mp4
-        service: media_player.play_media
-        data:
-          media_content_id: view.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 17
-          milliseconds: 0
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-        data:
-          media_content_id: flower.mp4
-          media_content_type: video
-        alias: zoom.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 14
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-8-done
-      - service: script.1695732965297
-        data: {}
-        enabled: false
-        alias: Part Two
-      alias: Step 8
-  mode: parallel
-  max: 10
-- id: '1708191934908'
-  alias: Neighbours 2
-  description: ''
-  trigger:
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: start
-    id: start
-    alias: Start
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-1-done
-    id: step-2
-    alias: Step 2
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-2-done
-    id: step-3
-    alias: Step 3
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-3-done
-    id: step-4
-    alias: Step 4
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-4-done
-    id: step-5
-    alias: Step 5
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-5-done
-    id: step-6
-    alias: Step 6
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-6-done
-    id: step-7
-    alias: Step 7
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-7-done
-    id: step-8
-    alias: Step 8
-  - platform: event
-    event_type: neighbours-custom
-    event_data:
-      id: step-8-done
-    id: step-9
-    alias: Step 9
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id:
-        - start
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/black.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.tv, media_player.projector_2
-        alias: Black.mp4
-      - alias: Door2.wav
-        service: media_player.play_media
-        target:
-          entity_id: media_player.audio_4
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/d2/door2.wav
-          media_content_type: video
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 5
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-1-done
-      alias: Step 1
-    - conditions:
-      - condition: trigger
-        id:
-        - step-2
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/swamp.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.projector_2
-        alias: swamp.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/Nikola_intro.mp4
-          media_content_type: video
-        alias: Nikola_intro.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_2
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/Nikola_intro.wav
-          media_content_type: video
-        alias: Nikola_intro.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 39
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-2-done
-      alias: Step 2
-    - conditions:
-      - condition: trigger
-        id:
-        - step-3
-      sequence:
-      - alias: branches.mp4
-        service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/branches.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.projector_2
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/soil.mp4
-          media_content_type: video
-        alias: soil.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_3, media_player.audio_1
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/d1/Water.wav
-          media_content_type: video
-        alias: Water.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 15
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-3-done
-      alias: Step 3
-    - conditions:
-      - condition: trigger
-        id:
-        - step-4
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_4
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/d2/Scratching.wav
-          media_content_type: video
-        alias: Scratching.wav
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.projector_2
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/view.mp4
-          media_content_type: video
-        alias: view.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 30
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-4-done
-      alias: Step 4
-    - conditions:
-      - condition: trigger
-        id:
-        - step-5
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/Ivan_sun.mp4
-          media_content_type: video
-        alias: Ivan_sun.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_2
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/Ivan_sun.wav
-          media_content_type: video
-        alias: Ivan_sun.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/hole.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.projector_2
-        alias: hole.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 46
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-5-done
-      alias: Step 5
-    - conditions:
-      - condition: trigger
-        id:
-        - step-6
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/ride.mp4
-          media_content_type: video
-        alias: ride.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Toggle switch
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-6-done
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_1
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/d1/Lightsswitch.wav
-          media_content_type: video
-        alias: Lightsswitch.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 19
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-6-done
-      alias: Step 6
-    - conditions:
-      - condition: trigger
-        id:
-        - step-7
-        alias: Step 7
-      sequence:
-      - service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/riverbank.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.projector_2
-        alias: riverbank.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/Nikola_strah.mp4
-          media_content_type: video
-        alias: Nikola_strah.mp4
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_2
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/Nikola_strah.wav
-          media_content_type: video
-        alias: Nikola_strah.wav
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 2
-          milliseconds: 0
-      - type: turn_off
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Toggle switch
-      - delay:
-          hours: 0
-          minutes: 1
-          seconds: 40
-          milliseconds: 0
-      - alias: Toggle Switch
-        type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - type: turn_off
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Turn off Light
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 10
-          milliseconds: 0
-      - type: turn_on
-        device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-        entity_id: ffaa2813ea121f6cdcee334357bc8d03
-        domain: light
-        alias: Turn on Light
-      - event: neighbours-custom
-        event_data:
-          id: step-7-done
-      alias: Step 7
-    - conditions:
-      - condition: trigger
-        id:
-        - step-8
-      sequence:
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.audio_3
-        data:
-          media_content_id: http://192.168.8.119:8080/audio/Toronto/d2/bed.wav
-          media_content_type: video
-        alias: bed.wav
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/bush.mp4
-          media_content_type: video
-        alias: bush.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 1
-          milliseconds: 0
-      - alias: branches.mp4
-        service: media_player.play_media
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/branches.mp4
-          media_content_type: video
-        target:
-          entity_id: media_player.projector_2
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 17
-          milliseconds: 0
-      - service: media_player.play_media
-        target:
-          entity_id: media_player.tv
-        data:
-          media_content_id: http://192.168.8.119:8080/video/Toronto/TV/zoom.mp4
-          media_content_type: video
-        alias: zoom.mp4
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 14
-          milliseconds: 0
-      - event: neighbours-custom
-        event_data:
-          id: step-8-done
-      - service: script.1695732965297
-        data: {}
-        enabled: false
-        alias: Part Two
-      alias: Step 8
-  mode: parallel
-  max: 10
 - id: '1709258337582'
   alias: Reboot Doorbell Daily
   description: ''
@@ -8595,7 +7732,7 @@
             use_persistent_notification: true
             persistent_notification_id: NWS_{{ alert.ID }}
             notify_pine_private: true
-            print_receipt: true
+            print_receipt: false
           action: script.notify_sarah_and_nathan
       - delay:
           hours: 0
@@ -9046,6 +8183,7 @@
                 - {}
                 - media_content_type: app
                   media_content_id: media-source://media_source
+                browse_entity_id: media_player.ipad_browser
           target:
             entity_id: media_player.ipad_browser
         - action: browser_mod.popup
@@ -9149,7 +8287,7 @@
     - calendar.mealie_dinner
     id: mealplan-update
   - trigger: time_pattern
-    minutes: /5
+    minutes: /1
     id: 5-minutes
   conditions: []
   actions:
@@ -9167,8 +8305,8 @@
             config_entry_id: 01JQV7H0NCEG91ZWHK91VJESNW
             start_date: '{{(now() - timedelta(days=now().isoweekday() % 7)) | as_timestamp
               | timestamp_custom(''%Y-%m-%d'')}}'
-            end_date: '{{(now() + timedelta(days=(6 - now().isoweekday()%7))) | as_timestamp
-              | timestamp_custom(''%Y-%m-%d'')}}'
+            end_date: '{{(now() + timedelta(days=(7+6 - now().isoweekday()%7))) |
+              as_timestamp | timestamp_custom(''%Y-%m-%d'')}}'
           response_variable: mealplan
         - variables:
             mealplans_json: "[ {% for meal in mealplan.mealplan | rejectattr(\"recipe\",
@@ -9193,6 +8331,13 @@
               {%- endfor %}
 
               '
+            existing_ids: '{{ state_attr(''sensor.meal_plan'', ''mealplan'') | map(attribute=''id'')
+              | list if state_attr(''sensor.meal_plan'', ''mealplan'') is not none
+              else [] }}'
+            new_meal_indices: "{% set ns = namespace(indices=[]) %} {% for meal in
+              mealplans %}\n  {% if meal.id not in existing_ids %}\n    {% set ns.indices
+              = ns.indices + [loop.index0] %}\n  {% endif %}\n{% endfor %} {{ ns.indices
+              }}"
         - action: variable.update_sensor
           metadata: {}
           data:
@@ -9203,6 +8348,14 @@
             value: '{{mealplans | length | int(0)}}'
           target:
             entity_id: sensor.meal_plan
+        - repeat:
+            for_each: '{{ new_meal_indices }}'
+            sequence:
+            - action: script.send_recipe
+              metadata: {}
+              data:
+                recipe_index: '{{repeat.item}}'
+                print_recipe: true
       alias: Update variables
   mode: single
 - id: '1745528807349'
@@ -9645,14 +8798,6 @@
     metadata: {}
     data: {}
   mode: single
-- id: '1752429014281'
-  alias: Music Assistant Jukebox Controller
-  description: ''
-  use_blueprint:
-    path: music_assistant_jukebox/jukebox_controller.yaml
-    input:
-      media_player: media_player.back_porch_speakers
-      default_playlist: Yacht Rock Essentials
 - id: '1753926909304'
   alias: Meshtastic
   description: ''
@@ -9714,14 +8859,19 @@
         use_siren: false
         email_nathan: false
         message: "Meshtastic: \n{%- if trigger.event.data.data.from is defined and
-          trigger.event.data.data.from == 3677053688 %} TATR\n{%- else %} {{trigger.event.data.data.from}}\n{%-
-          endif %}\nto\n{%- if trigger.event.data.data.to is defined and trigger.event.data.data.to.node
-          == 819691296 %} TREE\n{%- elif trigger.event.data.data.to is defined and
-          trigger.event.data.data.to.channel == 0 %} LongFast\n{%- elif trigger.event.data.data.to
-          is defined and trigger.event.data.data.to.channel == 1 %} PinePrivate\n{%-
+          trigger.event.data.data.from == 3677053688 %} Christian\n{%- elif trigger.event.data.data.from
+          is defined and trigger.event.data.data.from == 1607449222 %} Tater\n{%-
+          elif trigger.event.data.data.from is defined and trigger.event.data.data.from
+          == 1255561437 %} Baxter St.\n{%- elif trigger.event.data.data.from is defined
+          and trigger.event.data.data.from == 3127548364 %} pbot\n{%- elif trigger.event.data.data.from
+          is defined and trigger.event.data.data.from == 1607449222 %} Garrett\n{%-
+          else %} {{trigger.event.data.data.from}}\n{%- endif %}\nto\n{%- if trigger.event.data.data.to
+          is defined and trigger.event.data.data.to.node == 819691296 %} TREE\n{%-
           elif trigger.event.data.data.to is defined and trigger.event.data.data.to.channel
-          is defined %} Channel {{ trigger.event.data.data.to.channel }}\n{%- elif
-          trigger.event.data.data.to is defined and trigger.event.data.data.to.node
+          == 0 %} LongFast\n{%- elif trigger.event.data.data.to is defined and trigger.event.data.data.to.channel
+          == 1 %} PinePrivate\n{%- elif trigger.event.data.data.to is defined and
+          trigger.event.data.data.to.channel is defined %} Channel {{ trigger.event.data.data.to.channel
+          }}\n{%- elif trigger.event.data.data.to is defined and trigger.event.data.data.to.node
           is defined %} Node {{ trigger.event.data.data.to.node }}\n{%- else %} {{trigger.event.data.data.to}}\n{%-
           endif -%}"
         more_info: '{{trigger.event.data.data.message}}'
@@ -9861,6 +9011,10 @@
   - trigger: tag
     tag_id: 11f7afba-c8e8-4ca6-b40d-512640dc0a2e
     id: tag-scanned
+  - trigger: state
+    entity_id:
+    - input_text.music_assistant_queue_guest_link
+    id: guest-queue-link-change
   conditions: []
   actions:
   - choose:
@@ -9874,6 +9028,11 @@
         data: {}
         target:
           entity_id: light.string_lights
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id: light.h616c_745e
+        data: {}
       - action: fan.turn_on
         metadata: {}
         data: {}
@@ -9884,23 +9043,25 @@
         data:
           volume_level: 0.8
         target:
-          entity_id: media_player.back_porch_speakers
-      - action: switch.turn_on
-        metadata: {}
-        data: {}
-        target:
-          entity_id: switch.music_assistant_jukebox_jukebox_play_music_on_start
-      - action: switch.turn_on
-        metadata: {}
-        data: {}
-        target:
-          entity_id: switch.music_assistant_jukebox_jukebox_allow_access
+          entity_id:
+          - media_player.back_porch
       - action: browser_mod.navigate
         metadata: {}
         data:
           user_id:
           - person.wall_panel
           path: /wall-panel/party
+      - action: shell_command.update_queue_page_redirect
+        metadata: {}
+        data: {}
+      - action: music_assistant.play_media
+        metadata: {}
+        target:
+          entity_id: media_player.back_porch
+        data:
+          enqueue: replace
+          media_id: '{{states(''input_text.party_playlist'')}}'
+          media_type: playlist
     - conditions:
       - condition: trigger
         id:
@@ -9913,16 +9074,13 @@
           entity_id:
           - light.string_lights
           - light.back_porch
+          - light.h616c_745e
       - action: media_player.media_pause
         metadata: {}
         data: {}
         target:
-          entity_id: media_player.back_porch_speakers
-      - action: switch.turn_off
-        metadata: {}
-        data: {}
-        target:
-          entity_id: switch.music_assistant_jukebox_jukebox_allow_access
+          entity_id:
+          - media_player.back_porch
       - action: browser_mod.navigate
         metadata: {}
         data:
@@ -9934,6 +9092,14 @@
         data: {}
         target:
           entity_id: fan.gazebo_fan
+      - action: shell_command.clear_queue_page
+        metadata: {}
+        data: {}
+      - action: media_player.clear_playlist
+        metadata: {}
+        target:
+          entity_id: media_player.back_porch
+        data: {}
     - conditions:
       - condition: trigger
         id:
@@ -9954,6 +9120,18 @@
         data: {}
         target:
           entity_id: input_boolean.party_mode
+    - conditions:
+      - condition: trigger
+        id:
+        - guest-queue-link-change
+      - condition: state
+        entity_id: input_boolean.party_mode
+        state:
+        - 'on'
+      sequence:
+      - action: shell_command.update_queue_page_redirect
+        metadata: {}
+        data: {}
   mode: restart
 - id: '1760998644974'
   alias: Candy Machine
@@ -10065,37 +9243,6 @@
           seconds: 5
           milliseconds: 0
   mode: single
-- id: '1763585858099'
-  alias: Set Up Eave Light Scenes
-  description: ''
-  triggers:
-  - event: start
-    trigger: homeassistant
-    id: ha-start
-  conditions: []
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id:
-        - ha-start
-      sequence:
-      - delay:
-          hours: 0
-          minutes: 5
-          seconds: 0
-          milliseconds: 0
-        enabled: true
-  - variables:
-      options: '{{state_attr(''light.eave_lights'', ''effect_list'')}}'
-  - metadata: {}
-    data:
-      options: '{{options}}'
-    target:
-      entity_id:
-      - input_select.eave_lights_scenes
-    action: input_select.set_options
-  mode: single
 - id: '1763586306958'
   alias: Eave Lights
   description: ''
@@ -10130,15 +9277,55 @@
     from:
     to:
     id: selected-scene-change
+  - event: start
+    trigger: homeassistant
+    id: ha-start
+  - trigger: calendar.event_started
+    target:
+      entity_id: calendar.holidays_in_united_states
+    options:
+      offset:
+        hours: 4
+        minutes: 0
+        seconds: 0
+        days: 2
+      offset_type: before
+    id: before-holiday
+  - trigger: calendar.event_ended
+    target:
+      entity_id: calendar.holidays_in_united_states
+    options:
+      offset:
+        hours: 19
+        minutes: 0
+        seconds: 0
+        days: 0
+      offset_type: after
+    id: after-holiday
   conditions: []
   actions:
   - choose:
     - conditions:
-      - condition: trigger
-        id:
-        - sunset
-        - selected-scene-change
+      - condition: or
+        conditions:
+        - condition: trigger
+          id:
+          - sunset
+        - condition: and
+          conditions:
+          - condition: template
+            value_template: '{{trigger.from_state | default(''None'') != ''None''}}'
+          - condition: trigger
+            id:
+            - selected-scene-change
       sequence:
+      - action: variable.update_sensor
+        metadata: {}
+        target:
+          entity_id: sensor.last_eave_lights
+        data:
+          replace_attributes: false
+          value: '{{states(''input_select.eave_lights_scenes'')}}'
       - action: light.turn_on
         metadata: {}
         data:
@@ -10158,6 +9345,110 @@
         action: light.turn_off
         target:
           entity_id: light.eave_lights
+    - conditions:
+      - condition: trigger
+        id:
+        - ha-start
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 5
+          seconds: 0
+          milliseconds: 0
+        enabled: true
+      - sequence:
+        - variables:
+            options: '{{state_attr(''light.eave_lights'', ''effect_list'')}}'
+        - metadata: {}
+          data:
+            options: '{{options}}'
+          target:
+            entity_id:
+            - input_select.eave_lights_scenes
+          action: input_select.set_options
+        - action: input_select.select_option
+          metadata: {}
+          target:
+            entity_id: input_select.eave_lights_scenes
+          data:
+            option: "{% if states('sensor.last_eave_lights') in options %}\n  {{ states('sensor.last_eave_lights')
+              }}\n{% else %}\n  Normal\n{% endif %}\n"
+    - conditions:
+      - condition: trigger
+        id:
+        - before-holiday
+      sequence:
+      - sequence:
+        - action: ai_task.generate_data
+          metadata: {}
+          data:
+            task_name: Holiday Scene Generation
+            instructions: "{% set holiday = state_attr('calendar.holidays_in_united_states',
+              'message') %}\n{% set scenes = state_attr('input_select.eave_lights_scenes',
+              'options') %}\n\nUpcoming Holiday: {{ holiday }}\nAvailable Scene Options:
+              {{ scenes }}\n\nTask: \n1. Identify the \"vibe\" or \"colors\" of this
+              holiday.\n2. Find ALL scenes in the list that could reasonably fit that
+              holiday. \n   - Example: For Easter, you might find ['Easter', 'Easter
+              Egg', 'Candy', 'Spring', 'Flower Field'].\n   - Example: For a patriotic
+              holiday, you might find ['Fireworks', 'Bright', 'Active'].\n   - Example:
+              For Juneteenth, look for ['Colorful', 'Rainbow', 'Sunrise', 'Enthusiastic'].\n3.
+              Randomly select ONE scene from your identified matches.\n4. If the holiday
+              is obscure, make your best creative guess based on the name (e.g., 'Groundhog
+              Day' -> 'Forest' or 'Earth')."
+            structure:
+              new_scene:
+                description: 'The scene that was choses for the given holiday Rules:
+                  - Respond ONLY with the exact string of the chosen scene. - No punctuation,
+                  no quotes, no explanation. - ONLY if there is absolutely no creative
+                  match, return ''Normal''."'
+                required: true
+                selector:
+                  text:
+              reasoning:
+                description: Why the model made the scene choice for the given holiday
+                required: true
+                selector:
+                  text:
+            entity_id: ai_task.google_ai_task
+          response_variable: ai_output
+        - action: script.notify_sarah_and_nathan
+          metadata: {}
+          data:
+            use_alexa: false
+            use_persistent_notification: true
+            notify_sarah: false
+            notify_nathan: true
+            text_nathan: false
+            text_sarah: false
+            text_garrett: false
+            text_ice_contacts: false
+            bypass_quiet_mode: false
+            use_siren: false
+            email_nathan: false
+            print_receipt: false
+            message: 'New Scene: {{ai_output.data.new_scene}}'
+            more_info: 'Why: {{ai_output.data.reasoning}}'
+        - action: input_select.select_option
+          metadata: {}
+          target:
+            entity_id: input_select.eave_lights_scenes
+          data:
+            option: '{{ai_output.data.new_scene}}'
+    - conditions:
+      - condition: trigger
+        id:
+        - after-holiday
+      - condition: template
+        value_template: "{% set next_event = state_attr('calendar.holidays_in_united_states',
+          'start_time') %}\n{{ next_event != None and \n   (as_timestamp(next_event)
+          - now() | as_timestamp) >= (2 * 86400) }}\n"
+      sequence:
+      - action: input_select.select_option
+        metadata: {}
+        target:
+          entity_id: input_select.eave_lights_scenes
+        data:
+          option: Normal
     default: []
   mode: queued
   max: 10
@@ -10213,6 +9504,11 @@
     id: tater-at-store
   - trigger: zone
     entity_id: person.nathan
+    zone: zone.food_city
+    event: enter
+    id: tater-at-store
+  - trigger: zone
+    entity_id: person.nathan
     zone: zone.walmart_browns_mill_road
     event: enter
     id: tater-at-store
@@ -10222,8 +9518,23 @@
     event: enter
     id: tater-at-store
   - trigger: zone
+    entity_id: person.nathan
+    zone: zone.harbor_freight
+    event: enter
+    id: tater-at-hardware-store
+  - trigger: zone
+    entity_id: person.nathan
+    zone: zone.lowes
+    event: enter
+    id: tater-at-hardware-store
+  - trigger: zone
     entity_id: person.sarah
     zone: zone.kroger
+    event: enter
+    id: sarah-at-store
+  - trigger: zone
+    entity_id: person.sarah
+    zone: zone.food_city
     event: enter
     id: sarah-at-store
   - trigger: zone
@@ -10240,6 +9551,9 @@
     entity_id:
     - input_button.print_grocery_list
     id: print-list-button
+  - trigger: state
+    entity_id: todo.alexa_todo_shop
+    id: list-changed
   conditions: []
   actions:
   - action: todo.get_items
@@ -10247,8 +9561,20 @@
     data:
       status: needs_action
     target:
-      entity_id: todo.shopping_list
+      entity_id:
+      - todo.alexa_todo_shop
     response_variable: list_response
+  - variables:
+      shopping_list: '{{list_response[''todo.alexa_todo_shop''][''items'']}}'
+  - action: todo.get_items
+    metadata: {}
+    data:
+      status: needs_action
+    target:
+      entity_id: todo.alexa_todo_lowe_s_shopping
+    response_variable: lowes_response
+  - variables:
+      lowes_shopping_list: '{{lowes_response[''todo.alexa_todo_lowe_s_shopping''][''items'']}}'
   - choose:
     - conditions:
       - condition: trigger
@@ -10271,11 +9597,7 @@
           email_nathan: false
           print_receipt: false
           message: "\U0001F6D2 Shopping List"
-          url: todo?entity_id=todo.shopping_list
-          more_info: '{% set shopping_list = list_response[''todo.shopping_list''][''items'']
-            %}
-
-            {% if shopping_list %}
+          more_info: '{% if shopping_list %}
 
             {% for item in shopping_list if item.status == ''needs_action'' %}
 
@@ -10288,6 +9610,43 @@
             Your shopping list is currently empty!
 
             {% endif %}'
+          url: /lovelace/shopping
+    - conditions:
+      - condition: trigger
+        id:
+        - tater-at-hardware-store
+      sequence:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: false
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_garrett: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: "\U0001F6D2 Shopping List"
+          more_info: '{% if lowes_shopping_list %}
+
+            {% for item in lowes_shopping_list if item.status == ''needs_action''
+            %}
+
+            - {{ item.summary | capitalize }}
+
+            {%- endfor %}
+
+            {% else %}
+
+            Your shopping list is currently empty!
+
+            {% endif %}'
+          url: /lovelace/shopping
     - conditions:
       - condition: trigger
         id:
@@ -10309,11 +9668,7 @@
           email_nathan: false
           print_receipt: false
           message: "\U0001F6D2 Shopping List"
-          url: todo?entity_id=todo.shopping_list
-          more_info: '{% set shopping_list = list_response[''todo.shopping_list''][''items'']
-            %}
-
-            {% if shopping_list %}
+          more_info: '{% if shopping_list %}
 
             {% for item in shopping_list if item.status == ''needs_action'' %}
 
@@ -10326,6 +9681,7 @@
             Your shopping list is currently empty!
 
             {% endif %}'
+          url: /lovelace/shopping
     - conditions:
       - condition: trigger
         id:
@@ -10334,10 +9690,7 @@
       - action: ai_task.generate_data
         data:
           task_name: Grocery List Generation
-          instructions: '{% set shopping_list = list_response[''todo.shopping_list''][''items'']
-            %}
-
-            {%- for item in shopping_list -%}
+          instructions: '{%- for item in shopping_list -%}
 
             {{ item[''summary''] }}
 
@@ -10367,8 +9720,7 @@
           bold: true
           underline: single
           feed: 2
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.print_text
         metadata: {}
         data:
@@ -10376,8 +9728,7 @@
           align: left
           cut: none
           feed: 1
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.print_text
         metadata: {}
         data:
@@ -10390,6 +9741,819 @@
           bold: false
           cut: full
           feed: 0
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
+    - conditions:
+      - condition: trigger
+        id:
+        - list-changed
+      sequence:
+      - variables:
+          prompt: I want to add these items to my cart. Prefer 1. items I've purchased
+            most often, then 2. Walmart brand items. {%- for item in shopping_list
+            %} - {{item.summary}} {%- endfor %}
+      - action: variable.update_sensor
+        metadata: {}
+        data:
+          replace_attributes: false
+          value: '{{now()}}'
+          attributes:
+            prompt: '{{prompt}}'
         target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          entity_id: sensor.walmart_ai_prompt
+  mode: single
+- id: '1768778492409'
+  alias: Bathroom Presence
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.apollo_msr_2_f8ee88_radar_zone_3_occupancy
+    from:
+    - 'off'
+    to:
+    - 'on'
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+    id: on-toilet
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - on-toilet
+      sequence:
+      - action: esphome.apollo_msr_2_f8ee88_play_buzzer
+        metadata: {}
+        data:
+          song_str: Cantina:d=4,o=5,b=250:8a,8p,8d6,8p,8a,8p,8d6,8p,8a,8d6,8p,8a,8p,8g#,a,8a,8g#,8a,g,8f#,8g,8f#,f.,8d.,16p,p.,8a,8p,8d6,8p,8a,8p,8d6,8p,8a,8d6,8p,8a,8p,8g#,8a,8p,8g,8p,g.,8f#,8g,8p,8c6,a#,a,g
+  mode: single
+- id: '1775315490786'
+  alias: Back Porch Under Lights
+  description: ''
+  triggers:
+  - event: sunset
+    id: sunset
+    offset: -01:00:00
+    trigger: sun
+  - entity_id: input_boolean.night_mode
+    id: sleep
+    to: 'on'
+    from: 'off'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+  - entity_id: binary_sensor.occupied
+    id: occupation
+    trigger: state
+  - entity_id: input_boolean.night_mode
+    id: wake
+    from: 'on'
+    to: 'off'
+    trigger: state
+  - at: 00:00:00
+    id: midnight
+    trigger: time
+  - trigger: state
+    entity_id:
+    - input_select.porch_light_scenes
+    from:
+    to:
+    id: selected-scene-change
+  - event: start
+    trigger: homeassistant
+    id: ha-start
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - selected-scene-change
+      - condition: template
+        value_template: '{{trigger.from_state | default(''None'') != ''None''}}'
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          effect: '{{states(''input_select.porch_light_scenes'')}}'
+        target:
+          entity_id:
+          - light.h616c_745e
+      - action: variable.update_sensor
+        metadata: {}
+        target:
+          entity_id:
+          - sensor.last_under_porch_lights_scene
+        data:
+          replace_attributes: false
+          value: '  {{states(''input_select.porch_light_scenes'')}}'
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: sleep
+        - condition: trigger
+          id: midnight
+      sequence:
+      - data: {}
+        enabled: true
+        action: light.turn_off
+        target:
+          entity_id:
+          - light.h616c_745e
+    - conditions:
+      - condition: trigger
+        id:
+        - ha-start
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 5
+          seconds: 0
+          milliseconds: 0
+        enabled: true
+      - sequence:
+        - variables:
+            options: '{{state_attr(''light.h616c_745e'', ''effect_list'')}}'
+        - metadata: {}
+          data:
+            options: '{{options}}'
+          target:
+            entity_id:
+            - input_select.porch_light_scenes
+          action: input_select.set_options
+        - action: input_select.select_option
+          metadata: {}
+          target:
+            entity_id:
+            - input_select.porch_light_scenes
+          data:
+            option: "{% if states('sensor.last_under_porch_lights_scene') in options
+              %}\n  {{ states('sensor.last_under_porch_lights_scene') }}\n{% else
+              %}\n  Afternoon\n{% endif %}\n"
+    default: []
+  mode: queued
+  max: 10
+- id: '1777936601486'
+  alias: Ring Keypad Automations
+  description: ''
+  use_blueprint:
+    path: ImSorryButWho/keypad_blueprint.yaml
+    input:
+      keypad: dca83fd20bf07e58b85d5070546d7b14
+      alarm: alarm_control_panel.alarmo
+      selected_action_police:
+      - action: alarm_control_panel.alarm_trigger
+        metadata: {}
+        target:
+          entity_id: alarm_control_panel.alarmo
+        data: {}
+      selected_action_medical:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_garrett: true
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: Medical Emergency
+          more_info: Medical Emergency button pressed on security system
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Medical
+      - delay:
+          hours: 0
+          minutes: 1
+          seconds: 0
+          milliseconds: 0
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Disarm
+      selected_action_fire:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: false
+          notify_sarah: true
+          notify_nathan: true
+          text_nathan: true
+          text_sarah: true
+          text_garrett: true
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: Fire Emergency
+          more_info: Fire button pressed on security system
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Smoke
+      - delay:
+          hours: 0
+          minutes: 1
+          seconds: 0
+          milliseconds: 0
+      - action: script.ring_keypad_actions
+        metadata: {}
+        data:
+          mode: Disarm
+- id: '1779826116151'
+  alias: 'HVAC: Output Performance Monitor'
+  description: Monitors delta T between intake and vent after a configurable delay
+    when AC or Heat turns on.
+  triggers:
+  - entity_id:
+    - climate.kitchen
+    to:
+    - cooling
+    - heating
+    id: hvac_started
+    trigger: state
+  conditions: []
+  actions:
+  - delay: '{{ states(''input_number.hvac_setup_delay'') | int(15) * 60 }}'
+  - condition: template
+    value_template: '{{ is_state_attr(''climate.kitchen'', ''hvac_action'', trigger.to_state.attributes.hvac_action)
+      }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.hvac_action == ''cooling''
+          }}'
+      - condition: template
+        value_template: '{% set intake = states(''sensor.ac_intake_sensor_temperature'')
+          | float(0) %} {% set vent = states(''sensor.ac_output_sensor_temperature'')
+          | float(0) %} {% set target = states(''input_number.hvac_target_ac_differential'')
+          | float(12) %} {{ (intake - vent) < target }}'
+      sequence:
+      - action: script.notify_sarah_and_nathan
+        data:
+          message: 'HVAC Alert: Poor AC Performance'
+          more_info: 'The AC has been running for {{ states(''input_number.hvac_setup_delay'')
+            | int }} minutes,  but the temperature split is only {{ (states(''sensor.ac_intake_sensor_temperature'')
+            | float(0) - states(''sensor.ac_output_sensor_temperature'') | float(0))
+            | round(1) }}°F  (Intake: {{ states(''sensor.ac_intake_sensor_temperature'')
+            }}°F, Vent: {{ states(''sensor.ac_output_sensor_temperature'') }}°F).
+            Target is {{ states(''input_number.hvac_target_ac_differential'') }}°F.'
+          notify_nathan: true
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.hvac_action == ''heating''
+          }}'
+      - condition: template
+        value_template: '{% set intake = states(''sensor.ac_intake_sensor_temperature'')
+          | float(0) %} {% set vent = states(''sensor.ac_output_sensor_temperature'')
+          | float(0) %} {% set target = states(''input_number.hvac_target_heat_differential'')
+          | float(15) %} {{ (vent - intake) < target }}'
+      sequence:
+      - action: script.notify_sarah_and_nathan
+        data:
+          message: 'HVAC Alert: Poor Heating Performance'
+          more_info: 'The Heat has been running for {{ states(''input_number.hvac_setup_delay'')
+            | int }} minutes,  but the temperature split is only {{ (states(''sensor.ac_output_sensor_temperature'')
+            | float(0) - states(''sensor.hvac_intake_temp'') | float(0)) | round(1)
+            }}°F  (Intake: {{ states(''sensor.ac_intake_sensor_temperature'') }}°F,
+            Vent: {{ states(''sensor.ac_output_sensor_temperature'') }}°F). Target
+            is {{ states(''input_number.hvac_target_heat_differential'') }}°F.'
+          notify_nathan: true
+  mode: restart
+- id: '1779840056234'
+  alias: HVAC Health Monitor - Blueprint
+  description: ''
+  use_blueprint:
+    path: gmlupatelli/hvac_health_monitor.yaml
+    input:
+      thermostat: climate.kitchen
+      enable_deadband_detection: false
+      cooling_problem_actions:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: true
+          text_nathan: false
+          text_sarah: false
+          text_garrett: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: Cooling Problems Detected from Blueprint
+          notify_sarah: false
+          notify_nathan: true
+      heating_problem_actions:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: true
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_garrett: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: Heating Problems Detected from Blueprint
+      long_ac_runtime_actions:
+      - action: script.notify_sarah_and_nathan
+        metadata: {}
+        data:
+          use_alexa: false
+          use_persistent_notification: true
+          notify_sarah: false
+          notify_nathan: true
+          text_nathan: false
+          text_sarah: false
+          text_garrett: false
+          text_ice_contacts: false
+          bypass_quiet_mode: false
+          use_siren: false
+          email_nathan: false
+          print_receipt: false
+          message: AC Long Runtime Detected from Blueprint
+      cooling_runtime: 180
+      cooling_temperature_tolerance: 0.1
+- id: '1780959526553'
+  alias: Frozen Jude's Room
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - media_player.spotify_nathan_orick
+    attribute: media_title
+    to:
+    - Let It Go - From "Frozen"/Soundtrack Version
+  - trigger: media_player.started_playing
+    target:
+      entity_id: media_player.spotify_nathan_orick
+    options:
+      behavior: any
+      for: 00:00:00
+  conditions:
+  - condition: state
+    entity_id: media_player.spotify_nathan_orick
+    state:
+    - Jude's Echo
+    attribute: source
+  - condition: state
+    entity_id: input_boolean.quiet_mode
+    state:
+    - 'off'
+  - condition: media_player.is_playing
+    target:
+      entity_id: media_player.spotify_nathan_orick
+    options:
+      behavior: any
+      for: 00:00:00
+  - condition: state
+    entity_id: media_player.spotify_nathan_orick
+    state:
+    - Let It Go - From "Frozen"/Soundtrack Version
+    attribute: media_title
+  actions:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 45
+      milliseconds: 0
+  - action: scene.turn_on
+    metadata: {}
+    target:
+      entity_id: scene.jude_s_room_frozen
+    data: {}
+  mode: single
+- id: '1781268963813'
+  alias: Button Remote
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id: event.button_remote_button_1
+    id: button-1
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_2
+    id: button-2
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_3
+    id: button-3
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_4
+    id: button-4
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_5
+    id: button-5
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_6
+    id: button-6
+  conditions:
+  - condition: switch.is_on
+    target:
+      entity_id: input_boolean.jude_s_remote
+    options:
+      behavior: any
+      for: 00:00:00
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - button-1
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id:
+          - light.hue_color_lamp_1_4
+          - light.hue_color_lamp_1_3
+        data:
+          rgb_color:
+          - 0
+          - 0
+          - 255
+          brightness_pct: 100
+      - action: light.turn_off
+        metadata: {}
+        target:
+          entity_id: light.nursery_ceiling
+        data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-2
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id:
+          - light.hue_color_lamp_1_4
+          - light.hue_color_lamp_1_3
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness_pct: 100
+      - action: light.turn_off
+        metadata: {}
+        target:
+          entity_id: light.nursery_ceiling
+        data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-3
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id:
+          - light.hue_color_lamp_1_4
+          - light.hue_color_lamp_1_3
+        data:
+          rgb_color:
+          - 255
+          - 0
+          - 0
+          brightness_pct: 100
+      - action: light.turn_off
+        metadata: {}
+        target:
+          entity_id: light.nursery_ceiling
+        data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-4
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        target:
+          entity_id:
+          - light.hue_color_lamp_1_4
+          - light.hue_color_lamp_1_3
+        data:
+          rgb_color:
+          - 255
+          - 0
+          - 255
+          brightness_pct: 100
+      - action: light.turn_off
+        metadata: {}
+        target:
+          entity_id: light.nursery_ceiling
+        data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-5
+      sequence:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          brightness_pct: 100
+          color_temp_kelvin: 4027
+        target:
+          entity_id: light.nursery
+    - conditions:
+      - condition: trigger
+        id:
+        - button-6
+      sequence:
+      - action: light.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.nursery
+  mode: single
+
+- id: '1781268963814'
+  alias: Button Remote (Bedtime Mode)
+  description: 'Button remote automation with bedtime check to only turn on Jude nightstand at 25%.'
+  triggers:
+  - trigger: state
+    entity_id: event.button_remote_button_1
+    id: button-1
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_2
+    id: button-2
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_3
+    id: button-3
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_4
+    id: button-4
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_5
+    id: button-5
+  - trigger: state
+    entity_id:
+    - event.button_remote_button_6
+    id: button-6
+  conditions:
+  - condition: switch.is_on
+    target:
+      entity_id: input_boolean.jude_s_remote
+    options:
+      behavior: any
+      for: 00:00:00
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - button-1
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: input_datetime.baby_bed_time
+            before: input_datetime.morning
+          sequence:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.hue_color_lamp_1_3
+            data:
+              rgb_color:
+              - 0
+              - 0
+              - 255
+              brightness_pct: 25
+          - action: light.turn_off
+            metadata: {}
+            target:
+              entity_id:
+              - light.hue_color_lamp_1_4
+              - light.nursery_ceiling
+            data: {}
+        default:
+        - action: light.turn_on
+          metadata: {}
+          target:
+            entity_id:
+            - light.hue_color_lamp_1_4
+            - light.hue_color_lamp_1_3
+          data:
+            rgb_color:
+            - 0
+            - 0
+            - 255
+            brightness_pct: 100
+        - action: light.turn_off
+          metadata: {}
+          target:
+            entity_id: light.nursery_ceiling
+          data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-2
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: input_datetime.baby_bed_time
+            before: input_datetime.morning
+          sequence:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.hue_color_lamp_1_3
+            data:
+              rgb_color:
+              - 0
+              - 255
+              - 0
+              brightness_pct: 25
+          - action: light.turn_off
+            metadata: {}
+            target:
+              entity_id:
+              - light.hue_color_lamp_1_4
+              - light.nursery_ceiling
+            data: {}
+        default:
+        - action: light.turn_on
+          metadata: {}
+          target:
+            entity_id:
+            - light.hue_color_lamp_1_4
+            - light.hue_color_lamp_1_3
+          data:
+            rgb_color:
+            - 0
+            - 255
+            - 0
+            brightness_pct: 100
+        - action: light.turn_off
+          metadata: {}
+          target:
+            entity_id: light.nursery_ceiling
+          data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-3
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: input_datetime.baby_bed_time
+            before: input_datetime.morning
+          sequence:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.hue_color_lamp_1_3
+            data:
+              rgb_color:
+              - 255
+              - 0
+              - 0
+              brightness_pct: 25
+          - action: light.turn_off
+            metadata: {}
+            target:
+              entity_id:
+              - light.hue_color_lamp_1_4
+              - light.nursery_ceiling
+            data: {}
+        default:
+        - action: light.turn_on
+          metadata: {}
+          target:
+            entity_id:
+            - light.hue_color_lamp_1_4
+            - light.hue_color_lamp_1_3
+          data:
+            rgb_color:
+            - 255
+            - 0
+            - 0
+            brightness_pct: 100
+        - action: light.turn_off
+          metadata: {}
+          target:
+            entity_id: light.nursery_ceiling
+          data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-4
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: input_datetime.baby_bed_time
+            before: input_datetime.morning
+          sequence:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.hue_color_lamp_1_3
+            data:
+              rgb_color:
+              - 255
+              - 0
+              - 255
+              brightness_pct: 25
+          - action: light.turn_off
+            metadata: {}
+            target:
+              entity_id:
+              - light.hue_color_lamp_1_4
+              - light.nursery_ceiling
+            data: {}
+        default:
+        - action: light.turn_on
+          metadata: {}
+          target:
+            entity_id:
+            - light.hue_color_lamp_1_4
+            - light.hue_color_lamp_1_3
+          data:
+            rgb_color:
+            - 255
+            - 0
+            - 255
+            brightness_pct: 100
+        - action: light.turn_off
+          metadata: {}
+          target:
+            entity_id: light.nursery_ceiling
+          data: {}
+    - conditions:
+      - condition: trigger
+        id:
+        - button-5
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: input_datetime.baby_bed_time
+            before: input_datetime.morning
+          sequence:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.hue_color_lamp_1_3
+            data:
+              brightness_pct: 25
+              color_temp_kelvin: 4027
+          - action: light.turn_off
+            metadata: {}
+            target:
+              entity_id:
+              - light.hue_color_lamp_1_4
+              - light.nursery_ceiling
+            data: {}
+        default:
+        - action: light.turn_on
+          metadata: {}
+          data:
+            brightness_pct: 100
+            color_temp_kelvin: 4027
+          target:
+            entity_id: light.nursery
+    - conditions:
+      - condition: trigger
+        id:
+        - button-6
+      sequence:
+      - action: light.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.nursery
   mode: single

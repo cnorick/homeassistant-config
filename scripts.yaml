@@ -505,17 +505,21 @@ start_tesla:
       entity_id:
       - climate.tesleigh_lynn_climate
   - if:
-    - condition: numeric_state
-      entity_id: sensor.tesleigh_lynn_outside_temperature
-      below: '45'
+    - condition: or
+      conditions:
+      - condition: numeric_state
+        entity_id: sensor.tesleigh_lynn_outside_temperature
+        below: '45'
+      - condition: numeric_state
+        entity_id: weather.home
+        attribute: temperature
+        below: 45
     then:
-    - data:
-        preset_mode: Defrost
-      action: climate.set_preset_mode
-      continue_on_error: true
+    - action: switch.turn_on
+      metadata: {}
       target:
-        entity_id:
-        - climate.tesleigh_lynn_climate
+        entity_id: switch.tesleigh_lynn_defrost
+      data: {}
   mode: single
 vacuum_rooms:
   alias: Vacuum Room(s)
@@ -700,9 +704,15 @@ start_tesla_and_turn_off_if_doesnt_leave_home:
 lock_front_door:
   alias: Lock Front Door
   sequence:
-  - service: google_assistant_sdk.send_text_command
-    data:
+  - data:
       command: Lock front door
+    action: google_assistant_sdk.send_text_command
+    enabled: false
+  - action: lock.lock
+    metadata: {}
+    target:
+      entity_id: lock.entryway_entryway_lock
+    data: {}
   mode: single
 vacuum_next_area:
   alias: Vacuum Next Area
@@ -781,272 +791,6 @@ notify_mobile_devices:
     path: Grumblezz/notify_devices.yaml
     input:
       notify_message_actions_text: Select 1 of the following actions on your phone
-'1708021248590':
-  alias: ufoft
-  sequence:
-  - service: media_player.play_media
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    alias: Black.mp4
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Door2.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 5
-      milliseconds: 0
-  - service: script.1695667825634
-    data: {}
-    enabled: false
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: vdieo
-    metadata: {}
-    alias: Nikola_intro.mp4
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Nikola_intro.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 39
-      milliseconds: 0
-  - service: script.1695668418139
-    data: {}
-    enabled: false
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: soil.mp4
-      media_content_type: video
-    metadata: {}
-    alias: soil.mp4
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Water.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 15
-      milliseconds: 0
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Scratching.wav
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: view.mp4
-      media_content_type: video
-    metadata: {}
-    alias: view.mp4
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 30
-      milliseconds: 0
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    alias: Ivan_sun.mp4
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Ivan_sun.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
-  - service: script.1695668494663
-    data: {}
-    enabled: false
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 46
-      milliseconds: 0
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    alias: ride.mp4
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
-  - type: turn_on
-    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-    entity_id: ffaa2813ea121f6cdcee334357bc8d03
-    domain: light
-    alias: Toggle switch
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Lightsswitch.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 19
-      milliseconds: 0
-  - service: script.1695668575447
-    data: {}
-    enabled: false
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    alias: Nikola_strah.mp4
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.audio_2
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: Nikola_strah.wav
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 2
-      milliseconds: 0
-  - type: turn_off
-    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-    entity_id: ffaa2813ea121f6cdcee334357bc8d03
-    domain: light
-    alias: Toggle switch
-  - delay:
-      hours: 0
-      minutes: 1
-      seconds: 40
-      milliseconds: 0
-  - alias: Toggle Switch
-    type: turn_on
-    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-    entity_id: ffaa2813ea121f6cdcee334357bc8d03
-    domain: light
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
-  - type: turn_off
-    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-    entity_id: ffaa2813ea121f6cdcee334357bc8d03
-    domain: light
-    alias: Turn off Light
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 10
-      milliseconds: 0
-  - type: turn_on
-    device_id: 6f97f9cd3195a1cd5707f4a68f1c2f5f
-    entity_id: ffaa2813ea121f6cdcee334357bc8d03
-    domain: light
-    alias: Turn on Light
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: Scratching.wav
-      media_content_type: video
-    metadata: {}
-    alias: bed.wav
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    alias: bush.mp4
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
-  - service: script.1695668418139
-    data: {}
-    enabled: false
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 17
-      milliseconds: 0
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.rpi_streamer_d8_3a_dd_b0_d5_84
-    data:
-      media_content_id: flower.mp4
-      media_content_type: video
-    metadata: {}
-    alias: zoom.mp4
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 14
-      milliseconds: 0
-  - service: script.1695732965297
-    data: {}
-    enabled: false
-  - event: neighbours-custom
-    event_data:
-      id: step-1-done
-  mode: single
 notify_sarah_and_nathan:
   alias: Notify Sarah and Nathan
   fields:
@@ -1202,6 +946,8 @@ notify_sarah_and_nathan:
             image: '{{ image }}'
             actions: '{{ notification_actions }}'
             group: '{{ mobile_message_group}}'
+            ttl: 0
+            priority: high
         action: notify.mobile_app_pixel_10_pro
     default: []
   - choose:
@@ -1346,6 +1092,15 @@ notify_sarah_and_nathan:
           message: '{% set m = message ~ ''\n\n'' ~ more_info %}
 
             {{m[:200]}}'
+        enabled: false
+      - action: meshcore.send_channel_message
+        metadata: {}
+        data:
+          channel_idx: 6
+          message: '{% set m = message ~ ''\n\n'' ~ more_info %}
+
+            {{m[:117]}}...'
+        continue_on_error: true
   - choose:
     - conditions:
       - condition: template
@@ -1364,8 +1119,6 @@ notify_sarah_and_nathan:
             cut: none
             feed: 2
             bold: true
-          target:
-            entity_id: notify.esc_pos_printer_192_168_3_131_9100
       - action: escpos_printer.print_text
         continue_on_error: true
         metadata: {}
@@ -1375,9 +1128,8 @@ notify_sarah_and_nathan:
             endif -%}'
           bold: false
           cut: none
-          feed: 2
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          feed: 0
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - if:
         - condition: template
           value_template: '{{image is defined}}'
@@ -1391,8 +1143,7 @@ notify_sarah_and_nathan:
             align: center
             cut: none
             feed: 2
-          target:
-            entity_id: notify.esc_pos_printer_192_168_3_131_9100
+            device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - if:
         - condition: template
           value_template: '{{url is defined}}'
@@ -1407,6 +1158,7 @@ notify_sarah_and_nathan:
             align: center
             cut: none
             feed: 0
+            device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.print_text
         continue_on_error: true
         metadata: {}
@@ -1420,30 +1172,26 @@ notify_sarah_and_nathan:
           bold: false
           cut: none
           feed: 0
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.feed
         continue_on_error: true
         metadata: {}
         data:
           lines: 2
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.cut
         continue_on_error: true
         metadata: {}
         data:
           mode: full
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
       - action: escpos_printer.beep
         continue_on_error: true
         metadata: {}
         data:
           times: 3
           duration: 2
-        target:
-          entity_id: notify.esc_pos_printer_192_168_3_131_9100
+          device_id: 18d5285c0b5ee5afd56b6182c39103a9
   mode: queued
   max: 10
 notify_ice_contacts:
@@ -1609,8 +1357,7 @@ send_recipe:
         feed: 2
         cut: none
         underline: single
-      target:
-        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+        device_id: 18d5285c0b5ee5afd56b6182c39103a9
     - action: escpos_printer.print_image
       metadata: {}
       data:
@@ -1618,8 +1365,7 @@ send_recipe:
         high_density: true
         align: center
         cut: none
-      target:
-        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+        device_id: 18d5285c0b5ee5afd56b6182c39103a9
       enabled: false
     - action: escpos_printer.print_text
       metadata: {}
@@ -1656,8 +1402,7 @@ send_recipe:
         align: left
         cut: none
         feed: 1
-      target:
-        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+        device_id: 18d5285c0b5ee5afd56b6182c39103a9
     - action: escpos_printer.print_qr
       metadata: {}
       data:
@@ -1667,8 +1412,7 @@ send_recipe:
         align: center
         cut: full
         feed: 2
-      target:
-        entity_id: notify.esc_pos_printer_192_168_3_131_9100
+        device_id: 18d5285c0b5ee5afd56b6182c39103a9
     else:
     - action: script.notify_sarah_and_nathan
       metadata: {}
@@ -1702,7 +1446,7 @@ send_recipe:
       selector:
         boolean: {}
       name: Print Recipe
-  alias: Send Recipe
+  alias: Send Recipe via Meal Plan Index
   description: ''
 flash_the_selected_lights:
   sequence:
@@ -1836,3 +1580,140 @@ flash_the_selected_lights:
   description: Flash the selected lights from either the current or off state then
     return to the original lighting scene
   mode: restart
+ring_keypad_actions:
+  sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Smoke''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          property: '14'
+          property_key: '9'
+          value: 100
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''CO2''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          property: '15'
+          property_key: '9'
+          value: 100
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Medical''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          property: '19'
+          value: 100
+          property_key: '9'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Burglar''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          property: '13'
+          value: 100
+          property_key: '9'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Disarm''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          value: 100
+          property_key: '9'
+          property: '2'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Doorbell''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          value: 100
+          property_key: '9'
+          property: '100'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Guitar Riff''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          value: 100
+          property_key: '9'
+          property: '97'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{mode == ''Double Beep''}}'
+      sequence:
+      - action: zwave_js.set_value
+        metadata: {}
+        data:
+          device_id:
+          - dca83fd20bf07e58b85d5070546d7b14
+          command_class: '135'
+          endpoint: '0'
+          value: 100
+          property_key: '9'
+          property: '96'
+  alias: Ring Keypad Actions
+  description: ''
+  fields:
+    mode:
+      selector:
+        select:
+          options:
+          - Smoke
+          - CO2
+          - Medical
+          - Burglar
+          - Disarm
+          - Doorbell
+          - Guitar Riff
+          - Double Beep

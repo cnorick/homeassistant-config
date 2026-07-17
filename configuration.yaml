@@ -10,6 +10,9 @@ tts:
   - platform: google_translate
 homeassistant:
   customize: !include customize.yaml
+  media_dirs:
+    www: /config/www
+    mail: /config/custom_components/mail_and_packages/images
 
 group: !include_dir_merge_named ./groups
 automation: !include automations.yaml
@@ -18,6 +21,10 @@ script secret: !include secret_scripts.yaml
 scene: !include scenes.yaml
 frontend:
   themes: !include_dir_merge_named ./themes
+
+# temp fix for wyze 2026.7
+additional_ca:
+  digicert_g1_root: digicert_g1.crt
 
 http:
   server_port: 80
@@ -56,12 +63,6 @@ recorder:
       - sensor.speed_limit_data_sensor
       - sensor.vehicle_config_data_sensor
 
-alexa_media:
-  accounts:
-    - email: !secret amazon_email
-      password: !secret amazon_password
-      url: amazon.com
-
 wyzeapi:
   username: !secret wyze_username
   password: !secret wyze_password
@@ -92,6 +93,13 @@ rest_command: !include rest_commands.yaml
 
 camera: !include cameras.yaml
 # image_processing: !include image_processing.yaml
+
+shell_command:
+  update_queue_page_redirect: >
+    bash /config/change-queue-file.sh {{states('input_text.music_assistant_queue_guest_link') }}
+
+  clear_queue_page: >
+    bash /config/change-queue-file.sh no-queue.html
 
 notify:
   - name: nathan_gmail
