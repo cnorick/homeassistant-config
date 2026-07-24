@@ -100,17 +100,3 @@ shell_command:
 
   clear_queue_page: >
     bash /config/change-queue-file.sh no-queue.html
-
-notify:
-  - name: nathan_gmail
-    platform: smtp
-    server: "smtp.gmail.com"
-    port: 587
-    timeout: 15
-    sender: !secret gmail_email
-    encryption: starttls
-    username: !secret gmail_email
-    password: !secret gmail_password
-    recipient:
-      - !secret gmail_email
-    sender_name: "Home Assistant"
